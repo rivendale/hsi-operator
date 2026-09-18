@@ -97,6 +97,10 @@ four-way claim labelling — Data, Estimate, Assumption, Opinion — is a genuin
 on the three-way version this started with, because collapsing *estimate* into *assumption*
 is what lets a calculation pass as a finding.
 
+Human-systems integration is the other parent. What we took from NASA/DAU/Endsley, what
+we refused (seven-domain matrices, learned rankers), and the restricted three-body reading
+of L0 live in `skills/hsi-operator/references/hsi-se.md`. Steal patterns; do not vendor them.
+
 ## License
 
 MIT.
