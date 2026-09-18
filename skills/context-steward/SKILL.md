@@ -65,6 +65,10 @@ what never does (system prompt, images, keys).
 5. **What is blocked, and on whom.**
 6. **What must not be re-litigated**, with the date it was settled.
 
+**A secret's location survives; its value never does.** A long session can hold a live credential,
+pasted into chat, printed by a command or read from a file, and it will score as important. Write
+where it is and what it unlocks, never the string itself, in notes and in the handoff alike.
+
 **What does NOT need to survive:** your reasoning chain, intermediate attempts that went nowhere,
 tool output you already acted on, anything reconstructible from a file you can name.
 
@@ -74,8 +78,9 @@ The instinct is to summarize so it fits. That is the failure. **Write it to a fi
 path.** A path costs a line and returns everything; a summary costs a paragraph and returns a
 lossy shadow of it.
 
-Prefer, in order: **the repo** (durable, diffable, survives the machine) · a scratch file the
-runtime can re-read · the context itself, last.
+Prefer, in order: **a private repo** (durable, diffable, survives the machine), **never a public
+one**, where a handoff publishes names, locations and the status of other work · a local
+scratch file the runtime can re-read · the context itself, last.
 
 ## 5. Classification decides what stays — and it is a GROUP-level use
 
@@ -108,7 +113,8 @@ as agreement and is not.
 
 ## 7. The handoff, written before you need it
 
-One file, at the top of the working tree, containing: what is running and how to restart it ·
+One file, at the top of a **private** working tree (a local scratch path if the tree is public),
+containing: what is running and how to restart it ·
 the highest-leverage unstarted thing · who is blocked on what · what is open on the human · what
 is live and unfixed · what must not be re-litigated · the lesson worth carrying.
 
