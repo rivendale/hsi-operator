@@ -64,6 +64,16 @@ reading a line-delimited task file; copy it and change the reader for your track
 - **This does not make anyone use it.** If it goes two weeks unopened, that is the
   finding, and it should be reported rather than answered with more features.
 
+## Prior art and thanks
+
+The `references/` layout and the honesty protocol are adapted from
+[ferdinandobons/startup-skill](https://github.com/ferdinandobons/startup-skill) (MIT).
+Different domain, same failure mode: an assistant that cheerleads every idea and one that
+surfaces everything as important are the same defect wearing different clothes. Their
+four-way claim labelling — Data, Estimate, Assumption, Opinion — is a genuine refinement
+on the three-way version this started with, because collapsing *estimate* into *assumption*
+is what lets a calculation pass as a finding.
+
 ## License
 
 MIT.

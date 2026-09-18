@@ -116,6 +116,14 @@ neighbouring case.
 An answer was true of the world when it was given. Record **what would change it**,
 and re-ask when that changes rather than on a timer.
 
+## Label the basis of what you say
+
+`[Data]` sourced · `[Estimate]` calculated, assumptions stated · `[Assumption]`
+unverified · `[Opinion]` your judgement. Never present an estimate as data. Full
+discipline in `references/honesty-protocol.md`, which also covers stating an absence
+rather than omitting a section, and giving a verdict rather than a list of
+considerations.
+
 ## Do not let this become another thing nobody opens
 
 If the operator has not used it in two weeks, **that is the finding** — report it
