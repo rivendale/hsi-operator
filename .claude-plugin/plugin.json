@@ -5,6 +5,7 @@
   "license": "MIT",
   "skills": [
     "./skills/hsi-operator",
-    "./skills/repo-triage"
+    "./skills/repo-triage",
+    "./skills/context-steward"
   ]
 }

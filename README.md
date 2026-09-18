@@ -27,6 +27,13 @@ triage --hf org/model        same for a Hugging Face model
 It answers steps 1 and 2 and says so. Whether the thing is *useful* is judgement, and the
 tool does not pretend to have made it.
 
+**`context-steward`** — when a long session nears its context limit, decide what must survive,
+write it somewhere durable *before* the window closes, and keep working memory small by moving
+detail **out** rather than summarising it **away**. A summary is a pointer, not a substitute: it
+drops the file path, the exact error and the number, and it drops them silently. Includes the
+gauge rule that prompted it — check the actual context meter, not a token budget, and act at 80%
+rather than 95%.
+
 ## Why three
 
 A list of twenty-seven is a list of zero. The scarce resource is not willingness, it is
