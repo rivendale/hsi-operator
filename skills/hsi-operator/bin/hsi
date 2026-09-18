@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+"""hsi — rank what needs a human, and never show more than three.
+
+  hsi items.json                 the top 3, with the ranking rule stated
+  hsi items.json --all           everything, grouped by kind
+  hsi items.json --why ID        why that one ranked where it did
+  hsi --schema                   the input contract
+
+WHY A HARD CAP OF THREE. A list of twenty-seven is a list of zero. The scarce resource
+is not the operator's willingness, it is their attention in one sitting, and an
+unranked board spends it on whatever happens to be at the top.
+
+WHY THE RANKING IS PRINTED EVERY TIME. A hidden ranking is a judgement the operator
+cannot audit. `--why` shows the arithmetic for any single item, and `--all` shows what
+was held back -- the rest is one keystroke away, never gone.
+
+This reads a plain JSON contract and nothing else. It knows nothing about any
+particular estate, calendar or tracker; an adapter produces the contract. See
+`hsi --schema` and adapters/ for a worked example.
+"""
+import json
+import sys
+
+KINDS = ("DECIDE", "APPROVE", "EXECUTE", "TASTE")
+
+SCHEMA = {
+    "items": [{
+        "id": "short-slug",
+        "kind": "DECIDE | APPROVE | EXECUTE | TASTE",
+        "question": "Phrased so it can be answered in a sentence. NOT a status line.",
+        "why_you": "Why this needs a person and not the machine.",
+        "options": [{"label": "...", "consequence": "what follows if chosen"}],
+        "recommend": "optional: which option, and why",
+        "if_ignored_30d": "what actually happens",
+        "blocks": ["who or what is waiting"],
+        "reversible": "yes | partly | no",
+        "cost": "minutes | a decision | money | a conversation",
+        "deadline": "YYYY-MM-DD, or null. A HARD EXTERNAL date only.",
+        "evidence": "file:line, or a command that reproduces it",
+    }]
+}
+
+
+def score(it):
+    """Return (points, explanation). Deliberately simple and inspectable.
+
+    A weighting nobody can recompute by hand is a weighting nobody will trust. Four
+    terms, stated in the SKILL, and a hard deadline dominates by construction rather
+    than by out-weighing everything else numerically.
+    """
+    why, pts = [], 0
+    rev = str(it.get("reversible", "")).lower()
+    if rev == "no":
+        pts += 40; why.append("+40 irreversible")
+    elif rev == "partly":
+        pts += 20; why.append("+20 partly reversible")
+    n = len(it.get("blocks") or [])
+    if n:
+        pts += 15 * min(n, 3); why.append(f"+{15*min(n,3)} blocks {n}")
+    ign = (it.get("if_ignored_30d") or "").lower()
+    if any(w in ign for w in ("forfeit", "penalt", "expire", "lost", "closes", "late", "unrecover")):
+        pts += 30; why.append("+30 inaction has a named cost")
+    if it.get("kind") == "EXECUTE":
+        pts += 10; why.append("+10 only they have the hands")
+    return pts, why
+
+
+def order(items):
+    """Hard deadlines first by date, then everything else by points."""
+    dated = sorted([i for i in items if i.get("deadline")], key=lambda i: i["deadline"])
+    rest = sorted([i for i in items if not i.get("deadline")],
+                  key=lambda i: -score(i)[0])
+    return dated + rest
+
+
+def show(it, n=None):
+    head = f"{n}. " if n else "   "
+    print(f"\n{head}[{it.get('kind','?')}] {it.get('question','(no question)')}")
+    if it.get("deadline"):
+        print(f"      BY {it['deadline']}")
+    if it.get("why_you"):
+        print(f"      needs you: {it['why_you']}")
+    for o in (it.get("options") or []):
+        print(f"        - {o.get('label','?')} — {o.get('consequence','')}")
+    if it.get("recommend"):
+        print(f"      I'd suggest: {it['recommend']}")
+    if it.get("if_ignored_30d"):
+        print(f"      if ignored: {it['if_ignored_30d']}")
+    bits = [b for b in (it.get("cost"), f"blocks {', '.join(it['blocks'])}" if it.get("blocks") else None) if b]
+    if bits:
+        print(f"      {' · '.join(bits)}")
+    if it.get("evidence"):
+        print(f"      evidence: {it['evidence']}")
+
+
+def main(argv):
+    if "--schema" in argv:
+        print(json.dumps(SCHEMA, indent=2)); return 0
+    paths = [a for a in argv[1:] if not a.startswith("-")]
+    if not paths:
+        print(__doc__); return 0
+    try:
+        data = json.load(open(paths[0], encoding="utf-8"))
+    except (OSError, ValueError) as e:
+        print(f"hsi: cannot read {paths[0]}: {type(e).__name__}", file=sys.stderr); return 2
+    items = data.get("items") if isinstance(data, dict) else data
+    if not isinstance(items, list):
+        print("hsi: expected {\"items\": [...]} or a bare list", file=sys.stderr); return 2
+
+    bad = [i.get("id", "?") for i in items if i.get("kind") not in KINDS]
+    if bad:
+        print(f"hsi: {len(bad)} item(s) have no valid kind: {', '.join(map(str,bad[:5]))}",
+              file=sys.stderr)
+        print(f"     kind must be one of {', '.join(KINDS)} — an item that is none of "
+              f"these does not belong in front of a person.", file=sys.stderr)
+        return 2
+
+    if "--why" in argv:
+        want = argv[argv.index("--why") + 1]
+        for it in items:
+            if it.get("id") == want:
+                pts, why = score(it)
+                print(f"{want}: {pts} points" + (f", deadline {it['deadline']} (deadlines sort first)"
+                                                 if it.get("deadline") else ""))
+                for w in why: print(f"  {w}")
+                if not why: print("  (nothing scored — reversible, blocks nobody, no named cost)")
+                return 0
+        print(f"hsi: no item with id {want!r}", file=sys.stderr); return 2
+
+    ranked = order(items)
+    if "--all" in argv:
+        print(f"ALL {len(ranked)} item(s), grouped by kind\n")
+        for k in KINDS:
+            grp = [i for i in ranked if i.get("kind") == k]
+            if not grp: continue
+            print(f"--- {k} ({len(grp)}) ---")
+            for it in grp: show(it)
+            print()
+        return 0
+
+    top, rest = ranked[:3], ranked[3:]
+    if not top:
+        print("Nothing needs you. That is the update, not an absence of one.")
+        return 0
+    print(f"{len(top)} of {len(ranked)} thing(s) need you. Ranked by: hard deadline first,")
+    print("then irreversibility, who is blocked, and the cost of doing nothing for 30 days.")
+    for n, it in enumerate(top, 1):
+        show(it, n)
+    if rest:
+        print(f"\n{len(rest)} more held back, one keystroke away:  hsi {paths[0]} --all")
+        print("Held back means ranked lower, never dropped. `--why ID` shows the arithmetic.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

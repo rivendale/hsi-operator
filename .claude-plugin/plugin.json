@@ -1,0 +1,7 @@
+{
+  "name": "hsi-operator",
+  "version": "0.1.0",
+  "description": "Keeps the human operator at the strategic level: surfaces only what genuinely needs a person, and elicits what 'done' means before work starts.",
+  "license": "MIT",
+  "skills": ["./skills/hsi-operator"]
+}

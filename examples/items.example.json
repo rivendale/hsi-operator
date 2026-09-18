@@ -1,0 +1,38 @@
+{
+  "items": [
+    {
+      "id": "vendor-contract-renewal",
+      "kind": "DECIDE",
+      "question": "Renew the analytics vendor at $18k/yr, or drop to the free tier and lose historical data?",
+      "why_you": "Money, and a judgement about whether the history is worth keeping. Neither is in the record.",
+      "options": [
+        {"label": "Renew", "consequence": "$18k/yr, history preserved, auto-renews again in 12 months"},
+        {"label": "Free tier", "consequence": "$0, 90-day retention, existing history deleted at switch"},
+        {"label": "Export then drop", "consequence": "$0 after one month, history kept as our own files, ~2 days of work"}
+      ],
+      "recommend": "Export then drop, unless anyone actually queried data older than 90 days this year. I cannot tell from here whether they did.",
+      "if_ignored_30d": "Auto-renews on 2026-10-14 and the decision is made for you.",
+      "blocks": [],
+      "reversible": "no",
+      "cost": "money",
+      "deadline": "2026-10-14",
+      "evidence": "contracts/analytics-2025.pdf:4, auto-renewal clause"
+    },
+    {
+      "id": "onboarding-copy-tone",
+      "kind": "TASTE",
+      "question": "The first-run screen reads as a warning. Should it?",
+      "why_you": "Taste. I can make it friendlier or keep the caution, and I cannot tell which is right for your users.",
+      "options": [
+        {"label": "Keep the caution", "consequence": "fewer people start, the ones who do know what they signed up for"},
+        {"label": "Soften it", "consequence": "more starts, more support questions later"}
+      ],
+      "if_ignored_30d": "Ships as written.",
+      "blocks": ["design"],
+      "reversible": "yes",
+      "cost": "minutes",
+      "deadline": null,
+      "evidence": "src/onboarding/FirstRun.tsx:22"
+    }
+  ]
+}

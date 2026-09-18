@@ -1,0 +1,11 @@
+{
+  "name": "rivendale",
+  "owner": { "name": "rivendale" },
+  "plugins": [
+    {
+      "name": "hsi-operator",
+      "source": "./",
+      "description": "Human-systems integration for agent work. Two doors: what needs you now, and what does done mean."
+    }
+  ]
+}
