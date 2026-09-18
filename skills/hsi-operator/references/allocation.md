@@ -4,6 +4,10 @@ The person-test in `SKILL.md` *is* HSI function allocation. Written down here so
 ranker or adapter can name a mis-allocation without inventing policy.
 
 Sibling: what may reach the operator, and at what density, is `l0-channel.md`.
+Citations and the three-body reading: `hsi-se.md`.
+
+**A skipped question is never a yes.** Door 2 exists so silence cannot pass as
+acceptance. SureForge / honesty; not a new phase gate.
 
 ```
 FACT                         → machine (a search you skipped)
@@ -47,5 +51,4 @@ so it is not rediscovered as a feature request.
 
 Not a seven-domain DoD HSI matrix. Not IMPRINT. Not a second issue tracker.
 Borrow the integrator habit — trade attention against irreversibility — not the
-reporting stack. External citations, when wanted, belong in `hsi-se.md` (#8, not
-yet required for #2).
+reporting stack. External citations live in `hsi-se.md`.
