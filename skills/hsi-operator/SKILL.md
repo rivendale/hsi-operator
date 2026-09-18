@@ -84,6 +84,28 @@ Run this **before** building, not at the end. Five questions, in order.
 5. **What is explicitly OUT of scope?** Write it down; this is what stops the work
    growing quietly.
 
+### Write it as a setpoint, and cite it before starting
+
+The five answers go in one JSON file, the **setpoint**. `hsi --schema` prints the shape;
+`examples/setpoint.example.json` in the repo is the worked example as a file.
+
+`id` · `who` · `when` (1) · `enables` (2) · `wrong_if` (3) · `done` + `check` (4) ·
+`out_of_scope` (5) · `invalidated_by` · `words` · `date` · `basis`
+
+Two fields are new: an **id** to cite, and **words**, the request as they first put it,
+verbatim. The rest is this page as fields: `check` is question 4's command, number or
+person, and `invalidated_by` is the stale-answer rule below, a condition and never a timer.
+
+```
+hsi done setpoint.json    # prints the five answers; exit 2 if done has no check
+```
+
+**The interlock: no work starts without a setpoint id.** Cite the id before building. No
+id means Door 2 has not run. Exit 2 means it ran and did not produce a checkable done, and
+the move is to shrink done, not to start anyway. This is a rule you keep, not a lock:
+nothing blocks a keystroke, and nothing should. `hsi done` checks the *shape* of the check;
+whether it would prove anything is still read by a person.
+
 ### The bias: SHRINK the definition of done
 
 When the criteria are hard to state, the answer is usually a **smaller** done, not

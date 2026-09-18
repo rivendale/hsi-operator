@@ -1,0 +1,27 @@
+{
+  "setpoint": {
+    "id": "monday-shipped",
+    "who": "Me",
+    "when": "Monday mornings, before the standup",
+    "enables": "Stop asking three people what shipped last week.",
+    "wrong_if": "If I still have to open Jira to understand it.",
+    "done": "On Monday I can answer 'what shipped' without opening another tab.",
+    "check": {
+      "type": "person",
+      "expect": "answers 'what shipped' at Monday standup with no other tab opened"
+    },
+    "out_of_scope": [
+      "anything about the future",
+      "roadmap",
+      "burndown",
+      "estimates"
+    ],
+    "invalidated_by": [
+      "standup moves",
+      "a second person starts reading it"
+    ],
+    "words": "can we build a dashboard for the team",
+    "date": "2026-09-18",
+    "basis": "Data"
+  }
+}
