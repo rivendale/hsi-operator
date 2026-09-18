@@ -1,0 +1,4 @@
+{"id":"vendor-renewal","what":"Renew the analytics vendor or drop to free tier","who":["alice"],"status":"open","firmness":"hard","due":"2026-10-14","note":"Auto-renews 2026-10-14 and the decision is made for you. $18k/yr."}
+{"id":"onboarding-tone","what":"The first-run copy reads as a warning - should it?","who":["alice","design"],"status":"open","firmness":"soft","note":"Ships as written if nobody says otherwise."}
+{"id":"db-migration-window","what":"Approve the Sunday 02:00 migration window","who":["alice"],"status":"open","firmness":"hard","due":"2026-09-28","note":"Rollback is 40 minutes. Not reversible once started."}
+{"id":"stale-thing","what":"Old closed item that must not appear","who":["alice"],"status":"done"}

@@ -49,8 +49,8 @@ hsi items.json --why ID # the arithmetic for one item
 hsi --schema            # the full contract
 ```
 
-An **adapter** turns your world into that contract. `adapters/rygiel/` is a worked one
-reading a household's calendar; write your own for yours. The skill never changes.
+An **adapter** turns your world into that contract. `adapters/jsonl-tasks/` is a worked one
+reading a line-delimited task file; copy it and change the reader for your tracker. The skill never changes.
 
 ## Honest limitations
 
