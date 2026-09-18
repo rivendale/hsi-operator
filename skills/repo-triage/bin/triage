@@ -1,0 +1,89 @@
+#!/usr/bin/env python3
+"""triage — the mechanical half of repo triage, so judgement is spent on judgement.
+
+  triage owner/repo [owner/repo ...]        GitHub
+  triage --hf org/model [org/model ...]     Hugging Face
+
+Answers only what a machine can answer: licence, age, activity, and whether attention
+exceeds use. It does NOT tell you whether the thing is useful -- steps 3 to 6 of the SKILL
+are judgement and this deliberately does not attempt them.
+
+WHY LICENCE IS PRINTED FIRST AND LOUDEST. It is the cheapest kill and the one most often
+skipped, because it takes ten seconds and feels like paperwork. NO LICENCE IS NOT
+PERMISSIVE -- it is all-rights-reserved, and "useful as a reference" is exactly the framing
+that invites lifting code from something you may not lift from.
+
+Needs `gh` for GitHub (auth optional for public repos) and nothing for Hugging Face.
+"""
+import datetime, json, subprocess, sys, urllib.request
+
+def days(iso):
+    try:
+        d = datetime.datetime.fromisoformat(iso.replace("Z", "+00:00"))
+        return (datetime.datetime.now(datetime.timezone.utc) - d).days
+    except Exception:
+        return None
+
+def verdict_licence(spdx):
+    if not spdx or spdx in ("NOASSERTION", "null", None):
+        return "NO LICENCE — all rights reserved. Readable, NOT copyable.", True
+    if "NC" in spdx.upper() or "NonCommercial" in spdx:
+        return f"{spdx} — NON-COMMERCIAL. Rules out anything touching a business.", True
+    return f"{spdx}", False
+
+def gh(repo):
+    try:
+        out = subprocess.run(["gh", "api", f"repos/{repo}"], capture_output=True,
+                             text=True, timeout=45)
+        if out.returncode != 0:
+            print(f"  {repo}: could not fetch ({out.stderr.strip()[:60]})"); return
+        d = json.loads(out.stdout)
+    except Exception as e:
+        print(f"  {repo}: {type(e).__name__}"); return
+
+    lic, lic_flag = verdict_licence((d.get("license") or {}).get("spdx_id"))
+    age, stale = days(d.get("created_at")), days(d.get("pushed_at"))
+    stars, forks = d.get("stargazers_count", 0), d.get("forks_count", 0)
+
+    print(f"\n{repo}")
+    print(f"  LICENCE   {'** ' + lic if lic_flag else lic}")
+    print(f"  age       created {age}d ago, last pushed {stale}d ago"
+          + ("   ** stale" if stale and stale > 180 else ""))
+    print(f"  attention {stars} stars, {forks} forks", end="")
+    if stars and forks and stars / max(forks, 1) > 25:
+        print(f"   ** {stars/max(forks,1):.0f}:1 stars to forks — attention, not use", end="")
+    if age is not None and age <= 7 and stars > 500:
+        print(f"\n            ** {stars} stars in {age}d — a launch, not a track record", end="")
+    print()
+    if d.get("archived"): print("  ARCHIVED")
+    if d.get("description"): print(f"  {d['description'][:96]}")
+
+def hf(model):
+    try:
+        with urllib.request.urlopen(f"https://huggingface.co/api/models/{model}", timeout=30) as r:
+            d = json.loads(r.read())
+    except Exception as e:
+        print(f"  {model}: {type(e).__name__}"); return
+    lic, lic_flag = verdict_licence((d.get("cardData") or {}).get("license"))
+    dl, likes = d.get("downloads", 0), d.get("likes", 0)
+    print(f"\n{model}")
+    print(f"  LICENCE   {'** ' + lic if lic_flag else lic}")
+    print(f"  use       {dl} downloads, {likes} likes"
+          + ("   ** almost unused — nobody has found its failures yet" if dl < 1000 else ""))
+    print(f"  modified  {(d.get('lastModified') or '?')[:10]}")
+    print(f"  NOTE      a model card licence is not a LICENSE file. Check the repo too.")
+
+def main(argv):
+    args = argv[1:]
+    if not args:
+        print(__doc__); return 0
+    is_hf = "--hf" in args
+    for a in [x for x in args if not x.startswith("-")]:
+        (hf if is_hf else gh)(a)
+    print("\nThis answered steps 1 and 2 only. Steps 3-6 -- does the runtime exist on your")
+    print("hardware, what does the SOURCE do, what measured gap does it close, what would it")
+    print("make worse -- are judgement, and no tool should pretend to have made them.")
+    return 0
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv))

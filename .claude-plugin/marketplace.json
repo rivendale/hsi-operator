@@ -1,11 +1,13 @@
 {
   "name": "rivendale",
-  "owner": { "name": "rivendale" },
+  "owner": {
+    "name": "rivendale"
+  },
   "plugins": [
     {
       "name": "hsi-operator",
       "source": "./",
-      "description": "Human-systems integration for agent work. Two doors: what needs you now, and what does done mean."
+      "description": "Keep a human at the strategic level of agent work: surface only what needs a person, establish what 'done' means before building, and triage shared repos against measured gaps rather than their own pitch."
     }
   ]
 }

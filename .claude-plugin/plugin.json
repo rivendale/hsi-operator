@@ -1,7 +1,10 @@
 {
   "name": "hsi-operator",
   "version": "0.1.0",
-  "description": "Keeps the human operator at the strategic level: surfaces only what genuinely needs a person, and elicits what 'done' means before work starts.",
+  "description": "Keep a human at the strategic level of agent work: surface only what needs a person, establish what 'done' means before building, and triage shared repos against measured gaps rather than their own pitch.",
   "license": "MIT",
-  "skills": ["./skills/hsi-operator"]
+  "skills": [
+    "./skills/hsi-operator",
+    "./skills/repo-triage"
+  ]
 }

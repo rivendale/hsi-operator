@@ -6,10 +6,26 @@ Agents are good at producing things and bad at knowing whether anyone wanted the
 is the other half: **surface only what genuinely needs a person, and find out what "done"
 means before building.**
 
-Two doors, neither subordinate to the other:
+Two skills. The first has two doors:
 
+**`hsi-operator`**
 - **`how can I help`** — the 3 things that most need you, each as an answerable question
 - **`what does done mean`** — acceptance criteria, elicited *before* work starts
+
+**`repo-triage`** — when someone shares a repo, model or tool and asks "is this useful?",
+evaluate it against **measured** gaps rather than its own pitch. Most verdicts should be
+no. The failure it prevents is adopting on enthusiasm, and its order is deliberate:
+licence first because it is the cheapest kill, then maturity, then **does the runtime exist
+on the hardware you actually have** — the check most often skipped and the one that kills
+most confidently.
+
+```
+triage owner/repo            licence, age, activity — the mechanical half
+triage --hf org/model        same for a Hugging Face model
+```
+
+It answers steps 1 and 2 and says so. Whether the thing is *useful* is judgement, and the
+tool does not pretend to have made it.
 
 ## Why three
 
