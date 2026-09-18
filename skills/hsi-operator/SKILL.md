@@ -15,6 +15,9 @@ Human-systems integration for agent work. **Two doors.**
 
 Neither is subordinate. Most failures come from the second being skipped.
 
+What may reach the operator, and at what density, is `references/l0-channel.md`.
+What is theirs versus the machine's is `references/allocation.md`.
+
 ---
 
 ## DOOR 1 — "how can I help"
