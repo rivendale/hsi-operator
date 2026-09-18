@@ -59,7 +59,7 @@ npx skills add rivendale/hsi-operator --skill hsi-operator -g -a claude-code
 ```
 
 Or read `skills/hsi-operator/SKILL.md` — it is one file and the skill is the prose, not
-the code. The CLI only does the ranking.
+the code. The CLI ranks items and prints a setpoint back; the judgment is in the prose.
 
 ## The contract
 
@@ -69,6 +69,7 @@ the code. The CLI only does the ranking.
 hsi items.json          # top 3, ranking rule stated
 hsi items.json --all    # everything, grouped by kind
 hsi items.json --why ID # the arithmetic for one item
+hsi done setpoint.json  # Door 2 as a file; exit 2 if done has no check
 hsi --schema            # the full contract
 ```
 
@@ -84,6 +85,9 @@ reading a line-delimited task file; copy it and change the reader for your track
 - **The ranking is deliberately simple** — four terms, printed, recomputable by hand. A
   weighting nobody can check is a weighting nobody will trust. It will be wrong sometimes;
   `--why` is how you catch it.
+- **`hsi done` checks the shape of a check, not its meaning.** It refuses a done with no
+  command, number or person behind it, and a few stock judgments like "looks good". It
+  cannot tell a check that proves done from one that does not; a person still reads it.
 - **This does not make anyone use it.** If it goes two weeks unopened, that is the
   finding, and it should be reported rather than answered with more features.
 
