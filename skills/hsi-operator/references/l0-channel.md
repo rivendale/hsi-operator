@@ -7,7 +7,7 @@ is a dashboard.
 
 Sibling: what is the human's versus the machine's is `allocation.md`.
 Claim labels: `honesty-protocol.md`.
-Loop map: issues #1–#8.
+Loop map: issues #1–#8. Three-body reading: `hsi-se.md`.
 
 ---
 
@@ -22,6 +22,9 @@ Loop map: issues #1–#8.
 
 The operator lives at L0. The loop *computes* with L2. L3 is never in the prompt
 unless pulled. A summary that replaces L3 is a sensor failure.
+
+**Mask tool output to a pointer.** That is L2. Do not paste the dump. Observation
+masking arrived independently in context-engineering skills; we already required it.
 
 A list of twenty-seven is a list of zero. The quota is **three answerable questions
 per sitting**, plus one Door 2 conversation *before* work starts. A fourth item on
