@@ -25,9 +25,9 @@ loud rather than adding to it.
 
 ## 2. Make it one filename, and prove what loads it
 
-`AGENTS.md` at the root, and `CLAUDE.md` as a **symlink** to it. One inode, no drift, both
-names resolve, and no chance of two instruction files disagreeing while the auto-loaded one
-silently wins.
+`AGENTS.md` at the root, and nothing else. If the repo already carries an older per-vendor
+instruction file, fold its content in and delete it: two instruction files disagree sooner
+or later, and the auto-loaded one wins silently.
 
 Then prove it, per tool, in this repo:
 

@@ -1,20 +1,20 @@
 # AGENTS.md — how agents work in this repo
 
-One file, read by whichever harness you run — but **keep `CLAUDE.md` as a symlink to it**,
-because "every tool reads AGENTS.md now" is not true yet.
+**One file: `AGENTS.md`. No second name, no symlink, no fork.** Every tool this repo is
+worked with loads it, and that is a measurement rather than a vendor's promise.
 
 Measured 2026-09-21, by asking each tool what it loaded rather than reading a release note:
 
 | tool | version | instruction file | skills |
 |---|---|---|---|
-| Claude Code | 2.1.278 | `AGENTS.md`, and `CLAUDE.md` | `~/.claude/skills`, `.claude/skills` |
-| grok | 1.0.34, then 1.0.40 hours later | `AGENTS.md` or `CLAUDE.md` — **but only inside a folder it trusts**; an untrusted directory reports `Project Instructions (0)`, which reads exactly like "there is no instructions file" | reads `~/.claude/skills` |
+| Claude Code | 2.1.278 | `AGENTS.md` | `~/.claude/skills`, `.claude/skills` |
+| grok | 1.0.34, then 1.0.40 hours later | `AGENTS.md` — **but only inside a folder it trusts**; an untrusted directory reports `Project Instructions (0)`, which reads exactly like "there is no instructions file" | reads `~/.claude/skills` |
 | Gemini CLI | 0.60.0 | its own file | its own store: `gemini skills install <git url>`, and it does **not** see `~/.claude/skills` |
 | Codex CLI | 0.155.1 | `AGENTS.md` | plugins: `codex plugin add`, from a marketplace |
 
-So one symlink, never a fork: two instruction files drift, the auto-loaded one wins the
-contradiction, and one inode means both names resolve to the same text. It costs nothing and
-it removes a whole class of question.
+Two instruction files drift, and the auto-loaded one wins the contradiction, so there is one
+file and no alias. If you meet a tool that reads only some older name, that is a measurement
+to record here — not a reason to keep a second copy for everyone else.
 
 Two more things measured the same way, on three machines:
 

@@ -5,10 +5,10 @@ part, delete every section your repo has never needed, and keep it short enough 
 before the first action. Every line below earned its place by a failure somewhere; a line
 yours has not had is noise that makes the rest cheaper to skip.
 
-This is the one instruction file. Keep `CLAUDE.md` as a **symlink** to it rather than a
-second copy: two instruction files drift, and the auto-loaded one wins the contradiction.
-Then prove what your own tools load — some read a project's instructions only in a folder
-they have been told to trust, and "nothing loaded" prints exactly like "no file here".
+This is the one instruction file, and there is no second name for it: two instruction files
+drift, and the auto-loaded one wins the contradiction. Prove what your own tools load —
+some read a project's instructions only in a folder they have been told to trust, and
+"nothing loaded" prints exactly like "no file here".
 
 ---
 

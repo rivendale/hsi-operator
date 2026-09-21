@@ -12,6 +12,13 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **One instruction file, and no alias.** The failure this replaces: the repo told readers
+  to keep a second per-vendor filename symlinked to `AGENTS.md`, hedging against tools that
+  had not caught up. Measured instead of assumed, every tool this repo is worked with loads
+  `AGENTS.md` — so the hedge was advice to maintain a name nobody needs. A tool that reads
+  only some older name is now a measurement to record in the table, not a second file for
+  everyone to carry.
+
 - **`starter/` and `docs/adopting-an-existing-repo.md`.** The failure this guards against
   is the one every rules file invites: sixty lines pasted on day one, followed by nobody
   citing any of them. The starter is four files for an empty repo; the adoption guide is

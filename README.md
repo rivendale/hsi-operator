@@ -95,8 +95,8 @@ reading a line-delimited task file; copy it and change the reader for your track
 
 `AGENTS.md` is how agents work in this repo: scope guard, testing, what a long context costs,
 and how to talk to the person. Every harness we measured reads that filename, so there is one
-file and no `CLAUDE.md` fork — keep `CLAUDE.md` as a symlink to it, and prove what your own
-tool loads rather than trusting a release note; `AGENTS.md` has the measurements.
+file and no alias — and prove what your own tool loads rather than trusting a release note;
+`AGENTS.md` has the measurements.
 [`starter/`](starter) is the drop-in version for a new repo: `AGENTS.md`, a `CHANGELOG.md`
 that asks for the failure behind each change, a `SETPOINT.md` for what done means, and the
 one CI workflow. For a repo that already exists, the order matters more than the files —
