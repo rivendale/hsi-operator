@@ -16,6 +16,16 @@ So one symlink, never a fork: two instruction files drift, the auto-loaded one w
 contradiction, and one inode means both names resolve to the same text. It costs nothing and
 it removes a whole class of question.
 
+Two more things measured the same way, on three machines:
+
+- **An `@other-file.md` import line is not expanded by every tool.** One tool left the
+  literal string in place and found the target file on its own, so the same content appeared
+  as two entries. The content arrived; the mechanism the file implies was not the one that
+  delivered it. Do not assume an import works for a reader you have not asked.
+- **On a case-insensitive mount, one instruction file can load twice.** The same file was
+  listed under two casings and counted at full token cost each time. A figure measured there
+  is double; measure on the native filesystem.
+
 **Prove the load, not the filename.** "Nothing loaded" and "no file here" print the same
 string. A first pass at this table had grok ignoring `AGENTS.md`; a peer showed the real cause
 was an untrusted folder, and a controlled probe inside a trusted root then loaded `AGENTS.md`
