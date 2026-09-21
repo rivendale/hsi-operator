@@ -1,9 +1,20 @@
 # AGENTS.md — how agents work in this repo
 
-One file, read by whichever harness you run. Claude Code, Codex and the rest read
-`AGENTS.md` by name, so nothing here needs a second copy under another filename. If a tool
-still insists on `CLAUDE.md`, make it a symlink to this file rather than a fork of it: two
-instruction files drift, and the one that is loaded automatically wins the contradiction.
+One file, read by whichever harness you run — but **keep `CLAUDE.md` as a symlink to it**,
+because "every tool reads AGENTS.md now" is not true yet.
+
+Measured 2026-09-21, by asking each tool what it loaded rather than reading a release note:
+
+| tool | version | instruction file | skills |
+|---|---|---|---|
+| Claude Code | 2.1.278 | `AGENTS.md`, and `CLAUDE.md` | `~/.claude/skills`, `.claude/skills` |
+| grok | 1.0.34 | **`CLAUDE.md` only** — a repo with `AGENTS.md` and no `CLAUDE.md` reports `Project Instructions (0)` | reads `~/.claude/skills` |
+| Gemini CLI | 0.60.0 | its own file | its own store: `gemini skills install <git url>`, and it does **not** see `~/.claude/skills` |
+| Codex CLI | 0.155.1 | `AGENTS.md` | plugins: `codex plugin add`, from a marketplace |
+
+So one symlink, never a fork: two instruction files drift, and the auto-loaded one wins the
+contradiction. One inode means both names resolve to the same text. Deleting the old name
+because one vendor moved on is how a lane goes quietly unguided while every check stays green.
 
 The repo's substance is in `skills/`. This page is the working agreement around it.
 
