@@ -1,9 +1,40 @@
 # AGENTS.md — how agents work in this repo
 
-One file, read by whichever harness you run. Claude Code, Codex and the rest read
-`AGENTS.md` by name, so nothing here needs a second copy under another filename. If a tool
-still insists on `CLAUDE.md`, make it a symlink to this file rather than a fork of it: two
-instruction files drift, and the one that is loaded automatically wins the contradiction.
+One file, read by whichever harness you run — but **keep `CLAUDE.md` as a symlink to it**,
+because "every tool reads AGENTS.md now" is not true yet.
+
+Measured 2026-09-21, by asking each tool what it loaded rather than reading a release note:
+
+| tool | version | instruction file | skills |
+|---|---|---|---|
+| Claude Code | 2.1.278 | `AGENTS.md`, and `CLAUDE.md` | `~/.claude/skills`, `.claude/skills` |
+| grok | 1.0.34, then 1.0.40 hours later | `AGENTS.md` or `CLAUDE.md` — **but only inside a folder it trusts**; an untrusted directory reports `Project Instructions (0)`, which reads exactly like "there is no instructions file" | reads `~/.claude/skills` |
+| Gemini CLI | 0.60.0 | its own file | its own store: `gemini skills install <git url>`, and it does **not** see `~/.claude/skills` |
+| Codex CLI | 0.155.1 | `AGENTS.md` | plugins: `codex plugin add`, from a marketplace |
+
+So one symlink, never a fork: two instruction files drift, the auto-loaded one wins the
+contradiction, and one inode means both names resolve to the same text. It costs nothing and
+it removes a whole class of question.
+
+Two more things measured the same way, on three machines:
+
+- **An `@other-file.md` import line is not expanded by every tool.** One tool left the
+  literal string in place and found the target file on its own, so the same content appeared
+  as two entries. The content arrived; the mechanism the file implies was not the one that
+  delivered it. Do not assume an import works for a reader you have not asked.
+- **A version measured at the start of a session may not be the one that ran.** One of these
+  tools updated itself from 1.0.34 to 1.0.40 between two measurements a few hours apart, with
+  no prompt. Date every version claim, and re-read it before citing it.
+- **On a case-insensitive mount, one instruction file can load twice.** The same file was
+  listed under two casings and counted at full token cost each time. A figure measured there
+  is double; measure on the native filesystem.
+
+**Prove the load, not the filename.** "Nothing loaded" and "no file here" print the same
+string. A first pass at this table had grok ignoring `AGENTS.md`; a peer showed the real cause
+was an untrusted folder, and a controlled probe inside a trusted root then loaded `AGENTS.md`
+alone without complaint. Before blaming a name, drop a two-line file in that directory and ask
+the tool what it loaded. A project directory the tool does not trust is silently unguided:
+every rule in this file is absent and nothing says so.
 
 The repo's substance is in `skills/`. This page is the working agreement around it.
 
