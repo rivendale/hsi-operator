@@ -8,7 +8,7 @@ Measured 2026-09-21, by asking each tool what it loaded rather than reading a re
 | tool | version | instruction file | skills |
 |---|---|---|---|
 | Claude Code | 2.1.278 | `AGENTS.md`, and `CLAUDE.md` | `~/.claude/skills`, `.claude/skills` |
-| grok | 1.0.34 | `AGENTS.md` or `CLAUDE.md` — **but only inside a folder it trusts**; an untrusted directory reports `Project Instructions (0)`, which reads exactly like "there is no instructions file" | reads `~/.claude/skills` |
+| grok | 1.0.34, then 1.0.40 hours later | `AGENTS.md` or `CLAUDE.md` — **but only inside a folder it trusts**; an untrusted directory reports `Project Instructions (0)`, which reads exactly like "there is no instructions file" | reads `~/.claude/skills` |
 | Gemini CLI | 0.60.0 | its own file | its own store: `gemini skills install <git url>`, and it does **not** see `~/.claude/skills` |
 | Codex CLI | 0.155.1 | `AGENTS.md` | plugins: `codex plugin add`, from a marketplace |
 
@@ -22,6 +22,9 @@ Two more things measured the same way, on three machines:
   literal string in place and found the target file on its own, so the same content appeared
   as two entries. The content arrived; the mechanism the file implies was not the one that
   delivered it. Do not assume an import works for a reader you have not asked.
+- **A version measured at the start of a session may not be the one that ran.** One of these
+  tools updated itself from 1.0.34 to 1.0.40 between two measurements a few hours apart, with
+  no prompt. Date every version claim, and re-read it before citing it.
 - **On a case-insensitive mount, one instruction file can load twice.** The same file was
   listed under two casings and counted at full token cost each time. A figure measured there
   is double; measure on the native filesystem.
