@@ -94,9 +94,16 @@ reading a line-delimited task file; copy it and change the reader for your track
 ## The working agreement
 
 `AGENTS.md` is how agents work in this repo: scope guard, testing, what a long context costs,
-and how to talk to the person. Every current harness reads that filename, so there is one file
-and no `CLAUDE.md` fork. `examples/AGENTS.example.md` is the copyable version for your own
-repo — fill in the bracketed parts and delete the rest.
+and how to talk to the person. Every harness we measured reads that filename, so there is one
+file and no `CLAUDE.md` fork — keep `CLAUDE.md` as a symlink to it, and prove what your own
+tool loads rather than trusting a release note; `AGENTS.md` has the measurements.
+`examples/AGENTS.example.md` is the copyable version for your own repo — fill in the
+bracketed parts and delete the rest.
+
+## Changes
+
+`CHANGELOG.md`, where every entry names the **failure that caused the change**. What moved
+is in the diff already; why it moved is the part that does not survive anywhere else.
 
 ## Prior art and thanks
 
