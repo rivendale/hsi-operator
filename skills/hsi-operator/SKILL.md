@@ -74,7 +74,39 @@ A status line makes them do the work of turning it into a decision. Give them:
 
 ## DOOR 2 — "what does done mean"
 
-Run this **before** building, not at the end. Five questions, in order.
+Run this **before** building, not at the end.
+
+### First, say how much process this needs
+
+Classify the request and **say the classification out loud before the first question**, so
+the operator can overrule it in one word. Running the same five questions on a one-line fix
+and on a new subsystem is how this door gets skipped entirely.
+
+- **Spike** — a feasibility question whose output is an **answer, not something you keep**.
+  Say what you will try in two sentences, get a nod, and find out as cheaply as correctness
+  allows. Anything built stays labeled throwaway. The spike working is not permission to
+  keep it: that is a new request and it gets its own classification.
+- **Bounded** — a change to something that already exists and that you can read. Ask only
+  the questions that matter, put **done** in chat in a few sentences, and stop there.
+  Bounded measures the thing in front of you, not your familiarity with that kind of thing.
+- **Architectural** — a new thing, a new subsystem, or a change to an interface someone else
+  depends on. All five questions, and the answers get written down.
+
+When two paths look equally right, **take the heavier one**: reaching for the lighter label
+in order to skip work is itself the doubt. The ratchet turns one way. Complexity found
+mid-task upgrades the path — stop and say so — and nothing downgrades mid-task.
+
+### An approval covers the stage you actually showed
+
+**Approving the idea is not approving the artifact that does not exist yet.** A yes to
+"sounds right" is a yes to that sentence, not to a spec, a build or a deploy. Resume at the
+earliest stage nobody approved rather than spending one yes as permission to skip the rest.
+Reading and exploring stay allowed while an approval is outstanding.
+
+The gate is the approval, not the length of what you showed. A bounded design may be two
+sentences, and presenting it and starting in the same breath is still skipping the gate.
+
+### Then the five questions, in order
 
 1. **Who uses this, and when?** If the honest answer is "nobody yet", say so now.
    Most wasted work fails here and passes every other test.
