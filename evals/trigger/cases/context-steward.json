@@ -1,13 +1,13 @@
 {
   "skill": "context-steward",
-  "why_these": "It is invoked when a window is filling or at a checkpoint. The near-misses are the other two skills' territory plus an ordinary summary request.",
+  "how_these_were_written": "What a person types when a window is filling, including the '/clear' and 'lose' phrasings that the description was missing at first. Near-misses borrow the neighbouring skills' vocabulary so the contrast is real. 'summarize this long article' is kept but marked non-lexical: this skill's description has to talk about summarizing, so no honest wording separates the two by word overlap alone. Padding the description to win that case would be gaming the check.",
   "cases": [
-    {"id": "context-limit", "prompt": "we are close to the context limit, what must survive", "should_trigger": true},
-    {"id": "compact-now", "prompt": "is this a safe point to compact the session", "should_trigger": true},
-    {"id": "handoff", "prompt": "write the handoff before this window closes", "should_trigger": true},
-    {"id": "checkpoint", "prompt": "long running work, checkpoint what matters somewhere durable", "should_trigger": true},
-    {"id": "near-operator", "prompt": "what are the three things that most need a person", "should_trigger": false},
-    {"id": "near-triage", "prompt": "evaluate this tool against our measured gaps", "should_trigger": false},
-    {"id": "near-summary", "prompt": "summarize this article for me", "should_trigger": false}
+    {"id": "about-to-clear", "prompt": "I am about to clear this session, what do I need to not lose", "should_trigger": true},
+    {"id": "running-out-of-room", "prompt": "we are running out of room in this window, what must survive", "should_trigger": true},
+    {"id": "safe-to-compact", "prompt": "is this a safe checkpoint to compact", "should_trigger": true},
+    {"id": "write-the-handoff", "prompt": "save the handoff somewhere durable before this closes", "should_trigger": true},
+    {"id": "near-three-things", "prompt": "what are the three things that most need a person to decide", "should_trigger": false},
+    {"id": "near-adopt-tool", "prompt": "is this repo worth adopting, does it close a measured gap", "should_trigger": false},
+    {"id": "near-summarize-doc", "prompt": "summarize this long article and keep it short", "should_trigger": false, "lexical": false}
   ]
 }
