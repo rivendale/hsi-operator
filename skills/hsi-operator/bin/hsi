@@ -4,6 +4,7 @@
   hsi items.json                 the top 3, with the ranking rule stated
   hsi items.json --all           everything, grouped by kind
   hsi items.json --why ID        why that one ranked where it did
+  hsi done setpoint.json         Door 2 as a file: the five answers; exit 2 if done has no check
   hsi --schema                   the input contract
 
 WHY A HARD CAP OF THREE. A list of twenty-seven is a list of zero. The scarce resource
@@ -14,14 +15,32 @@ WHY THE RANKING IS PRINTED EVERY TIME. A hidden ranking is a judgement the opera
 cannot audit. `--why` shows the arithmetic for any single item, and `--all` shows what
 was held back -- the rest is one keystroke away, never gone.
 
+WHY A SETPOINT. Door 2 is the reference the work is measured against. Written as a file,
+it can be cited before work starts and compared against when work ends. `hsi done` prints
+it back and refuses a done with no external check of a known type. It checks the SHAPE of
+the check, not whether the check proves anything; reading that is still a person's job.
+
 This reads a plain JSON contract and nothing else. It knows nothing about any
 particular estate, calendar or tracker; an adapter produces the contract. See
 `hsi --schema` and adapters/ for a worked example.
 """
 import json
+import re
 import sys
 
 KINDS = ("DECIDE", "APPROVE", "EXECUTE", "TASTE")
+BASES = ("Data", "Estimate", "Assumption", "Opinion")
+
+# A check is something outside the model: a command that exits, a number that moves, a
+# person who uses the thing. Each type names the one field that says HOW, plus `expect`.
+# A person check with no `who` of its own is the setpoint's `who`: one fact, one place.
+CHECKS = {"command": "cmd", "number": "measure", "person": "who"}
+
+# Phrases that are a judgment, not a check, matched as whole phrases in `done` and in the
+# check. Deliberately short: it catches the example the SKILL names and its near
+# neighbors. A longer list would start guessing at meaning.
+NOT_A_CHECK = ("looks good", "look good", "looks right", "look right", "feels right",
+               "feel right")
 
 SCHEMA = {
     "items": [{
@@ -37,7 +56,27 @@ SCHEMA = {
         "cost": "minutes | a decision | money | a conversation",
         "deadline": "YYYY-MM-DD, or null. A HARD EXTERNAL date only.",
         "evidence": "file:line, or a command that reproduces it",
-    }]
+    }],
+    "setpoint": {
+        "id": "short-slug. Work cites this before it starts: no id, no start.",
+        "who": "1. Who uses the finished thing. One person beats 'the team'.",
+        "when": "1. The moment they use it.",
+        "enables": "2. What it lets them do that they cannot do today.",
+        "wrong_if": "3. What would make them say 'that is not what I wanted'.",
+        "done": "4. ONE checkable sentence, external to the model.",
+        "check": {
+            "type": "command | number | person. 'It looks good' is none of these.",
+            "cmd": "type command: what to run",
+            "measure": "type number: where the number is read",
+            "who": "type person: optional; the setpoint's who when absent",
+            "expect": "command: the exit code; number: the value that means done; person: what they do",
+        },
+        "out_of_scope": ["5. What this will not do, written down so the work cannot grow quietly."],
+        "invalidated_by": ["What would change this answer. A condition, never a timer."],
+        "words": "The operator's own words, verbatim: the request as they first put it.",
+        "date": "YYYY-MM-DD",
+        "basis": "Data | Estimate | Assumption | Opinion",
+    },
 }
 
 
@@ -93,7 +132,132 @@ def show(it, n=None):
         print(f"      evidence: {it['evidence']}")
 
 
+def filled(v):
+    """A value that says something: a non-blank string, or a number that is not a bool."""
+    if isinstance(v, str):
+        return bool(v.strip())
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def check_parts(sp):
+    """(type, how, expect) of the check, each None when absent or malformed."""
+    chk = sp.get("check")
+    if not isinstance(chk, dict):
+        return None, None, None
+    t = chk.get("type")
+    t = t if isinstance(t, str) and t in CHECKS else None
+    how = chk.get(CHECKS[t]) if t else None
+    if t == "person" and not filled(how):
+        how = sp.get("who")
+    return t, (how if filled(how) else None), (chk.get("expect") if filled(chk.get("expect")) else None)
+
+
+def not_checkable(sp):
+    """Return the reasons done is NOT checkable. Empty means it is.
+
+    Checkable here means a `check` of a known type with its HOW field and `expect` filled
+    in, and no stock judgment phrase in `done` or the check. That is a test of SHAPE. It
+    cannot tell a check that proves done from one that does not, and does not pretend to.
+    """
+    why = []
+    d = sp.get("done")
+    done = d.strip() if isinstance(d, str) else ""
+    if d is not None and not isinstance(d, str):
+        why.append("done must be one sentence, not a list, a number or an object")
+    elif not done:
+        why.append("there is no done sentence")
+    chk = sp.get("check")
+    t, how, expect = check_parts(sp)
+    if not isinstance(chk, dict):
+        why.append("there is no check: a command that exits, a number that moves, "
+                   "or a person who uses it")
+    elif not t:
+        why.append(f"check.type {chk.get('type')!r} is not command | number | person")
+    else:
+        missing = [f for f, v in ((CHECKS[t], how), ("expect", expect)) if v is None]
+        if missing:
+            why.append(f"a {t} check needs {' and '.join(missing)}")
+    text = " ".join(str(x) for x in (done, how, expect) if x is not None).lower()
+    why += [f"'{p}' is a judgment, not a check" for p in NOT_A_CHECK
+            if re.search(rf"(?<![\w-]){re.escape(p)}(?![\w-])", text)]
+    return why
+
+
+def listed(v):
+    """A field that should be a list may arrive as one string; print either the same way."""
+    if isinstance(v, list):
+        return " · ".join(str(x) for x in v if filled(x))
+    return v.strip() if isinstance(v, str) else ""
+
+
+def show_setpoint(sp):
+    basis = f" [{sp['basis']}]" if sp.get("basis") else " (basis not labeled)"
+    print(f"Setpoint {sp['id']}, {sp.get('date') or 'undated'}{basis}")
+    asked = f'"{sp["words"]}"' if filled(sp.get("words")) else "(request not recorded)"
+    print(f"  asked as:     {asked}\n")
+    who = " · ".join(str(sp[k]) for k in ("who", "when") if filled(sp.get(k)))
+    rows = (("1. who, when", who),
+            ("2. lets you", sp.get("enables")),
+            ("3. wrong if", sp.get("wrong_if")),
+            ("4. done when", sp.get("done") if isinstance(sp.get("done"), str) else None))
+    for label, v in rows:
+        print(f"  {label + ':':<14}{v if filled(v) else '(not answered)'}")
+    t, how, expect = check_parts(sp)
+    if isinstance(sp.get("check"), dict):
+        print(f"  {'':<14}check, {t or '?'}: {how if how is not None else '?'} · "
+              f"expect {expect if expect is not None else '?'}")
+    print(f"  {'5. not doing:':<14}"
+          f"{listed(sp.get('out_of_scope')) or '(nothing written: this is what stops the work growing quietly)'}")
+    print(f"\n  re-ask if:    "
+          f"{listed(sp.get('invalidated_by')) or '(nothing recorded: this answer rules until someone notices)'}")
+
+
+def done_cmd(args):
+    """`hsi done FILE`: print the setpoint; exit 2 if it cannot be cited or checked."""
+    if not args:
+        print("hsi done: give a setpoint file. `hsi --schema` shows the shape.", file=sys.stderr)
+        return 2
+    try:
+        # utf-8-sig: a file saved on Windows often starts with a byte-order mark.
+        data = json.load(open(args[0], encoding="utf-8-sig"))
+    except (OSError, ValueError, RecursionError) as e:
+        print(f"hsi: cannot read {args[0]}: {type(e).__name__}", file=sys.stderr); return 2
+    if isinstance(data, dict) and "setpoint" not in data and not ({"id", "done", "check"} & set(data)):
+        print(f"hsi: no setpoint in {args[0]} (found: {', '.join(map(str, data)) or 'nothing'}). "
+              f"`hsi --schema` shows the shape.", file=sys.stderr)
+        return 2
+    sp = data.get("setpoint", data) if isinstance(data, dict) else None
+    if not isinstance(sp, dict):
+        print("hsi: expected {\"setpoint\": {...}} or a bare setpoint object", file=sys.stderr)
+        return 2
+    if not (isinstance(sp.get("id"), str) and sp["id"].strip()):
+        print("hsi: this setpoint has no usable id. Work cites the id before it starts, so it "
+              "must be a non-blank string.", file=sys.stderr)
+        return 2
+    if sp.get("basis") and sp["basis"] not in BASES:
+        print(f"hsi: basis {sp['basis']!r} is not {' | '.join(BASES)}", file=sys.stderr); return 2
+
+    show_setpoint(sp)
+    why = not_checkable(sp)
+    if why:
+        print(f"\nNOT CHECKABLE, so no work starts against {sp['id']}:")
+        for w in why:
+            print(f"  - {w}")
+        print("Shrink done until a command exits, a number moves, or a person does something you")
+        print("can watch. A smaller done that can be checked beats a larger one that cannot.")
+        return 2
+    open_q = [n for n, k in (("1", "who"), ("2", "enables"), ("3", "wrong_if"), ("5", "out_of_scope"))
+              if not (listed(sp.get(k)) if k == "out_of_scope" else filled(sp.get(k)))]
+    print(f"\nDone is checkable. Work against this cites setpoint {sp['id']}.")
+    if open_q:
+        print(f"Still unanswered: question{'s' if len(open_q) > 1 else ''} {', '.join(open_q)}. "
+              f"The check does not need them; the work probably does.")
+    return 0
+
+
 def main(argv):
+    if len(argv) > 1 and argv[1] == "done":
+        return done_cmd(argv[2:])
     if "--schema" in argv:
         print(json.dumps(SCHEMA, indent=2)); return 0
     paths = [a for a in argv[1:] if not a.startswith("-")]
