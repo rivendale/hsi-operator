@@ -1,0 +1,15 @@
+{
+  "skill": "hsi-operator",
+  "why_these": "Door 1 is asked in the operator's own words; Door 2 is asked at the start of work. The near-misses are the neighbours: a ranking question that is not about a person, and work that is already specified.",
+  "cases": [
+    {"id": "how-can-i-help", "prompt": "how can I help", "should_trigger": true},
+    {"id": "what-needs-me", "prompt": "what needs me today", "should_trigger": true},
+    {"id": "what-do-you-need", "prompt": "what do you need from me", "should_trigger": true},
+    {"id": "decisions-waiting", "prompt": "what decisions are waiting on my approval", "should_trigger": true},
+    {"id": "what-does-done-mean", "prompt": "before we start, what does done mean for this", "should_trigger": true},
+    {"id": "acceptance-criteria", "prompt": "write the acceptance criteria before building the importer", "should_trigger": true},
+    {"id": "near-compaction", "prompt": "this session is nearly full, decide what to keep", "should_trigger": false},
+    {"id": "near-repo-shared", "prompt": "someone shared this repo, is it useful to us", "should_trigger": false},
+    {"id": "near-plain-build", "prompt": "add a retry to the upload function", "should_trigger": false}
+  ]
+}

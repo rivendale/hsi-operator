@@ -1,0 +1,13 @@
+{
+  "skill": "context-steward",
+  "why_these": "It is invoked when a window is filling or at a checkpoint. The near-misses are the other two skills' territory plus an ordinary summary request.",
+  "cases": [
+    {"id": "context-limit", "prompt": "we are close to the context limit, what must survive", "should_trigger": true},
+    {"id": "compact-now", "prompt": "is this a safe point to compact the session", "should_trigger": true},
+    {"id": "handoff", "prompt": "write the handoff before this window closes", "should_trigger": true},
+    {"id": "checkpoint", "prompt": "long running work, checkpoint what matters somewhere durable", "should_trigger": true},
+    {"id": "near-operator", "prompt": "what are the three things that most need a person", "should_trigger": false},
+    {"id": "near-triage", "prompt": "evaluate this tool against our measured gaps", "should_trigger": false},
+    {"id": "near-summary", "prompt": "summarize this article for me", "should_trigger": false}
+  ]
+}

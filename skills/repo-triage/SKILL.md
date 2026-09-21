@@ -1,6 +1,6 @@
 ---
 name: repo-triage
-description: Use when someone shares an open-source repo, model or tool and asks "is this useful?" — evaluates it against MEASURED gaps rather than against its own pitch, and produces a verdict. Most verdicts should be no.
+description: Use when someone shares an open-source repo, library, model or tool and asks whether it is useful, whether to adopt or install it, or whether it is worth taking on as a dependency — evaluates it against MEASURED gaps rather than against its own pitch, and gives a verdict. Most verdicts should be no.
 license: MIT
 ---
 
