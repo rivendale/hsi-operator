@@ -91,6 +91,13 @@ reading a line-delimited task file; copy it and change the reader for your track
 - **This does not make anyone use it.** If it goes two weeks unopened, that is the
   finding, and it should be reported rather than answered with more features.
 
+## The working agreement
+
+`AGENTS.md` is how agents work in this repo: scope guard, testing, what a long context costs,
+and how to talk to the person. Every current harness reads that filename, so there is one file
+and no `CLAUDE.md` fork. `examples/AGENTS.example.md` is the copyable version for your own
+repo — fill in the bracketed parts and delete the rest.
+
 ## Prior art and thanks
 
 The `references/` layout and the honesty protocol are adapted from
