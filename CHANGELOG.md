@@ -12,6 +12,11 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **`CLAUDE.md`, a symlink to `AGENTS.md`.** The failure: this repo told everyone else to
+  do that — in `AGENTS.md`, in `README.md`, in `starter/README.md` and in the adoption
+  guide — and did not do it itself. A rule the repo breaks in its own tree is a rule that
+  reads as advice. One inode, no drift, both names resolve.
+
 - **`starter/` and `docs/adopting-an-existing-repo.md`.** The failure this guards against
   is the one every rules file invites: sixty lines pasted on day one, followed by nobody
   citing any of them. The starter is four files for an empty repo; the adoption guide is
