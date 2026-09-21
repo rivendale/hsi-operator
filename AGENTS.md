@@ -29,6 +29,13 @@ Two more things measured the same way, on three machines:
   listed under two casings and counted at full token cost each time. A figure measured there
   is double; measure on the native filesystem.
 
+- **After changing the instruction file itself, ask the FIRST session what it loaded.**
+  Measured on one machine during this very change: the first session after the old file was
+  deleted loaded no project instructions at all, while later sessions on the same machine
+  loaded the new one correctly. Real, and not reproducible on demand, which is the shape
+  that bites. If the answer is none, start another session before trusting anything to obey
+  the rules — most of all the destructive ones.
+
 **Prove the load, not the filename.** "Nothing loaded" and "no file here" print the same
 string. A first pass at this table had grok ignoring `AGENTS.md`; a peer showed the real cause
 was an untrusted folder, and a controlled probe inside a trusted root then loaded `AGENTS.md`
