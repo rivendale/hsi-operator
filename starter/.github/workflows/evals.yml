@@ -1,0 +1,18 @@
+# The only automated gate in this repo. It runs the trigger check and the check's own
+# selftest, so a green tick means both "the descriptions still route" and "the checker can
+# still fail". A checker nothing runs is a comment.
+name: evals
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 evals/trigger/run.py
+      - run: python3 evals/trigger/run.py --selftest
