@@ -1,12 +1,12 @@
-# AGENTS.md — example
+# AGENTS.md
 
-Copy this into a repo, delete what does not apply, and fill the bracketed parts. It is the
-one instruction file: every current harness reads `AGENTS.md` by name. If a tool still wants
-`CLAUDE.md`, symlink it here instead of writing a second copy, because two instruction files
-drift and the auto-loaded one wins.
-
-Keep it short enough that it is read before the first action. Everything below earned its
-place by a failure; delete a line rather than keep one nobody follows.
+**This is a template. Delete this block once you have filled it in.** Fill every bracketed
+part, delete every section your repo has never needed, and keep it short enough to be read
+before the first action. Every line below earned its place by a failure somewhere; a line
+yours has not had is noise that makes the rest cheaper to skip. This is the one instruction file. Keep `CLAUDE.md` as a **symlink** to it rather than a
+second copy: two instruction files drift, and the auto-loaded one wins the contradiction.
+Then prove what your own tools load — some read a project's instructions only in a folder
+they have been told to trust, and "nothing loaded" prints exactly like "no file here".
 
 ---
 

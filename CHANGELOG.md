@@ -12,6 +12,14 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **`starter/` and `docs/adopting-an-existing-repo.md`.** The failure this guards against
+  is the one every rules file invites: sixty lines pasted on day one, followed by nobody
+  citing any of them. The starter is four files for an empty repo; the adoption guide is
+  for a repo with habits already in it, ordered so each step is paid for by a failure you
+  can name, with a way to tell whether it worked and an instruction to stop when it is not.
+  `examples/AGENTS.example.md` moved to `starter/AGENTS.md` rather than being copied, so
+  there is one of it.
+
 - **`evals/trigger/`, and the repo's first CI.** The failure: a skill is loaded by its
   description and nothing else, so a perfect body behind a description missing the words
   people type never runs — and nothing here checked that. It found the defect immediately:
