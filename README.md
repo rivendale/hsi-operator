@@ -108,6 +108,13 @@ four-way claim labelling — Data, Estimate, Assumption, Opinion — is a genuin
 on the three-way version this started with, because collapsing *estimate* into *assumption*
 is what lets a calculation pass as a finding.
 
+Door 2's three paths (spike, bounded, architectural), the one-way ratchet between them, and
+the rule that an approval covers the stage actually shown are adapted from the brainstorming
+skill in [obra/superpowers](https://github.com/obra/superpowers) (MIT). We took the
+classifier and the gate; we did not take "when in doubt take the heavier path" as a general
+habit, because this skill's bias is a *smaller* done, and we did not install the collection:
+its session hook re-injects itself at every startup and every compaction.
+
 Human-systems integration is the other parent. What we took from NASA/DAU/Endsley, what
 we refused (seven-domain matrices, learned rankers), and the restricted three-body reading
 of L0 live in `skills/hsi-operator/references/hsi-se.md`. Steal patterns; do not vendor them.
