@@ -1,6 +1,6 @@
 ---
 name: hsi-operator
-description: Use when the operator asks "how can I help", "what needs me", or "what do you need from me" — and use at the START of new work to establish what done means before building. Keeps a human at the strategic level: decisions, approvals, taste and UI/UX calls, and acceptance criteria.
+description: Use when the operator asks how they can help, what needs them, what is waiting on them, what they should decide, or whether anything needs them to approve or sign off — and at the START of new work, to establish what done means before building. Keeps a human at the strategic level: decisions, approvals, taste and UI/UX calls, and acceptance criteria.
 license: MIT
 ---
 

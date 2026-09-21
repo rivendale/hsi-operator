@@ -1,0 +1,57 @@
+{
+  "skill": "hsi-operator",
+  "how_these_were_written": "Phrasings an operator actually types, written before the description was widened rather than copied out of it. Two of them failed at first: 'sign off' and 'waiting on me' were absent from the description, which is the defect this file exists to find. The near-misses share real vocabulary with the description on purpose — a contrast that scores zero proves nothing. The machine-decidable one is marked non-lexical: 'decide which retry limit' and 'what should I decide' are the same word, and what separates them is who must decide, which is meaning and not vocabulary.",
+  "cases": [
+    {
+      "id": "anything-to-sign-off",
+      "prompt": "is there anything waiting for me to sign off on",
+      "should_trigger": true
+    },
+    {
+      "id": "whats-blocked-on-me",
+      "prompt": "what is blocked waiting on me to decide",
+      "should_trigger": true
+    },
+    {
+      "id": "how-can-i-help",
+      "prompt": "how can I help today, what needs me most",
+      "should_trigger": true
+    },
+    {
+      "id": "what-needs-me",
+      "prompt": "what needs me today and what can you handle",
+      "should_trigger": true
+    },
+    {
+      "id": "done-before-building",
+      "prompt": "before you start building, what does done mean here",
+      "should_trigger": true
+    },
+    {
+      "id": "acceptance-criteria",
+      "prompt": "write the acceptance criteria for the new importer first",
+      "should_trigger": true
+    },
+    {
+      "id": "near-household-task",
+      "prompt": "my wife asked me to handle the school thing, add it",
+      "should_trigger": false
+    },
+    {
+      "id": "near-decide-no-person",
+      "prompt": "decide which retry limit the uploader should use and just do it",
+      "should_trigger": false,
+      "lexical": false
+    },
+    {
+      "id": "near-survive-session",
+      "prompt": "the session is nearly full, decide what must survive and save it",
+      "should_trigger": false
+    },
+    {
+      "id": "near-adopt-tool",
+      "prompt": "should we adopt this library, is it worth the dependency",
+      "should_trigger": false
+    }
+  ]
+}

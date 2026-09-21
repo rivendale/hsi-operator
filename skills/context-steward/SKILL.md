@@ -1,6 +1,6 @@
 ---
 name: context-steward
-description: Use when a long session approaches its context limit, or at any natural checkpoint in long-running work. Decides what must survive compaction, writes it somewhere durable BEFORE the window closes, and keeps working memory small by moving detail out rather than summarizing it away.
+description: Use when a long session approaches its context limit, is about to be compacted or cleared, or reaches any natural checkpoint in long-running work. Decides what must survive and what would be lost, saves it somewhere durable BEFORE the window closes, and keeps working memory small by moving detail out to a path rather than summarizing it away.
 license: MIT
 ---
 

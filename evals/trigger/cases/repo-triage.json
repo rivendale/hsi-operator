@@ -1,0 +1,14 @@
+{
+  "skill": "repo-triage",
+  "how_these_were_written": "How a shared link actually arrives. 'found this on HN' is kept and marked non-lexical: no word in it overlaps any honest description, and pretending otherwise would mean padding the description with noise. The near-misses are work on a repo we already use, and the other two doors.",
+  "cases": [
+    {"id": "worth-installing", "prompt": "is this library worth installing or not", "should_trigger": true},
+    {"id": "should-we-adopt", "prompt": "someone shared this, should we adopt it", "should_trigger": true},
+    {"id": "evaluate-model", "prompt": "evaluate this model for us before we depend on it", "should_trigger": true},
+    {"id": "another-dependency", "prompt": "do we want to take on another dependency for this", "should_trigger": true},
+    {"id": "found-on-hn", "prompt": "found this on HN, thoughts", "should_trigger": true, "lexical": false},
+    {"id": "near-use-existing", "prompt": "clone the repo we already use and run its tests", "should_trigger": false},
+    {"id": "near-done-mean", "prompt": "what does done mean for this feature before we build it", "should_trigger": false},
+    {"id": "near-survive-compaction", "prompt": "decide what survives compaction and save it durably", "should_trigger": false}
+  ]
+}

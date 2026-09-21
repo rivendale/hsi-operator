@@ -12,7 +12,17 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
-Nothing merged since 2026-09-21.
+- **`evals/trigger/`, and the repo's first CI.** The failure: a skill is loaded by its
+  description and nothing else, so a perfect body behind a description missing the words
+  people type never runs — and nothing here checked that. It found the defect immediately:
+  "is this library worth installing" routed to `context-steward`, not `repo-triage`.
+  Two rounds of independent review then found the check itself was the softer problem: its
+  cases were paraphrases of the descriptions they graded, which is the author marking their
+  own homework, and its contrast set scored zero, which made the margin unreachable. Cases
+  are now written from outside the description, the scoring is coverage rather than a
+  length-damped count, a case that only a semantic router could catch is marked non-lexical
+  rather than quietly lowering the bar, and `--selftest` re-runs four real mutations so the
+  denying-direction evidence is a command rather than a paragraph in a pull request.
 
 ## 2026-09-21
 

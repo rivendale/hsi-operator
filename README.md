@@ -122,6 +122,13 @@ classifier and the gate; we did not take "when in doubt take the heavier path" a
 habit, because this skill's bias is a *smaller* done, and we did not install the collection:
 its session hook re-injects itself at every startup and every compaction.
 
+`evals/trigger/` checks that each skill's description would actually route the prompts it
+claims, and `--selftest` proves the check can still fail. Both run in CI on every pull
+request. The idea is from
+[addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) (MIT), found via
+[Shubhamsaboo/awesome-llm-apps](https://github.com/Shubhamsaboo/awesome-llm-apps)
+(Apache-2.0); rewritten here rather than vendored.
+
 Human-systems integration is the other parent. What we took from NASA/DAU/Endsley, what
 we refused (seven-domain matrices, learned rankers), and the restricted three-body reading
 of L0 live in `skills/hsi-operator/references/hsi-se.md`. Steal patterns; do not vendor them.
