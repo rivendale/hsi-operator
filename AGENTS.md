@@ -43,6 +43,14 @@ alone without complaint. Before blaming a name, drop a two-line file in that dir
 the tool what it loaded. A project directory the tool does not trust is silently unguided:
 every rule in this file is absent and nothing says so.
 
+Two more, both measured, both the kind that make a reader think they are finished:
+
+- **A nested repo does not inherit trust from a trusted parent.** Trusting `~/projects` does
+  not trust the checkouts inside it — they still read as untrusted, one by one. Give each
+  its own entry, then check each.
+- **Trusted with zero instruction files is still unguided,** and it prints exactly like the
+  untrusted case. "Trusted: yes, instructions: 0" means the rules are absent, not present.
+
 The repo's substance is in `skills/`. This page is the working agreement around it.
 
 ---
@@ -121,7 +129,14 @@ A long context window is a bill, not just a limit.
 - **Compact at a boundary**, when a unit of work is finished, and require less certainty as
   the window fills. `skills/context-steward/SKILL.md` has the rule and the arithmetic;
   [compact-adviser](https://github.com/kunchenguid/compact-adviser) (MIT) is a plugin that
-  makes that call for you.
+  makes that call for you — **and read what it sends before you install it.** Measured from
+  its source: up to ~32 KB per checkpoint goes to a hosted classifier, including several
+  kilobytes of raw conversation text and a short excerpt of *every* tool result, with
+  redaction covering credential shapes only. Installing is consent. If your sessions touch
+  anything that must not leave the machine, that decides it, and the rule in
+  `context-steward` §5 already says why: sending working memory to a third party is a data
+  decision, not a performance one. The sliding threshold is free to copy; the hosted call is
+  not free to make.
 - **Move detail out to a path rather than summarizing it away.** A summary is a pointer, and
   a bad one: it drops the file path, the exact error and the number, silently.
 

@@ -12,6 +12,17 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **Two measured traps added to the tool table, and a caveat on the one tool this file
+  recommends by name.** The failures, both found by a reader of this repo rather than its
+  author: trusting a parent directory does NOT trust the repos inside it, so a reader who
+  trusts `~/projects` believes they are done and is not; and a folder that is trusted with
+  zero instruction files is still unguided while printing exactly like the untrusted case.
+  Separately, this file recommended a compaction adviser without saying what it transmits —
+  several kilobytes of conversation text and an excerpt of every tool result, to a hosted
+  classifier, with redaction covering credential shapes only. A public file that recommends
+  a tool owes the reader its data path, and `starter/AGENTS.md` now carries the same caveat,
+  because it is copied into other people's repos.
+
 - **One instruction file, and no alias.** The failure this replaces: the repo told readers
   to keep a second per-vendor filename symlinked to `AGENTS.md`, hedging against tools that
   had not caught up. Measured instead of assumed, every tool this repo is worked with loads
