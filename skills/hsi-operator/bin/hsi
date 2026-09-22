@@ -5,6 +5,9 @@
   hsi items.json --all           everything, grouped by kind
   hsi items.json --why ID        why that one ranked where it did
   hsi done setpoint.json         Door 2 as a file: the five answers; exit 2 if done has no check
+  hsi items.json --use FILE      read the usage record; if nothing was answered in 14 days,
+                                 say that and show nothing else
+  hsi answered --use FILE        record that the operator answered something today
   hsi --schema                   the input contract
 
 WHY A HARD CAP OF THREE. A list of twenty-seven is a list of zero. The scarce resource
@@ -15,6 +18,12 @@ WHY THE RANKING IS PRINTED EVERY TIME. A hidden ranking is a judgement the opera
 cannot audit. `--why` shows the arithmetic for any single item, and `--all` shows what
 was held back -- the rest is one keystroke away, never gone.
 
+WHY A USAGE RECORD. The README promises that if this goes two weeks unopened, that is the
+finding and it should be reported rather than answered with more features. A promise nobody
+measures is decoration. `--use` measures it: when the last answer is older than
+FURNITURE_DAYS, the only thing printed is that nobody is using this. Reporting that IS the
+job, and it costs one date in one file.
+
 WHY A SETPOINT. Door 2 is the reference the work is measured against. Written as a file,
 it can be cited before work starts and compared against when work ends. `hsi done` prints
 it back and refuses a done with no external check of a known type. It checks the SHAPE of
@@ -24,11 +33,23 @@ This reads a plain JSON contract and nothing else. It knows nothing about any
 particular setup, calendar or tracker; an adapter produces the contract. See
 `hsi --schema` and adapters/ for a worked example.
 """
+import datetime
 import json
+import os
 import re
 import sys
 
 KINDS = ("DECIDE", "APPROVE", "EXECUTE", "TASTE")
+
+# Two weeks, taken from the README's own sentence rather than tuned. It is the number that
+# was promised, so it is the number that gets measured.
+FURNITURE_DAYS = 14
+
+# Every flag this tool accepts. An unknown flag is refused rather than ignored: a typo in
+# --use would otherwise print a perfectly normal board, which is the detector failing in
+# exactly the way it exists to detect.
+FLAGS = {"--all", "--schema"}
+FLAGS_WITH_VALUE = {"--why", "--use", "--today"}
 BASES = ("Data", "Estimate", "Assumption", "Opinion")
 
 # A check is something outside the model: a command that exits, a number that moves, a
@@ -255,12 +276,80 @@ def done_cmd(args):
     return 0
 
 
+def today(argv):
+    """--today exists so a test can fix the clock. Nothing else should pass it."""
+    if "--today" in argv:
+        return datetime.date.fromisoformat(argv[argv.index("--today") + 1])
+    return datetime.date.today()
+
+
+def read_use(path):
+    """The usage record: one date, the last time a person answered something.
+
+    Missing is not stale. A file that has never existed means nobody has recorded an
+    answer yet, which is a first run rather than neglect, and saying otherwise would cry
+    wolf on day one.
+    """
+    if not path or not os.path.exists(path):
+        return None
+    try:
+        d = json.load(open(path, encoding="utf-8")).get("last_answered_at")
+        return datetime.date.fromisoformat(d) if d else None
+    except (OSError, ValueError, AttributeError):
+        return None
+
+
+def answered_cmd(argv):
+    """`hsi answered --use FILE`: stamp today. This is the only writer."""
+    if "--use" not in argv:
+        print("hsi answered: --use FILE says where to record it", file=sys.stderr); return 2
+    path = argv[argv.index("--use") + 1]
+    day = today(argv)
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    json.dump({"last_answered_at": day.isoformat()}, open(path, "w", encoding="utf-8"))
+    print(f"recorded: an answer on {day}. That is what keeps this from reporting itself as furniture.")
+    return 0
+
+
+def refuse_unknown_flags(argv):
+    """An unrecognised flag is an error, not a shrug.
+
+    This used to be silent, and the failure it hid is the worst kind here: `--sittng` or
+    `--us` would print a full, healthy-looking board while the usage check never ran.
+    """
+    args = argv[1:]
+    i = 0
+    while i < len(args):
+        a = args[i]
+        if a.startswith("-"):
+            if a in FLAGS_WITH_VALUE:
+                if i + 1 >= len(args):
+                    print(f"hsi: {a} needs a value", file=sys.stderr); return 2
+                i += 1
+            elif a not in FLAGS:
+                print(f"hsi: unknown flag {a}. Known: "
+                      f"{', '.join(sorted(FLAGS | FLAGS_WITH_VALUE))}", file=sys.stderr)
+                return 2
+        i += 1
+    return 0
+
+
 def main(argv):
     if len(argv) > 1 and argv[1] == "done":
         return done_cmd(argv[2:])
+    if len(argv) > 1 and argv[1] == "answered":
+        return answered_cmd(argv)
+    rc = refuse_unknown_flags(argv)
+    if rc:
+        return rc
     if "--schema" in argv:
         print(json.dumps(SCHEMA, indent=2)); return 0
     paths = [a for a in argv[1:] if not a.startswith("-")]
+    skip = set()
+    for f in FLAGS_WITH_VALUE:
+        if f in argv:
+            skip.add(argv[argv.index(f) + 1])
+    paths = [p for p in paths if p not in skip]
     if not paths:
         print(__doc__); return 0
     try:
@@ -290,6 +379,25 @@ def main(argv):
                 if not why: print("  (nothing scored — reversible, blocks nobody, no named cost)")
                 return 0
         print(f"hsi: no item with id {want!r}", file=sys.stderr); return 2
+
+    # The bandwidth check, before anything is ranked. If nobody has answered in two weeks,
+    # the only honest item is that nobody is using this — and it replaces the board rather
+    # than sitting at the top of it, because a fourth item beside three real ones is how
+    # this gets ignored.
+    if "--use" in argv:
+        last = read_use(argv[argv.index("--use") + 1])
+        if last is not None:
+            idle = (today(argv) - last).days
+            if idle >= FURNITURE_DAYS:
+                print(f"Nothing here has been answered in {idle} days.")
+                print("That is the finding, and it is the only one worth printing today: this "
+                      "is furniture.")
+                print("Do not add adapters, items or features this week. Ask whether the "
+                      "three questions are")
+                print("the wrong three, whether the moment is wrong, or whether nobody "
+                      "needed them in the first place.")
+                print(f"\nThe board is still there:  hsi {paths[0]} --all")
+                return 0
 
     ranked = order(items)
     if "--all" in argv:
