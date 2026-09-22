@@ -12,6 +12,26 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **The documented install line installed nothing, and exited 0 saying so.** The failure:
+  one unquoted colon in the flagship skill's frontmatter made it invalid YAML, so
+  `npx skills add` skipped the file, printed "No matching skills found", and returned
+  success. The repo named after that skill could not install it. Worse, this repo's own CI
+  gate passed it, because the checker read the frontmatter with a regex — a parser that
+  accepts what every real parser rejects. Both are fixed: the description is quoted, and
+  the check now parses the block as YAML and refuses a file an installer would skip, with
+  that mutation added to `--selftest`.
+- **Claims corrected against what the repo actually contains.** "Two skills" above a list
+  of three; a pointer to `examples/AGENTS.example.md`, which this repo moved and never
+  re-pointed; "every tool loads AGENTS.md" three lines above a table showing one that does
+  not; "no CI gate" after CI was added; and five files still assigning an agent to issue
+  #2, which shipped on 2026-09-21. A repo about checking claims against reality was
+  carrying five that a reader could falsify from the same page.
+- **Trust does not nest, and trusted-with-zero is still unguided.** Both measured, both
+  added to the tool table, and both the kind of gap that looks like success.
+- **The tool this file recommends by name now carries its data path, with a version and a
+  date.** A public file that recommends a tool owes the reader what it transmits; an
+  undated claim about someone else's software is wrong the day they change it.
+
 - **One instruction file, and no alias.** The failure this replaces: the repo told readers
   to keep a second per-vendor filename symlinked to `AGENTS.md`, hedging against tools that
   had not caught up. Measured instead of assumed, every tool this repo is worked with loads

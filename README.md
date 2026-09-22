@@ -6,7 +6,7 @@ Agents are good at producing things and bad at knowing whether anyone wanted the
 is the other half: **surface only what genuinely needs a person, and find out what "done"
 means before building.**
 
-Two skills. The first has two doors:
+Three skills. The first has two doors:
 
 **`hsi-operator`**
 - **`how can I help`** — the 3 things that most need you, each as an answerable question
@@ -54,12 +54,17 @@ An item asking a person for a **fact** is a search somebody skipped.
 
 ## Install
 
+All three:
+
 ```
-npx skills add rivendale/hsi-operator --skill hsi-operator -g -a claude-code
+npx skills add rivendale/hsi-operator --skill '*' -g -a claude-code
 ```
 
-Or read `skills/hsi-operator/SKILL.md` — it is one file and the skill is the prose, not
-the code. The CLI ranks items and prints a setpoint back; the judgment is in the prose.
+Or one of them: `--skill hsi-operator`, `--skill repo-triage`, `--skill context-steward`.
+
+Or read the `SKILL.md` you want and keep the file — each skill is one page of prose, and
+the prose is the skill. `bin/hsi` and `bin/triage` are scripts **inside** the skills, not
+commands on your PATH: after installing they sit at `~/.claude/skills/<skill>/bin/`.
 
 ## The contract
 

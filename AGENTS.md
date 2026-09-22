@@ -1,7 +1,9 @@
 # AGENTS.md — how agents work in this repo
 
-**One file: `AGENTS.md`. No second name, no symlink, no fork.** Every tool this repo is
-worked with loads it, and that is a measurement rather than a vendor's promise.
+**One file: `AGENTS.md`. No second name, no symlink, no fork.** Three of the four tools
+below load it; Gemini CLI reads a filename of its own, which is why this is a table and not
+a sentence. One file is still the right answer — a second copy drifts, and the tool that
+wants its own name can be given a pointer rather than a fork.
 
 Measured 2026-09-21, by asking each tool what it loaded rather than reading a release note:
 
@@ -16,7 +18,7 @@ Two instruction files drift, and the auto-loaded one wins the contradiction, so 
 file and no alias. If you meet a tool that reads only some older name, that is a measurement
 to record here — not a reason to keep a second copy for everyone else.
 
-Two more things measured the same way, on three machines:
+Two more things measured the same way, on more than one machine:
 
 - **An `@other-file.md` import line is not expanded by every tool.** One tool left the
   literal string in place and found the target file on its own, so the same content appeared
@@ -42,6 +44,14 @@ was an untrusted folder, and a controlled probe inside a trusted root then loade
 alone without complaint. Before blaming a name, drop a two-line file in that directory and ask
 the tool what it loaded. A project directory the tool does not trust is silently unguided:
 every rule in this file is absent and nothing says so.
+
+Two more, both measured, both the kind that make a reader think they are finished:
+
+- **A nested repo does not inherit trust from a trusted parent.** Trusting a projects
+  directory does not trust the checkouts inside it — they still read as untrusted, one by
+  one. Give each its own entry, then check each.
+- **Trusted with zero instruction files is still unguided,** and it prints exactly like the
+  untrusted case. "Trusted: yes, instructions: 0" means the rules are absent, not present.
 
 The repo's substance is in `skills/`. This page is the working agreement around it.
 
@@ -121,7 +131,14 @@ A long context window is a bill, not just a limit.
 - **Compact at a boundary**, when a unit of work is finished, and require less certainty as
   the window fills. `skills/context-steward/SKILL.md` has the rule and the arithmetic;
   [compact-adviser](https://github.com/kunchenguid/compact-adviser) (MIT) is a plugin that
-  makes that call for you.
+  makes that call for you — **and read what it sends before you install it.** Read at
+  version 0.1.6 on 2026-09-22: with an API key present it ships conversation text and
+  excerpts of tool results to a hosted classifier on each eligible checkpoint, and its own
+  security note calls the redaction best-effort rather than a guarantee. That is one
+  version on one day, so re-read it rather than citing this line; limits and redaction
+  change. Installing is consent, and `context-steward` §5 is the rule that decides it:
+  sending working memory to a third party is a data decision, not a performance one. The
+  sliding threshold is free to copy; the hosted call is not free to make.
 - **Move detail out to a path rather than summarizing it away.** A summary is a pointer, and
   a bad one: it drops the file path, the exact error and the number, silently.
 
@@ -175,9 +192,12 @@ into notes and handoffs; its value never does.
 
 ## Honest limitations of this page
 
-- None of it is enforced. There is no hook, no CI gate and no lock. It is a rule someone
-  keeps, and a rule nobody keeps is a comment.
+- Nothing on this page is enforced. The repo's one CI gate runs the skill-trigger evals,
+  not these rules: no hook reads this file and no check fails when it is ignored. It is a
+  rule someone keeps, and a rule nobody keeps is a comment.
 - The cost figures are the right order of magnitude, not a price list; vendors change both
   prices and cache lifetimes.
-- `examples/AGENTS.example.md` is the copyable version for another repo. This one describes
-  *this* repo and is not a template.
+- [`starter/AGENTS.md`](starter/AGENTS.md) is the copyable version for a new repo, and
+  [`docs/adopting-an-existing-repo.md`](docs/adopting-an-existing-repo.md) is the order to
+  take it in when the repo already has history. This page describes *this* repo and is not
+  a template.

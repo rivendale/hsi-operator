@@ -105,7 +105,9 @@ task at hand overrides these defaults.
 - Coming back to a cold, large window, start a new session and point it at the previous
   transcript if it needs the detail.
 - Compact at a **boundary** — a finished unit of work — and require less certainty as the
-  window fills.
+  window fills. If you use a hosted adviser to make that call, read what it sends first:
+  these tools ship conversation text and tool-result excerpts to a third party, and
+  installing one is consent. [Name the rule that governs that here for your own repo.]
 - **Move detail out to a path rather than summarizing it away.** Mark anything rebuilt from a
   summary as `[RECONSTRUCTED]`, and re-measure before a decision depends on it.
 
