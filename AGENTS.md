@@ -20,6 +20,18 @@ to record here — not a reason to keep a second copy for everyone else.
 
 Two more things measured the same way, on more than one machine:
 
+- **A `CLAUDE.md` you had forgotten about switches `AGENTS.md` off.** Claude Code's default
+  is `claude-md-or-agents-md`: when `CLAUDE.md`, `.claude/CLAUDE.md` or `CLAUDE.local.md`
+  exists in the working directory **or any directory above it**, `AGENTS.md` is skipped
+  entirely and nothing prints to say so. Found in the field 2026-09-21 — a home-directory
+  `.claude/CLAUDE.md` was silently suppressing a correct `AGENTS.md` beside it — and
+  confirmed against the documentation the next day. Delete the older file, or set
+  `instructionFiles` to `claude-md-and-agents-md`. **There is a trap inside the trap:** that
+  option is read only from user-level or managed settings, so committing it to a project's
+  `.claude/settings.json`, which is the natural place to put it for a team, is ignored
+  silently and looks exactly like the failure it was meant to fix.
+  ([docs](https://code.claude.com/docs/en/memory#choose-which-instruction-files-load),
+  read 2026-09-22.)
 - **An `@other-file.md` import line is not expanded by every tool.** One tool left the
   literal string in place and found the target file on its own, so the same content appeared
   as two entries. The content arrived; the mechanism the file implies was not the one that

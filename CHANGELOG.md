@@ -12,6 +12,14 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **A forgotten `CLAUDE.md` switches `AGENTS.md` off, and the documented fix has a trap of
+  its own.** Found on an operator's machine the day after we published "one file, no alias":
+  a home-directory `.claude/CLAUDE.md` was suppressing a correct `AGENTS.md` beside it, with
+  nothing printed to say so. The setting that re-enables both is read only from user-level
+  or managed settings, so committing it to a project's `.claude/settings.json` — the natural
+  place for a team — fails silently in exactly the shape it was meant to fix. Both now say
+  so in `AGENTS.md` and the starter template.
+
 - **The documented install line installed nothing, and exited 0 saying so.** The failure:
   one unquoted colon in the flagship skill's frontmatter made it invalid YAML, so
   `npx skills add` skipped the file, printed "No matching skills found", and returned
