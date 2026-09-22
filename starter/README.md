@@ -14,7 +14,6 @@ job with a different order: see [`../docs/adopting-an-existing-repo.md`](../docs
 ```
 cp starter/AGENTS.md starter/CHANGELOG.md /path/to/your-repo/
 cp -r starter/.github /path/to/your-repo/
-cd /path/to/your-repo && ln -s AGENTS.md CLAUDE.md
 ```
 
 ## Then do the part that cannot be copied
@@ -25,10 +24,10 @@ cd /path/to/your-repo && ln -s AGENTS.md CLAUDE.md
 2. **Delete what does not apply.** Every line in that file earned its place by a failure
    somewhere else. A line your repo has never needed is noise that makes the rest cheaper
    to skip. Deleting is the maintenance, not a compromise.
-3. **Keep `CLAUDE.md` as a symlink, not a copy.** One inode, no drift, both names resolve.
-   Then prove what your own tool loads rather than trusting a release note: some harnesses
-   only read a project's instructions in a folder you have told them to trust, and "nothing
-   loaded" prints exactly like "there is no file here".
+3. **Keep one instruction file.** `AGENTS.md`, no alias and no second copy. Then prove what
+   your own tool loads rather than trusting a release note: some harnesses read a project's
+   instructions only in a folder you have told them to trust, and "nothing loaded" prints
+   exactly like "there is no file here".
 4. **Write the first `CHANGELOG.md` entry the first time something breaks.** An empty
    changelog is honest; a changelog seeded with intentions is not.
 
