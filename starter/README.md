@@ -6,14 +6,15 @@ job with a different order: see [`../docs/adopting-an-existing-repo.md`](../docs
 
 | file | goes to | what it buys |
 |---|---|---|
-| `AGENTS.md` | repo root | the working agreement: scope guard, testing, context cost, how to talk to the person. Every current harness reads this filename. |
+| `AGENTS.md` | repo root | the working agreement: scope guard, testing, context cost, how to talk to the person. Most harnesses read this filename; measured 2026-09-21, one of four read a name of its own, so check yours. |
 | `CHANGELOG.md` | repo root | a record whose entries name the failure that caused each change. |
 | `.github/workflows/evals.yml` | repo root | the one automated gate, if you take the skills check below. |
 | `SETPOINT.md` | repo root, optional | what done means for the work in flight, before it starts. |
 
 ```
-cp starter/AGENTS.md starter/CHANGELOG.md /path/to/your-repo/
-cp -r starter/.github /path/to/your-repo/
+cp starter/AGENTS.md starter/CHANGELOG.md starter/SETPOINT.md /path/to/your-repo/
+cp -r starter/.github /path/to/your-repo/   # only with the line below: the workflow runs it
+cp -r evals /path/to/your-repo/             # only if your repo has skills
 ```
 
 ## Then do the part that cannot be copied

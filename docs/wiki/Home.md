@@ -2,7 +2,7 @@
 
 Keep a human at the strategic level of agent work. Surface only what needs a person. Establish what done means before building.
 
-This wiki is the operator-facing shelf. The skill itself is still the prose in `skills/*/SKILL.md`. Issues #1–#8 are the loop work. The coding agent is on **#2** (setpoint contract) unless told otherwise.
+This wiki is the operator-facing shelf. The skill itself is still the prose in `skills/*/SKILL.md`. Issues #1–#8 are the loop work. An agent takes its assignment from the issue tracker rather than from this page; #2 and #8 landed on 2026-09-21.
 
 ## Protocol
 

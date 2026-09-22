@@ -21,7 +21,7 @@ it back and refuses a done with no external check of a known type. It checks the
 the check, not whether the check proves anything; reading that is still a person's job.
 
 This reads a plain JSON contract and nothing else. It knows nothing about any
-particular estate, calendar or tracker; an adapter produces the contract. See
+particular setup, calendar or tracker; an adapter produces the contract. See
 `hsi --schema` and adapters/ for a worked example.
 """
 import json

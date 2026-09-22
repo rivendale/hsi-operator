@@ -199,9 +199,9 @@ and, once #2 lands, the setpoint JSON beside it.
 
 ---
 
-## Coding-agent note (issues #1–#8)
+## What this file does not authorize
 
-You are on **#2** unless told otherwise. This file is protocol. It does not add
-fields to `hsi --schema`. Do not implement sitting files, `signal`, or the ledger
-from here. When those issues land, they must still fit this frame — if they make
+Take your assignment from the issue tracker, not from this page — it ships with the skill
+and cannot know what has landed. This file is protocol. It does not add fields to
+`hsi --schema`. Do not implement sitting files, `signal`, or the ledger from here. When those issues land, they must still fit this frame — if they make
 L0 longer, the issue is wrong, not the frame.

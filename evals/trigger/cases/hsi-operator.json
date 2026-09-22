@@ -34,7 +34,7 @@
     },
     {
       "id": "near-household-task",
-      "prompt": "my wife asked me to handle the school thing, add it",
+      "prompt": "someone asked me to handle the catering, add it to the list",
       "should_trigger": false
     },
     {

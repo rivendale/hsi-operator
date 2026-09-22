@@ -15,6 +15,9 @@ WHAT IT CATCHES
   2. A description broad enough to outrank the skill that should have won.
   3. Two descriptions that share more than half their vocabulary.
   4. Omissions and stale artifacts: a skill with no cases, or cases for a skill that is gone.
+  5. Frontmatter no installer will accept. This check once read the description with a
+     regex and passed a file that every YAML parser rejects, so the repo's own flagship
+     skill was uninstallable while the suite was green.
 
 WHAT IT CANNOT DO. It cannot judge meaning. Word overlap is a proxy; a real harness routes
 semantically. A pass says the words are present, not that the skill is good or that it will
@@ -79,6 +82,31 @@ def words(text):
             if len(w) >= 3 and w not in STOP}
 
 
+def parses_as_yaml(block, path):
+    """The installer parses frontmatter as YAML; this check used to parse it as text.
+
+    A description containing an unquoted colon is valid to a regex and invalid to every
+    YAML parser, so the skill scored PASS here and was silently skipped at install time.
+    PyYAML is not in the standard library, so its absence must not turn this check off:
+    without it, fall back to the one shape that actually broke — a colon-space inside an
+    unquoted plain scalar.
+    """
+    try:
+        import yaml
+    except ImportError:
+        for line in block.split("\n"):
+            m = re.match(r"^([a-zA-Z_-]+):\s+(?![\"'|>])(.*)$", line)
+            if m and ": " in m.group(2):
+                raise ValueError(f"{path}: `{m.group(1)}` is an unquoted value containing "
+                                 f"': ' — no YAML parser will read this file. Quote it.")
+        return
+    try:
+        yaml.safe_load(block)
+    except Exception as e:
+        raise ValueError(f"{path}: frontmatter is not valid YAML, so an installer will skip "
+                         f"this skill: {type(e).__name__}") from None
+
+
 def description(skill_dir):
     """The description from SKILL.md's FRONTMATTER. A file with no frontmatter is not a
     skill any harness can load, so it is an error rather than a zero."""
@@ -87,6 +115,7 @@ def description(skill_dir):
     fm = re.match(r"^---\n(.*?)\n---", text, re.S)
     if not fm:
         raise ValueError(f"{path}: no frontmatter block, so no harness can load it")
+    parses_as_yaml(fm.group(1), path)
     m = re.search(r"^description:\s*(.+?)(?=^[a-zA-Z_-]+:|\Z)", fm.group(1), re.S | re.M)
     if not m or not m.group(1).strip():
         raise ValueError(f"{path}: frontmatter has no description, so nothing can route to it")
@@ -137,6 +166,13 @@ def score(prompt, desc):
 def check(verbose=False, out=print):
     failures = warnings = 0
     skills = {}
+    if not os.path.isdir(SKILLS):
+        # Copied into a repo that has no skills. That is not a failure: this repo's own
+        # advice is not to add a gate for the sake of having one. Say so and pass, rather
+        # than crashing the first CI run someone sees.
+        out(f"no skills/ directory at {SKILLS} — nothing to check. "
+            f"If this repo has no skills, delete this check and its workflow.")
+        return 0
     for name in sorted(os.listdir(SKILLS)):
         if os.path.exists(os.path.join(SKILLS, name, "SKILL.md")):
             try:
@@ -238,6 +274,10 @@ def selftest():
                           t, count=1, flags=re.M), "near-collide"),
         ("a SKILL.md with no frontmatter", "skills/context-steward/SKILL.md",
          lambda t: re.sub(r"^---\n.*?\n---\n", "", t, flags=re.S), "no frontmatter"),
+        ("frontmatter no installer would accept", "skills/repo-triage/SKILL.md",
+         lambda t: re.sub(r'^description: "(.*)"$', r"description: \1",
+                          re.sub(r"^(description: )(.*)$", r"\1here: a colon \2", t,
+                                 count=1, flags=re.M), count=1, flags=re.M), "YAML"),
         ("a near-miss relabelled as a string", "evals/trigger/cases/repo-triage.json",
          lambda t: t.replace('"should_trigger": false', '"should_trigger": "false"', 1),
          "JSON boolean"),
