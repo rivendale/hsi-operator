@@ -49,7 +49,7 @@ operator cannot audit:
 1. **Irreversibility** — can this be undone next week?
 2. **Who is blocked** — a person or agent stopped, waiting
 3. **Cost of inaction at 30 days** — money, legal exposure, a forfeited benefit
-4. **Hard external deadlines override all of the above** and go first
+4. **Errors with direct evidence come first**, dated by date then undated by score; proposals follow with hard external deadlines first, then score; reconstructed evidence is held last
 
 An item's optional `signal` is `proposal` by default or `error` when a named setpoint's
 check fails; `error` adds 25 points for the residual. Evidence marked `[RECONSTRUCTED]`

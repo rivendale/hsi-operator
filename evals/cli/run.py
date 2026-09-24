@@ -163,6 +163,41 @@ def main():
         rc, out = run(ITEMS)
         check("the worked example still ranks and prints a board", rc == 0 and "need you" in out, out)
 
+        # #1, the owner's call (2026-09-24): "failing check i think outranks dated proposal as it
+        # needs fixing before we move on - i don't want to leave bugs/issues behind". A residual
+        # beats a deadline; proposals keep deadline-first among themselves.
+        dated_prop = item("dated-proposal", deadline="2026-09-25", reversible="no")
+        undated_err = item("undated-error", signal="error", evidence="python3 tools/check.py exits 1")
+        f7 = items_file("errors-first.json", [dated_prop, undated_err])
+        rc, out = run(f7, "--all")
+        check("an undated error outranks a dated proposal",
+              rc == 0 and -1 < out.find("Question undated-error?") < out.find("Question dated-proposal?"), out)
+        rc, out = run(f7)
+        check("and it is first on the default board too",
+              rc == 0 and out.find("Question undated-error?") != -1
+              and out.find("Question undated-error?") < out.find("Question dated-proposal?"), out)
+        rule = out.split("\n\n")[0].lower()
+        check("the printed ranking rule says errors come first",
+              rc == 0 and "error" in rule and rule.find("error") < rule.find("deadline"), out)
+        dated_err = item("dated-error", signal="error", deadline="2026-10-20", evidence="python3 tools/other.py exits 1")
+        f8 = items_file("two-errors.json", [undated_err, dated_err, dated_prop])
+        rc, out = run(f8, "--all")
+        check("among errors, a dated one comes before an undated one",
+              rc == 0 and -1 < out.find("Question dated-error?") < out.find("Question undated-error?")
+              < out.find("Question dated-proposal?"), out)
+        held_err = item("held-error", signal="error", evidence="[RECONSTRUCTED] recalled failure")
+        f9 = items_file("held-error.json", [held_err, dated_prop])
+        rc, out = run(f9, "--all")
+        check("a reconstructed error is still held below direct evidence",
+              rc == 0 and -1 < out.find("Question dated-proposal?") < out.find("Question held-error?"), out)
+        p1 = item("prop-late", deadline="2026-11-01"); p2 = item("prop-soon", deadline="2026-10-01")
+        rc, out = run(items_file("props.json", [p1, p2]), "--all")
+        check("proposals keep deadline-first order among themselves",
+              rc == 0 and -1 < out.find("Question prop-soon?") < out.find("Question prop-late?"), out)
+        rc, out = run(f7, "--why", "undated-error")
+        check("--why says an error ranks ahead of every proposal",
+              rc == 0 and "ahead" in out.lower() and "proposal" in out.lower(), out)
+
         # Nothing above should have disturbed the other commands.
         rc, out = run("done", SETPOINT)
         check("hsi done still accepts the worked example",
