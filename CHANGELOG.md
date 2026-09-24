@@ -19,6 +19,21 @@ it does, the version goes above the date and this line goes away.
   or managed settings, so committing it to a project's `.claude/settings.json` — the natural
   place for a team — fails silently in exactly the shape it was meant to fix. Both now say
   so in `AGENTS.md` and the starter template.
+- **The two-week promise is measured now, not asserted (#5, first slice).** The failure:
+  the README has promised since day one that going two weeks unopened is the finding, and
+  nothing measured it — a claim about our own behaviour that could never come true or
+  false. `hsi answered --use FILE` records the day an answer happened; `hsi items.json
+  --use FILE` replaces the whole board with one line once that date is fourteen days old.
+  It replaces rather than joins, because a fourth item beside three real ones is how a
+  warning gets ignored, and a missing file counts as a first run rather than neglect.
+- **Unknown flags are refused instead of ignored.** Found while building the above and
+  worth more than the feature: `hsi items.json --sittng use.json` used to print a full,
+  healthy-looking board while the usage check never ran. A detector that fails open in
+  exactly the way it exists to detect is not a detector.
+- **`evals/cli/` runs the CLI end to end**, asserting exit codes and output on the real
+  commands, with the clock fixed so a case written today still means something in March.
+  Three of its twelve checks are refusals. It found one defect immediately — in itself,
+  where an assertion tested the wrong capitalisation.
 
 - **The documented install line installed nothing, and exited 0 saying so.** The failure:
   one unquoted colon in the flagship skill's frontmatter made it invalid YAML, so
