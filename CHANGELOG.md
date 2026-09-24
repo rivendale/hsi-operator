@@ -12,6 +12,13 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **A forgotten `CLAUDE.md` switches `AGENTS.md` off, and the documented fix has a trap of
+  its own.** Found on an operator's machine the day after we published "one file, no alias":
+  a home-directory `.claude/CLAUDE.md` was suppressing a correct `AGENTS.md` beside it, with
+  nothing printed to say so. The setting that re-enables both is read only from user-level
+  or managed settings, so committing it to a project's `.claude/settings.json` — the natural
+  place for a team — fails silently in exactly the shape it was meant to fix. Both now say
+  so in `AGENTS.md` and the starter template.
 - **The two-week promise is measured now, not asserted (#5, first slice).** The failure:
   the README has promised since day one that going two weeks unopened is the finding, and
   nothing measured it — a claim about our own behaviour that could never come true or

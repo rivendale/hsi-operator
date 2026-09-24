@@ -6,9 +6,12 @@ before the first action. Every line below earned its place by a failure somewher
 yours has not had is noise that makes the rest cheaper to skip.
 
 This is the one instruction file, and there is no second name for it: two instruction files
-drift, and the auto-loaded one wins the contradiction. Prove what your own tools load —
-some read a project's instructions only in a folder they have been told to trust, and
-"nothing loaded" prints exactly like "no file here".
+drift, and the auto-loaded one wins the contradiction. Prove what your own tools load, by
+asking a session what it read rather than by trusting a release note. Two ways this file
+goes silently unread: some tools load a project's instructions only inside a folder you
+have told them to trust, and at least one skips `AGENTS.md` entirely whenever an older
+instruction filename exists anywhere above you. "Nothing loaded" prints exactly like "no
+file here".
 
 ---
 
