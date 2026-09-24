@@ -20,6 +20,10 @@ it does, the version goes above the date and this line goes away.
   Neither the ledger nor its adapter detects that a condition fired; a person or agent must
   record the invalidation. An answer carrying a stray top-level `invalidated` key is refused
   before the write, because one such row made the whole append-only file unreadable in review.
+- **A per-token price comparison hid the long-context surcharges.** OpenAI and xAI charge more above
+  a context threshold and Anthropic does not, which reverses the ranking for a coordinator that
+  carries a 500k-token window. `docs/building-a-harness.md` now shows the three rates, read from
+  the vendors' pages on 2026-09-24.
 - **The harness guide said how to build a harness but not how to improve one.** Two September 2026
   papers (AIDE-squared, Ecdysis) agree that harness changes should be kept only when they win on
   tasks they were not tuned on, and promoted from recurring failures rather than single ones;
