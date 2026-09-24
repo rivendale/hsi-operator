@@ -16,3 +16,4 @@ jobs:
           python-version: '3.12'
       - run: python3 evals/trigger/run.py
       - run: python3 evals/trigger/run.py --selftest
+      - run: python3 evals/cli/run.py

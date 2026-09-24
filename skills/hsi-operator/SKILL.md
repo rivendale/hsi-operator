@@ -183,5 +183,18 @@ considerations.
 
 ## Do not let this become another thing nobody opens
 
-If the operator has not used it in two weeks, **that is the finding** — report it
-rather than adding features. Instrument that, and say so.
+If the operator has not used it in two weeks, **that is the finding** — report it rather
+than adding features.
+
+That promise is now measured rather than asserted. `hsi answered --use FILE` records the
+day an answer actually happened, and `hsi items.json --use FILE` reads it: once the last
+answer is fourteen days old, the **only** thing printed is that nobody is using this, with
+the board one keystroke away behind `--all`. It replaces the three items rather than
+joining them, because a fourth line beside three real ones is exactly how this gets
+ignored.
+
+**A missing usage file is a first run, not neglect.** Crying wolf on day one would teach
+the operator to ignore the one message this tool most needs them to read.
+
+**When it fires, the answer is not a better adapter.** Ask whether the three questions are
+the wrong three, whether the moment is wrong, or whether nobody needed them at all.

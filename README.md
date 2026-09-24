@@ -93,8 +93,11 @@ reading a line-delimited task file; copy it and change the reader for your track
 - **`hsi done` checks the shape of a check, not its meaning.** It refuses a done with no
   command, number or person behind it, and a few stock judgments like "looks good". It
   cannot tell a check that proves done from one that does not; a person still reads it.
-- **This does not make anyone use it.** If it goes two weeks unopened, that is the
-  finding, and it should be reported rather than answered with more features.
+- **This does not make anyone use it.** If it goes two weeks unopened, that is the finding,
+  and it should be reported rather than answered with more features. That is now measured:
+  `hsi answered --use FILE` records a real answer, and after fourteen days of silence the
+  board is replaced by a single line saying nobody is using this. It cannot make the tool
+  useful; it can stop the tool from being quietly useless.
 
 ## The working agreement
 
