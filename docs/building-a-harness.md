@@ -77,6 +77,19 @@ Price the API path before you are forced onto it: sample A's rate, run around th
 billing, is several thousand dollars a month (one model's estimate: $285 per 30 hours is about
 $6,800 over 720 hours).
 
+**Long context changes the ranking.** Read from vendor pages on 2026-09-24:
+
+| | standard rate (per Mtok, in / cached / out) | above a long-context threshold |
+|---|---|---|
+| Claude Opus 5.5 | $4 / $0.20 / $20 | none: Anthropic's pricing docs say Claude 4.6 and later models "include the full 1M token context window at standard pricing" |
+| GPT-6 Sol | $2 / $0.20 / $10 | $4 / $0.40 / $15 in OpenAI's long-context tier (read 2026-09-22) |
+| Grok 4.7 | $2 / $0.50 / $6 | $4 / $1.00 / $12 at or above 200k tokens (xAI docs) |
+
+A coordinator that carries a 500k-token window on every call (sample A above averaged 530k) sits
+past both surcharge thresholds on every request, so the vendor that looks cheapest per token for a
+short job can cost the most for this one. Route long-context coordination and short worker jobs by
+their own economics: the short jobs are where the cheaper models compete.
+
 | option | billed through | when |
 |---|---|---|
 | your current tool, worker models named, coordinator kept lean | subscription | first: the baseline everything else must beat |
