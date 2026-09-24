@@ -12,6 +12,13 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **The per-tool facts were scattered and partly wrong, and the efficiency guidance lived
+  nowhere an agent starting a project would find it (#12).** What each CLI does headless sat
+  in one operator's notes, some of it stale (a version, a flag, a billing term). `docs/tools.md`
+  now holds it in one dated matrix, and `docs/harness-efficiency.md` holds the efficiency
+  checklist, adapted from Cursor's 2026-09-23 article. The same change adds the adapter
+  standard (#7), a hand-written ledger row (#3), three testing rules (#13) and the rule for
+  when a failure earns a line in `AGENTS.md`.
 - **A number recalled from a compacted session could top the board (#6).** `references/l0-channel.md`
   said an item whose evidence is `[RECONSTRUCTED]` must not score; `bin/hsi` ranked one first at 85
   points. It now scores nothing and ranks after every item with direct evidence, dated or not, and

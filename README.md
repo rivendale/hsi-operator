@@ -113,6 +113,11 @@ three failures you actually had and says when to stop. Building your own agent h
 [`docs/building-a-harness.md`](docs/building-a-harness.md) has where the bill actually goes,
 what billing each shape implies, and what to build in from the start.
 
+Resources for agents and for anyone building a harness: [`docs/tools.md`](docs/tools.md) is
+what each of the four coding CLIs did when driven headless, dated, and
+[`docs/harness-efficiency.md`](docs/harness-efficiency.md) is a checklist for making a harness
+cheaper without making it worse, including the defaults a new project should start with.
+
 ## Changes
 
 `CHANGELOG.md`, where every entry names the **failure that caused the change**. What moved
