@@ -123,6 +123,22 @@ def main():
         check("a board whose only item is reconstructed still shows it, and says why",
               rc == 0 and "Question recon-big?" in out and held_line(out, "recon-big"), out)
 
+        # Found by a cross-vendor review of the first implementation: the gate must not depend
+        # on the evidence being a string or on the marker's case, and an explicit null signal
+        # is the same as no signal.
+        f5 = items_file("recon-list.json", [item("recon-list", reversible="no", blocks=["a", "b"],
+                                                 evidence=["[RECONSTRUCTED] recalled from a summary"]), plain])
+        rc, out = run(f5, "--all")
+        check("evidence given as a list is still held when it is reconstructed",
+              rc == 0 and -1 < out.find("Question plain-small?") < out.find("Question recon-list?"), out)
+        f6 = items_file("recon-lower.json", [item("recon-lower", reversible="no", blocks=["a", "b"],
+                                                  evidence="[reconstructed] from memory"), plain])
+        rc, out = run(f6, "--all")
+        check("a lowercase marker is still held",
+              rc == 0 and -1 < out.find("Question plain-small?") < out.find("Question recon-lower?"), out)
+        rc, out = run(items_file("nullsignal.json", [item("null-signal", signal=None)]))
+        check("an explicit null signal is a proposal, not a refusal", rc == 0 and "need you" in out, out)
+
         # #4: `signal` says why an item exists. `error` is a failed check against a setpoint and
         # scores a printed +25; an unknown value is refused like an unknown kind; `stale` waits
         # for the ledger (#3), because a term nothing can set is an instrument with one answer.
