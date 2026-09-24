@@ -12,6 +12,11 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **The harness guide said how to build a harness but not how to improve one.** Two September 2026
+  papers (AIDE-squared, Ecdysis) agree that harness changes should be kept only when they win on
+  tasks they were not tuned on, and promoted from recurring failures rather than single ones;
+  `docs/building-a-harness.md` now says so, with the stop-and-cleanup behavior a dispatcher needs
+  before it runs unattended.
 - **An undated failing check lost to any dated proposal, so a known bug could sit behind
   new work (#1).** The owner said, "q3 - failing check i think outranks dated proposal as it
   needs fixing before we move on - i don't want ot leaver bugs/issues behind". Errors with
