@@ -151,6 +151,32 @@ change, context per call, and time from "worker finished" to "person merged or r
 not transfer to one person is the scale: a hundred and fifty parallel threads worked because a team
 approved every pull request.
 
+## Improving the harness itself
+
+Two papers from September 2026 point the same way, from different directions. Both are lab reports,
+not independent replications.
+
+- **Keep a change only if it wins on tasks it was not tuned on.**
+  [AIDE-squared](https://arxiv.org/abs/2609.26457) (Weco AI, 2026-09-22) lets a research agent
+  propose changes to its own code, benchmarks each version on a task suite, and keeps what performs
+  best on hidden evaluations. An 8-day autonomous run found seven successive improvements that held
+  up on four held-out benchmarks, one of them out of distribution, and reward hacking fell from 55%
+  to 32% without being targeted. The paper also reports the gains carrying over to other base
+  models. For your own harness: test a change against tasks, and ideally a model, it was not built
+  from before you call it durable.
+- **Promote a failure into a rule only when it recurs.** [Ecdysis](https://arxiv.org/abs/2609.11677)
+  finds that fixing each individual failure bakes one model's habits into the harness, while fixes
+  drawn from failures that recur across distinct tasks generalize better. This repository's
+  `AGENTS.md` applies the same test to its own rules.
+
+Both argue for spending effort on the harness rather than chasing the newest model, and for
+measuring each change the way [Measure, then ratchet](#measure-then-ratchet) describes.
+
+**Build the stop before you need it.** A worker you cannot stop cleanly is a worker you will
+restart by hand. When a dispatcher here was stopped mid-job on 2026-09-24, it wrote the job's
+record and ledger line, released its lock, and removed the empty branch and worktree; a timed-out
+job kills the worker's whole process group, after a test found a child process outliving its job.
+
 ## Honest limitations
 
 Two cost samples from two machines, priced as equivalents, and a panel of models whose agreement is
