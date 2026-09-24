@@ -67,6 +67,7 @@ SCHEMA = {
     "items": [{
         "id": "short-slug",
         "kind": "DECIDE | APPROVE | EXECUTE | TASTE",
+        "signal": "optional: proposal (default, including null) | error. stale waits for the ledger (#3).",
         "question": "Phrased so it can be answered in a sentence. NOT a status line.",
         "why_you": "Why this needs a person and not the machine.",
         "options": [{"label": "...", "consequence": "what follows if chosen"}],
@@ -101,13 +102,28 @@ SCHEMA = {
 }
 
 
+def reconstructed(it):
+    """Recalled evidence cannot establish a score or a deadline priority."""
+    def has_marker(value):
+        if isinstance(value, str):
+            return "[reconstructed]" in value.lower()
+        if isinstance(value, list):
+            return any(has_marker(part) for part in value)
+        if isinstance(value, dict):
+            return any(has_marker(part) for pair in value.items() for part in pair)
+        return False
+
+    return has_marker(it.get("evidence"))
+
+
 def score(it):
     """Return (points, explanation). Deliberately simple and inspectable.
 
     A weighting nobody can recompute by hand is a weighting nobody will trust. Four
-    terms, stated in the SKILL, and a hard deadline dominates by construction rather
-    than by out-weighing everything else numerically.
+    original terms plus the error residual, with hard deadlines sorted separately.
     """
+    if reconstructed(it):
+        return 0, ["unscored because evidence is [RECONSTRUCTED]; re-read or re-measure it"]
     why, pts = [], 0
     rev = str(it.get("reversible", "")).lower()
     if rev == "no":
@@ -122,20 +138,25 @@ def score(it):
         pts += 30; why.append("+30 inaction has a named cost")
     if it.get("kind") == "EXECUTE":
         pts += 10; why.append("+10 only they have the hands")
+    if it.get("signal", "proposal") == "error":
+        pts += 25; why.append("+25 residual against a named setpoint")
     return pts, why
 
 
 def order(items):
-    """Hard deadlines first by date, then everything else by points."""
-    dated = sorted([i for i in items if i.get("deadline")], key=lambda i: i["deadline"])
-    rest = sorted([i for i in items if not i.get("deadline")],
+    """Hard deadlines first, then points, then all reconstructed evidence."""
+    eligible = [i for i in items if not reconstructed(i)]
+    dated = sorted([i for i in eligible if i.get("deadline")], key=lambda i: i["deadline"])
+    rest = sorted([i for i in eligible if not i.get("deadline")],
                   key=lambda i: -score(i)[0])
-    return dated + rest
+    return dated + rest + [i for i in items if reconstructed(i)]
 
 
 def show(it, n=None):
     head = f"{n}. " if n else "   "
     print(f"\n{head}[{it.get('kind','?')}] {it.get('question','(no question)')}")
+    if reconstructed(it):
+        print(f"      {it.get('id', '?')}: held [RECONSTRUCTED] pending re-reading or re-measurement")
     if it.get("deadline"):
         print(f"      BY {it['deadline']}")
     if it.get("why_you"):
@@ -368,13 +389,26 @@ def main(argv):
               f"these does not belong in front of a person.", file=sys.stderr)
         return 2
 
+    stale = [i.get("id", "?") for i in items if i.get("signal") == "stale"]
+    if stale:
+        print(f"hsi: signal stale is refused for item(s) {', '.join(map(str, stale[:5]))}; "
+              "it arrives with the ledger (#3).", file=sys.stderr)
+        return 2
+    bad_signal = [i.get("id", "?") for i in items
+                  if i.get("signal") not in (None, "proposal", "error")]
+    if bad_signal:
+        print(f"hsi: {len(bad_signal)} item(s) have no valid signal: "
+              f"{', '.join(map(str, bad_signal[:5]))}", file=sys.stderr)
+        print("     signal must be proposal or error", file=sys.stderr)
+        return 2
+
     if "--why" in argv:
         want = argv[argv.index("--why") + 1]
         for it in items:
             if it.get("id") == want:
                 pts, why = score(it)
                 print(f"{want}: {pts} points" + (f", deadline {it['deadline']} (deadlines sort first)"
-                                                 if it.get("deadline") else ""))
+                                                 if it.get("deadline") and not reconstructed(it) else ""))
                 for w in why: print(f"  {w}")
                 if not why: print("  (nothing scored — reversible, blocks nobody, no named cost)")
                 return 0
@@ -401,23 +435,37 @@ def main(argv):
 
     ranked = order(items)
     if "--all" in argv:
-        print(f"ALL {len(ranked)} item(s), grouped by kind\n")
+        print(f"ALL {len(ranked)} item(s), grouped by kind; reconstructed evidence held last\n")
         for k in KINDS:
-            grp = [i for i in ranked if i.get("kind") == k]
+            grp = [i for i in ranked if i.get("kind") == k and not reconstructed(i)]
             if not grp: continue
             print(f"--- {k} ({len(grp)}) ---")
             for it in grp: show(it)
             print()
+        held = [i for i in ranked if reconstructed(i)]
+        if held:
+            print(f"--- HELD [RECONSTRUCTED] ({len(held)}) ---")
+            for it in held: show(it)
         return 0
 
     top, rest = ranked[:3], ranked[3:]
     if not top:
         print("Nothing needs you. That is the update, not an absence of one.")
         return 0
-    print(f"{len(top)} of {len(ranked)} thing(s) need you. Ranked by: hard deadline first,")
-    print("then irreversibility, who is blocked, and the cost of doing nothing for 30 days.")
+    held_top = sum(reconstructed(it) for it in top)
+    if held_top:
+        print(f"{len(top) - held_top} of {len(ranked)} thing(s) need you; "
+              f"{held_top} of {len(top)} listed item(s) held [RECONSTRUCTED]. "
+              "Ranked by: hard deadline first,")
+    else:
+        print(f"{len(top)} of {len(ranked)} thing(s) need you. Ranked by: hard deadline first,")
+    print("then irreversibility, who is blocked, the cost of doing nothing for 30 days, "
+          "and error residuals. Reconstructed evidence is held last.")
     for n, it in enumerate(top, 1):
         show(it, n)
+    for it in rest:
+        if reconstructed(it):
+            print(f"{it.get('id', '?')}: held [RECONSTRUCTED] pending re-reading or re-measurement")
     if rest:
         print(f"\n{len(rest)} more held back, one keystroke away:  hsi {paths[0]} --all")
         print("Held back means ranked lower, never dropped. `--why ID` shows the arithmetic.")

@@ -51,6 +51,11 @@ operator cannot audit:
 3. **Cost of inaction at 30 days** — money, legal exposure, a forfeited benefit
 4. **Hard external deadlines override all of the above** and go first
 
+An item's optional `signal` is `proposal` by default or `error` when a named setpoint's
+check fails; `error` adds 25 points for the residual. Evidence marked `[RECONSTRUCTED]`
+earns no points and ranks after every item with direct evidence, even when it names a
+deadline. Keep it visible as held until someone re-reads or re-measures the evidence.
+
 ### Each item is a QUESTION, not a status line
 
 A status line makes them do the work of turning it into a decision. Give them:

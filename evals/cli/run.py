@@ -81,6 +81,88 @@ def main():
         check("recording an answer with nowhere to record it is refused",
               rc == 2 and "--use" in out, out)
 
+        # #6: evidence marked [RECONSTRUCTED] must not score. Held back means ranked lower,
+        # never dropped, and the board says what it held back.
+        def items_file(name, items):
+            p = os.path.join(tmp, name)
+            json.dump({"items": items}, open(p, "w"))
+            return p
+
+        def held_line(out, i):
+            return any(i in line and "held" in line.lower() and "RECONSTRUCTED" in line
+                       for line in out.splitlines())
+
+        def item(i, **kw):
+            base = {"id": i, "kind": "DECIDE", "question": f"Question {i}?", "why_you": "judgement",
+                    "options": [], "if_ignored_30d": "nothing", "blocks": [], "reversible": "yes",
+                    "cost": "minutes", "deadline": None, "evidence": f"notes/{i}.md:1"}
+            base.update(kw)
+            return base
+
+        recon = item("recon-big", reversible="no", blocks=["a", "b"],
+                     evidence="[RECONSTRUCTED] from a compacted session summary")
+        plain = item("plain-small")
+        f1 = items_file("recon.json", [recon, plain])
+        rc, out = run(f1, "--all")
+        check("a [RECONSTRUCTED] item ranks below a plain one it would otherwise beat",
+              rc == 0 and out.find("Question plain-small?") != -1
+              and out.find("Question plain-small?") < out.find("Question recon-big?"), out)
+        rc, out = run(f1)
+        check("the board names what it held back for reconstructed evidence, on one line",
+              rc == 0 and held_line(out, "recon-big"), out)
+        rc, out = run(f1, "--why", "recon-big")
+        check("--why shows the item is unscored because its evidence is reconstructed",
+              rc == 0 and "RECONSTRUCTED" in out and "+40" not in out, out)
+        f2 = items_file("recon-dated.json", [item("recon-dated", deadline="2026-10-01",
+                                                  evidence="[RECONSTRUCTED] recalled date"), plain])
+        rc, out = run(f2, "--all")
+        check("a hard deadline does not lift a [RECONSTRUCTED] item above a plain one",
+              rc == 0 and -1 < out.find("Question plain-small?") < out.find("Question recon-dated?"), out)
+        f3 = items_file("recon-only.json", [recon])
+        rc, out = run(f3)
+        check("a board whose only item is reconstructed still shows it, and says why",
+              rc == 0 and "Question recon-big?" in out and held_line(out, "recon-big"), out)
+
+        # Found by a cross-vendor review of the first implementation: the gate must not depend
+        # on the evidence being a string or on the marker's case, and an explicit null signal
+        # is the same as no signal.
+        f5 = items_file("recon-list.json", [item("recon-list", reversible="no", blocks=["a", "b"],
+                                                 evidence=["[RECONSTRUCTED] recalled from a summary"]), plain])
+        rc, out = run(f5, "--all")
+        check("evidence given as a list is still held when it is reconstructed",
+              rc == 0 and -1 < out.find("Question plain-small?") < out.find("Question recon-list?"), out)
+        f6 = items_file("recon-lower.json", [item("recon-lower", reversible="no", blocks=["a", "b"],
+                                                  evidence="[reconstructed] from memory"), plain])
+        rc, out = run(f6, "--all")
+        check("a lowercase marker is still held",
+              rc == 0 and -1 < out.find("Question plain-small?") < out.find("Question recon-lower?"), out)
+        rc, out = run(items_file("nullsignal.json", [item("null-signal", signal=None)]))
+        check("an explicit null signal is a proposal, not a refusal", rc == 0 and "need you" in out, out)
+
+        # #4: `signal` says why an item exists. `error` is a failed check against a setpoint and
+        # scores a printed +25; an unknown value is refused like an unknown kind; `stale` waits
+        # for the ledger (#3), because a term nothing can set is an instrument with one answer.
+        err = item("check-failing", signal="error", evidence="python3 tools/check.py exits 1")
+        prop = item("new-idea", signal="proposal")
+        f4 = items_file("signal.json", [prop, err])
+        rc, out = run(f4, "--why", "check-failing")
+        check("--why prints the +25 residual for signal error", rc == 0 and "+25" in out and "residual" in out, out)
+        rc, out = run(f4, "--all")
+        check("an error outranks an otherwise identical proposal",
+              rc == 0 and -1 < out.find("Question check-failing?") < out.find("Question new-idea?"), out)
+        rc, out = run(items_file("nosignal.json", [item("no-signal")]), "--why", "no-signal")
+        check("a missing signal is a proposal and adds no term", rc == 0 and "+25" not in out, out)
+        rc, out = run(items_file("badsignal.json", [item("typo", signal="eror")]))
+        check("an unknown signal is refused and named, not scored as a proposal",
+              rc == 2 and "typo" in out and "signal" in out, out)
+        rc, out = run(items_file("stale.json", [item("old-answer", signal="stale")]))
+        check("signal stale is refused until the ledger can produce it",
+              rc == 2 and ("ledger" in out or "#3" in out), out)
+        rc, out = run("--schema")
+        check("--schema documents signal", rc == 0 and '"signal"' in out, out[:300])
+        rc, out = run(ITEMS)
+        check("the worked example still ranks and prints a board", rc == 0 and "need you" in out, out)
+
         # Nothing above should have disturbed the other commands.
         rc, out = run("done", SETPOINT)
         check("hsi done still accepts the worked example",

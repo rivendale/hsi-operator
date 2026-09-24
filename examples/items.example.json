@@ -33,6 +33,23 @@
       "cost": "minutes",
       "deadline": null,
       "evidence": "src/onboarding/FirstRun.tsx:22"
+    },
+    {
+      "id": "setpoint-check-failed",
+      "kind": "DECIDE",
+      "signal": "error",
+      "question": "The acceptance check for the onboarding setpoint failed. Should the release wait for a fix?",
+      "why_you": "The release decision depends on your risk appetite after a named setpoint was missed.",
+      "options": [
+        {"label": "Wait for a fix", "consequence": "release moves after the check passes"},
+        {"label": "Release with the miss", "consequence": "users encounter the failed acceptance condition"}
+      ],
+      "if_ignored_30d": "The release stays paused.",
+      "blocks": [],
+      "reversible": "yes",
+      "cost": "a decision",
+      "deadline": null,
+      "evidence": "python3 tools/check-onboarding.py exits 1 against setpoint onboarding"
     }
   ]
 }
