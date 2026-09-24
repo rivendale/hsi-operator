@@ -12,6 +12,18 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **Nine-tenths of a coordinator's bill was its own context, and nothing here said so.** Two
+  long-running sessions priced from their transcripts: re-reading cached context was 60 to 70%
+  of cost, cache writes most of the rest, output about a tenth. The advice people reach for
+  first (trim the instruction file, shorten answers, fix the cache layout) aims at the smallest
+  slices. In one sample every one of 2,819 workflow subagent calls ran on the frontier model
+  because no step named a model. `AGENTS.md` now says where the bill goes, and
+  `docs/building-a-harness.md` records what a four-model panel and the two samples agreed on
+  for anyone building their own harness: drive the vendor CLIs, log cost per call by billing
+  type, and enforce review and memory rules in code rather than prose.
+- **The loop map still called the fourteen-day check "waiting" after it landed.** Two models
+  reading the repo cold found the wiki contradicting this file. `docs/wiki/The-loop.md` now
+  matches.
 - **A forgotten `CLAUDE.md` switches `AGENTS.md` off, and the documented fix has a trap of
   its own.** Found on an operator's machine the day after we published "one file, no alias":
   a home-directory `.claude/CLAUDE.md` was suppressing a correct `AGENTS.md` beside it, with

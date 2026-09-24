@@ -136,6 +136,15 @@ A long context window is a bill, not just a limit.
   per request at the top end, and a subscription quota drains the same way. The common way
   into it is walking away from a long session and coming back after the prompt cache has
   expired (on the order of an hour, shorter on some tools).
+- **Measure where the bill goes before trimming anything.** In two coordinator sessions priced
+  from their own transcripts, re-reading cached context was 60 to 70% of cost, cache writes 18
+  to 31%, output 9 to 12%, and uncached input about zero. The levers are how large the window
+  is on every call and how often it goes cold, not the instruction file and not answer length.
+  [`docs/building-a-harness.md`](docs/building-a-harness.md) has the numbers and how to price
+  your own.
+- **Keep a coordinating session small, and give hands-on work to short-lived workers** whose
+  context is thrown away when they finish. Name the worker's model: a subagent inherits the
+  session's frontier model unless a step says otherwise.
 - **Compact before you walk away, not after you come back.** Compacting a cold, huge window
   is itself a full-price request, so it costs the thing you were trying to save.
 - **Coming back to a cold, large window, prefer a new session** and point it at the previous

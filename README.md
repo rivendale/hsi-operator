@@ -109,7 +109,9 @@ file and no alias — and prove what your own tool loads rather than trusting a 
 that asks for the failure behind each change, a `SETPOINT.md` for what done means, and the
 one CI workflow. For a repo that already exists, the order matters more than the files —
 [`docs/adopting-an-existing-repo.md`](docs/adopting-an-existing-repo.md) starts from the
-three failures you actually had and says when to stop.
+three failures you actually had and says when to stop. Building your own agent harness:
+[`docs/building-a-harness.md`](docs/building-a-harness.md) has where the bill actually goes,
+what billing each shape implies, and what to build in from the start.
 
 ## Changes
 
