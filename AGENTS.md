@@ -125,6 +125,19 @@ the thing being graded.
   print one answer is worse than one that fails loudly, because it cannot be argued with.
 - **Test from the consuming end.** The expensive failures all share one shape: success
   declared at the producing end while the intended consumer never received the effect.
+- **Record the expectation independently before the fix.** Write down what the right result
+  is, from the spec or the person, before you look at what the code does.
+- **Ship the smallest failure package someone else can run.** A command, an input and the
+  output that is wrong, so a reviewer reproduces it without you.
+- **Prove a regression test failed before the fix landed.** A test never seen failing has not
+  been shown to test anything.
+
+**How a rule gets into this file.** Failures that recur across distinct tasks are stronger
+evidence of a harness defect than a single failure, and patching single failures bakes one
+model's habits into the harness (arXiv 2609.11677, "Ecdysis: Efficient and Effective Training
+of Runtime Harnesses for LLM Agents", 2026). So a single incident goes in the `CHANGELOG.md`,
+and a rule is added here when the failure recurs across distinct tasks or is costly enough
+that once is too many.
 
 ---
 

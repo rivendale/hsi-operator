@@ -12,6 +12,13 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **The per-tool facts were scattered and partly wrong, and the efficiency guidance lived
+  nowhere an agent starting a project would find it (#12).** What each CLI does headless sat
+  in one operator's notes, some of it stale (a version, a flag, a billing term). `docs/tools.md`
+  now holds it in one dated matrix, and `docs/harness-efficiency.md` holds the efficiency
+  checklist, adapted from Cursor's 2026-09-23 article. The same change adds the adapter
+  standard (#7), a hand-written ledger row (#3), three testing rules (#13) and the rule for
+  when a failure earns a line in `AGENTS.md`.
 - **Nine-tenths of a coordinator's bill was its own context, and nothing here said so.** Two
   long-running sessions priced from their transcripts: re-reading cached context was 60 to 70%
   of cost, cache writes most of the rest, output about a tenth. The advice people reach for
