@@ -12,6 +12,20 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **A number recalled from a compacted session could top the board (#6).** `references/l0-channel.md`
+  said an item whose evidence is `[RECONSTRUCTED]` must not score; `bin/hsi` ranked one first at 85
+  points. It now scores nothing and ranks after every item with direct evidence, dated or not, and
+  the board names each held item on its own line, because held back means ranked lower, never
+  dropped. A reviewer from another vendor found the first version only matched the marker as an
+  uppercase string, so evidence given as a list slipped through; it now matches in any case, in
+  strings, lists and objects.
+- **A failed check ranked like a new idea (#4).** The board had no way to say an item exists because
+  a setpoint's check failed. `signal: error` adds one printed term, `+25 residual`, visible in
+  `--why`. An unknown signal is refused like an unknown kind, where before it would have been
+  scored silently as a proposal; `null` means no signal. `stale` is refused until the ledger (#3)
+  can produce it, because a score term nothing can set is an instrument with one answer. Whether an
+  undated error should beat a dated proposal is still an owner decision (#1), so deadline-first
+  ordering is unchanged.
 - **Nine-tenths of a coordinator's bill was its own context, and nothing here said so.** Two
   long-running sessions priced from their transcripts: re-reading cached context was 60 to 70%
   of cost, cache writes most of the rest, output about a tenth. The advice people reach for
