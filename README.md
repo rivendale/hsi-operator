@@ -75,6 +75,7 @@ hsi items.json          # top 3, ranking rule stated
 hsi items.json --all    # everything, grouped by kind
 hsi items.json --why ID # the arithmetic for one item
 hsi done setpoint.json  # Door 2 as a file; exit 2 if done has no check
+hsi record --ledger .hsi/ledger.jsonl --from answer.json  # append an accountable answer
 hsi --schema            # the full contract
 ```
 
