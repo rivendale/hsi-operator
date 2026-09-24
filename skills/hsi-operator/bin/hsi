@@ -8,6 +8,10 @@
   hsi items.json --use FILE      read the usage record; if nothing was answered in 14 days,
                                  say that and show nothing else
   hsi answered --use FILE        record that the operator answered something today
+  hsi record --ledger FILE --from ANSWER.json   append an accountable answer
+  hsi record --ledger FILE --lookup ITEM_ID     inspect the standing answer
+  hsi record --ledger FILE --invalidate ITEM_ID --evidence TEXT
+                                 record that its invalidation condition fired
   hsi --schema                   the input contract
 
 WHY A HARD CAP OF THREE. A list of twenty-seven is a list of zero. The scarce resource
@@ -38,8 +42,10 @@ import json
 import os
 import re
 import sys
+import argparse
 
-KINDS = ("DECIDE", "APPROVE", "EXECUTE", "TASTE")
+from ledger import BASES, KINDS, LedgerError, invalid_answer_field, read_ledger
+
 
 # Two weeks, taken from the README's own sentence rather than tuned. It is the number that
 # was promised, so it is the number that gets measured.
@@ -50,7 +56,6 @@ FURNITURE_DAYS = 14
 # exactly the way it exists to detect.
 FLAGS = {"--all", "--schema"}
 FLAGS_WITH_VALUE = {"--why", "--use", "--today"}
-BASES = ("Data", "Estimate", "Assumption", "Opinion")
 
 # A check is something outside the model: a command that exits, a number that moves, a
 # person who uses the thing. Each type names the one field that says HOW, plus `expect`.
@@ -67,7 +72,7 @@ SCHEMA = {
     "items": [{
         "id": "short-slug",
         "kind": "DECIDE | APPROVE | EXECUTE | TASTE",
-        "signal": "optional: proposal (default, including null) | error. stale waits for the ledger (#3).",
+        "signal": "optional: proposal (default, including null) | error | stale. stale adds 20 for an invalidated standing answer.",
         "question": "Phrased so it can be answered in a sentence. NOT a status line.",
         "why_you": "Why this needs a person and not the machine.",
         "options": [{"label": "...", "consequence": "what follows if chosen"}],
@@ -98,6 +103,18 @@ SCHEMA = {
         "words": "The operator's own words, verbatim: the request as they first put it.",
         "date": "YYYY-MM-DD",
         "basis": "Data | Estimate | Assumption | Opinion",
+    },
+    "ledger": {
+        "path": "Explicit --ledger FILE; convention ./.hsi/ledger.jsonl. One JSON object per line, append only.",
+        "answer": {
+            "item_id": "non-blank item id", "setpoint_id": "string or null",
+            "question": "question as asked", "answer": "answer", "words": "operator's words, verbatim",
+            "reasoning": "reasoning behind the answer", "kind": "DECIDE | APPROVE | EXECUTE | TASTE",
+            "date": "YYYY-MM-DD", "invalidated_by": "condition in prose, never a timer",
+            "basis": "Data | Estimate | Assumption | Opinion",
+            "supersedes_reason": "optional: reason a still-standing answer was replaced",
+        },
+        "invalidation": {"item_id": "item id", "invalidated": {"date": "YYYY-MM-DD", "evidence": "what fired"}},
     },
 }
 
@@ -140,11 +157,13 @@ def score(it):
         pts += 10; why.append("+10 only they have the hands")
     if it.get("signal", "proposal") == "error":
         pts += 25; why.append("+25 residual against a named setpoint")
+    elif it.get("signal") == "stale":
+        pts += 20; why.append("+20 invalidated standing answer")
     return pts, why
 
 
 def order(items):
-    """Direct-evidence errors first, then proposals, then reconstructed evidence."""
+    """Direct-evidence errors first, then proposals and stale, then reconstructed evidence."""
     eligible = [i for i in items if not reconstructed(i)]
 
     def by_deadline_then_score(group):
@@ -339,6 +358,77 @@ def answered_cmd(argv):
     return 0
 
 
+def append_ledger(path, row):
+    os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+    with open(path, "a", encoding="utf-8") as target:
+        target.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
+def record_cmd(argv):
+    """Append an answer or invalidation, or inspect the latest answer for an item."""
+    parser = argparse.ArgumentParser(prog="hsi record")
+    parser.add_argument("--ledger", required=True, metavar="FILE")
+    parser.add_argument("--today", metavar="YYYY-MM-DD")
+    modes = parser.add_mutually_exclusive_group(required=True)
+    modes.add_argument("--from", dest="source", metavar="ANSWER.json")
+    modes.add_argument("--lookup", metavar="ITEM_ID")
+    modes.add_argument("--invalidate", metavar="ITEM_ID")
+    parser.add_argument("--supersede", metavar="REASON")
+    parser.add_argument("--evidence", metavar="TEXT")
+    args = parser.parse_args(argv)
+    try:
+        if args.supersede is not None and args.source is None:
+            raise ValueError("--supersede requires --from")
+        if args.evidence is not None and args.invalidate is None:
+            raise ValueError("--evidence requires --invalidate")
+        standing = read_ledger(args.ledger)
+        if args.lookup is not None:
+            entry = standing.get(args.lookup)
+            if entry is None:
+                print(f"no standing answer for {args.lookup}")
+                return 1
+            row = entry["answer"]
+            for field in ("question", "answer", "words", "reasoning", "date", "basis", "invalidated_by"):
+                print(f"{field}: {row.get(field, '(missing)')}")
+            event = entry["invalidated"]
+            print(f"invalidated: {event['date']}: {event['evidence']}" if event else "invalidated: no")
+            return 0
+        if args.invalidate is not None:
+            if not isinstance(args.evidence, str) or not args.evidence.strip():
+                raise ValueError("evidence must not be blank")
+            entry = standing.get(args.invalidate)
+            if entry is None:
+                raise ValueError(f"no standing answer for {args.invalidate}")
+            if entry["invalidated"]:
+                raise ValueError(f"standing answer for {args.invalidate} is already invalidated")
+            day = datetime.date.fromisoformat(args.today) if args.today else datetime.date.today()
+            append_ledger(args.ledger, {"item_id": args.invalidate,
+                                        "invalidated": {"date": day.isoformat(), "evidence": args.evidence}})
+            print(f"invalidated {args.invalidate} on {day}")
+            return 0
+        if args.supersede is not None and not args.supersede.strip():
+            raise ValueError("--supersede needs a reason")
+        if args.source == "-":
+            row = json.load(sys.stdin)
+        else:
+            with open(args.source, encoding="utf-8") as source:
+                row = json.load(source)
+        invalid = invalid_answer_field(row)
+        if invalid:
+            raise ValueError(f"invalid or missing {invalid}")
+        prior = standing.get(row["item_id"])
+        if prior and not prior["invalidated"] and args.supersede is None:
+            raise ValueError(f"{row['item_id']} has a standing answer; use --supersede REASON")
+        if args.supersede is not None:
+            row["supersedes_reason"] = args.supersede
+        append_ledger(args.ledger, row)
+        print(f"recorded answer for {row['item_id']}")
+        return 0
+    except (LedgerError, OSError, ValueError, TypeError) as error:
+        print(f"hsi record: {error}", file=sys.stderr)
+        return 2
+
+
 def refuse_unknown_flags(argv):
     """An unrecognised flag is an error, not a shrug.
 
@@ -367,6 +457,8 @@ def main(argv):
         return done_cmd(argv[2:])
     if len(argv) > 1 and argv[1] == "answered":
         return answered_cmd(argv)
+    if len(argv) > 1 and argv[1] == "record":
+        return record_cmd(argv[2:])
     rc = refuse_unknown_flags(argv)
     if rc:
         return rc
@@ -396,17 +488,12 @@ def main(argv):
               f"these does not belong in front of a person.", file=sys.stderr)
         return 2
 
-    stale = [i.get("id", "?") for i in items if i.get("signal") == "stale"]
-    if stale:
-        print(f"hsi: signal stale is refused for item(s) {', '.join(map(str, stale[:5]))}; "
-              "it arrives with the ledger (#3).", file=sys.stderr)
-        return 2
     bad_signal = [i.get("id", "?") for i in items
-                  if i.get("signal") not in (None, "proposal", "error")]
+                  if i.get("signal") not in (None, "proposal", "error", "stale")]
     if bad_signal:
         print(f"hsi: {len(bad_signal)} item(s) have no valid signal: "
               f"{', '.join(map(str, bad_signal[:5]))}", file=sys.stderr)
-        print("     signal must be proposal or error", file=sys.stderr)
+        print("     signal must be proposal, error, or stale", file=sys.stderr)
         return 2
 
     if "--why" in argv:
@@ -414,7 +501,7 @@ def main(argv):
         for it in items:
             if it.get("id") == want:
                 pts, why = score(it)
-                signal = "errors" if it.get("signal") == "error" else "proposals"
+                signal = "errors" if it.get("signal") == "error" else "proposals and stale items"
                 print(f"{want}: {pts} points" + (f", deadline {it['deadline']} (dated {signal} sort first within {signal})"
                                                  if it.get("deadline") and not reconstructed(it) else ""))
                 for w in why: print(f"  {w}")
@@ -472,9 +559,9 @@ def main(argv):
               "Ranked by: errors first,")
     else:
         print(f"{len(top)} of {len(ranked)} thing(s) need you. Ranked by: errors first,")
-    print("dated by date then undated by score; proposals next, hard deadlines first then score. "
+    print("dated by date then undated by score; proposals and stale items next, hard deadlines first then score. "
           "Scores use irreversibility, who is blocked, the cost of doing nothing for 30 days, "
-          "and error residuals. Reconstructed evidence is held last.")
+          "error residuals, and invalidated standing answers. Reconstructed evidence is held last.")
     for n, it in enumerate(top, 1):
         show(it, n)
     for it in rest:

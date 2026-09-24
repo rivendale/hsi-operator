@@ -146,8 +146,8 @@ def main():
         check("an explicit null signal is a proposal, not a refusal", rc == 0 and "need you" in out, out)
 
         # #4: `signal` says why an item exists. `error` is a failed check against a setpoint and
-        # scores a printed +25; an unknown value is refused like an unknown kind; `stale` waits
-        # for the ledger (#3), because a term nothing can set is an instrument with one answer.
+        # scores a printed +25; an unknown value is refused like an unknown kind. `stale` was
+        # refused here until the ledger (#3) could produce it; it is accepted now, tested below.
         err = item("check-failing", signal="error", evidence="python3 tools/check.py exits 1")
         prop = item("new-idea", signal="proposal")
         f4 = items_file("signal.json", [prop, err])
@@ -161,9 +161,6 @@ def main():
         rc, out = run(items_file("badsignal.json", [item("typo", signal="eror")]))
         check("an unknown signal is refused and named, not scored as a proposal",
               rc == 2 and "typo" in out and "signal" in out, out)
-        rc, out = run(items_file("stale.json", [item("old-answer", signal="stale")]))
-        check("signal stale is refused until the ledger can produce it",
-              rc == 2 and ("ledger" in out or "#3" in out), out)
         rc, out = run("--schema")
         check("--schema documents signal", rc == 0 and '"signal"' in out, out[:300])
         rc, out = run(ITEMS)
@@ -276,6 +273,20 @@ def main():
         rc, out = run("record", "--ledger", bad_ledger, "--from",
                       answer_file("bad-date.json", answer("bad-date", date="not-a-date")))
         check("a date that is not a date is refused", rc == 2 and "date" in out, out)
+
+        # Review finding, 2026-09-24: an answer carrying a stray top-level `invalidated` key
+        # (one letter from `invalidated_by`) was appended, then read back as a malformed
+        # invalidation row, and every later command on that ledger failed. Append-only means
+        # no in-tool recovery, so the refusal has to happen before the write.
+        poison_ledger = os.path.join(tmp, "ledger-poison.jsonl")
+        rc, out = run("record", "--ledger", poison_ledger, "--from",
+                      answer_file("healthy-first.json", answer("healthy-first")))
+        rc, out = run("record", "--ledger", poison_ledger, "--from",
+                      answer_file("poison.json", answer("poison", invalidated="oops")))
+        check("an answer with a stray top-level invalidated key is refused before append",
+              rc == 2 and "invalidated" in out and len(ledger_lines(poison_ledger)) == 1, out)
+        rc, out = run("record", "--ledger", poison_ledger, "--lookup", "healthy-first")
+        check("the ledger still reads after that refusal", rc == 0 and "keep doing" in out, out)
 
         rc, out = run("record", "--ledger", bad_ledger, "--from",
                       answer_file("no-invalidated-by.json",

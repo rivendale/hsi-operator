@@ -52,7 +52,8 @@ operator cannot audit:
 4. **Errors with direct evidence come first**, dated by date then undated by score; proposals follow with hard external deadlines first, then score; reconstructed evidence is held last
 
 An item's optional `signal` is `proposal` by default or `error` when a named setpoint's
-check fails; `error` adds 25 points for the residual. Evidence marked `[RECONSTRUCTED]`
+check fails; `error` adds 25 points for the residual. `stale` adds 20 points when a standing
+answer has been invalidated and ranks with proposals, after errors. Evidence marked `[RECONSTRUCTED]`
 earns no points and ranks after every item with direct evidence, even when it names a
 deadline. Keep it visible as held until someone re-reads or re-measures the evidence.
 
@@ -166,12 +167,19 @@ ask for that one.
 
 Every answer is recorded with:
 - the question as asked, and the answer **in the operator's own words**
-- the reasoning, if given — this is what makes future calls match their taste
+- the reasoning behind it, which makes future calls match their taste
 - the date
 
 A settled question that returns is a defect. So is an answer recorded without the
 reasoning, because the next session inherits a verdict it cannot apply to a
-neighbouring case.
+neighboring case.
+
+Keep the append-only ledger at a path the operator chooses, commonly `./.hsi/ledger.jsonl`.
+Use `hsi record --ledger FILE --from ANSWER.json` to save the operator's words and reasoning,
+and `hsi record --ledger FILE --lookup ITEM_ID` before asking a question again.
+When a recorded condition fires, a person or agent runs `hsi record --ledger FILE --invalidate ITEM_ID --evidence TEXT`;
+`adapters/ledger/collect.py FILE` then surfaces it as
+`stale`. The ledger does not detect conditions by itself, and the adapter watches only the ledger.
 
 ## Keep a stale answer from ruling forever
 

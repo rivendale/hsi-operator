@@ -12,6 +12,14 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **A settled answer could be asked again, and a stale one could rule forever (#3, #4, #7).**
+  The skill promised that nothing gets asked twice, but had no file to remember the answer.
+  The append-only ledger now requires the operator's words and reasoning, records manual
+  invalidation with evidence, and feeds invalidated standing answers to the board through
+  the ledger adapter. `stale` adds a printed 20 points and ranks with proposals after errors.
+  Neither the ledger nor its adapter detects that a condition fired; a person or agent must
+  record the invalidation. An answer carrying a stray top-level `invalidated` key is refused
+  before the write, because one such row made the whole append-only file unreadable in review.
 - **The harness guide said how to build a harness but not how to improve one.** Two September 2026
   papers (AIDE-squared, Ecdysis) agree that harness changes should be kept only when they win on
   tasks they were not tuned on, and promoted from recurring failures rather than single ones;
@@ -40,10 +48,8 @@ it does, the version goes above the date and this line goes away.
 - **A failed check ranked like a new idea (#4).** The board had no way to say an item exists because
   a setpoint's check failed. `signal: error` adds one printed term, `+25 residual`, visible in
   `--why`. An unknown signal is refused like an unknown kind, where before it would have been
-  scored silently as a proposal; `null` means no signal. `stale` is refused until the ledger (#3)
-  can produce it, because a score term nothing can set is an instrument with one answer. Whether an
-  undated error should beat a dated proposal is still an owner decision (#1), so deadline-first
-  ordering is unchanged.
+  scored silently as a proposal; `null` means no signal. `stale` was held until the ledger (#3)
+  could produce it. A later owner decision (#1) put direct-evidence errors ahead of proposals.
 - **Nine-tenths of a coordinator's bill was its own context, and nothing here said so.** Two
   long-running sessions priced from their transcripts: re-reading cached context was 60 to 70%
   of cost, cache writes most of the rest, output about a tenth. The advice people reach for

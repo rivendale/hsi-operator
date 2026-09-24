@@ -2,8 +2,8 @@
 
 An adapter turns a system you already have (a tracker, a task file, a calendar) into the
 `items` contract that `bin/hsi` reads (`hsi --schema`). `jsonl-tasks/` is the worked example.
-The standard below is what any adapter must meet. Written 2026-09-24; it advances
-[#7](https://github.com/rivendale/hsi-operator/issues/7), which is still open.
+The standard below is what any adapter must meet. Written 2026-09-24 for
+[#7](https://github.com/rivendale/hsi-operator/issues/7); `ledger/` is the real adapter.
 
 ## What an adapter must never write
 
