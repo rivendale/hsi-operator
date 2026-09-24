@@ -144,12 +144,19 @@ def score(it):
 
 
 def order(items):
-    """Hard deadlines first, then points, then all reconstructed evidence."""
+    """Direct-evidence errors first, then proposals, then reconstructed evidence."""
     eligible = [i for i in items if not reconstructed(i)]
-    dated = sorted([i for i in eligible if i.get("deadline")], key=lambda i: i["deadline"])
-    rest = sorted([i for i in eligible if not i.get("deadline")],
-                  key=lambda i: -score(i)[0])
-    return dated + rest + [i for i in items if reconstructed(i)]
+
+    def by_deadline_then_score(group):
+        dated = sorted([i for i in group if i.get("deadline")], key=lambda i: i["deadline"])
+        undated = sorted([i for i in group if not i.get("deadline")],
+                         key=lambda i: -score(i)[0])
+        return dated + undated
+
+    errors = [i for i in eligible if i.get("signal") == "error"]
+    proposals = [i for i in eligible if i.get("signal") != "error"]
+    return (by_deadline_then_score(errors) + by_deadline_then_score(proposals)
+            + [i for i in items if reconstructed(i)])
 
 
 def show(it, n=None):
@@ -407,9 +414,15 @@ def main(argv):
         for it in items:
             if it.get("id") == want:
                 pts, why = score(it)
-                print(f"{want}: {pts} points" + (f", deadline {it['deadline']} (deadlines sort first)"
+                signal = "errors" if it.get("signal") == "error" else "proposals"
+                print(f"{want}: {pts} points" + (f", deadline {it['deadline']} (dated {signal} sort first within {signal})"
                                                  if it.get("deadline") and not reconstructed(it) else ""))
                 for w in why: print(f"  {w}")
+                if it.get("signal") == "error":
+                    if reconstructed(it):
+                        print("  Reconstructed errors are held after every item with direct evidence, including proposals.")
+                    else:
+                        print("  Errors with direct evidence rank ahead of every proposal.")
                 if not why: print("  (nothing scored — reversible, blocks nobody, no named cost)")
                 return 0
         print(f"hsi: no item with id {want!r}", file=sys.stderr); return 2
@@ -456,10 +469,11 @@ def main(argv):
     if held_top:
         print(f"{len(top) - held_top} of {len(ranked)} thing(s) need you; "
               f"{held_top} of {len(top)} listed item(s) held [RECONSTRUCTED]. "
-              "Ranked by: hard deadline first,")
+              "Ranked by: errors first,")
     else:
-        print(f"{len(top)} of {len(ranked)} thing(s) need you. Ranked by: hard deadline first,")
-    print("then irreversibility, who is blocked, the cost of doing nothing for 30 days, "
+        print(f"{len(top)} of {len(ranked)} thing(s) need you. Ranked by: errors first,")
+    print("dated by date then undated by score; proposals next, hard deadlines first then score. "
+          "Scores use irreversibility, who is blocked, the cost of doing nothing for 30 days, "
           "and error residuals. Reconstructed evidence is held last.")
     for n, it in enumerate(top, 1):
         show(it, n)

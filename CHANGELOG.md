@@ -12,6 +12,12 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **An undated failing check lost to any dated proposal, so a known bug could sit behind
+  new work (#1).** The owner said, "q3 - failing check i think outranks dated proposal as it
+  needs fixing before we move on - i don't want ot leaver bugs/issues behind". Errors with
+  direct evidence now rank ahead of every proposal, dated errors by date and undated errors
+  by score. Proposals keep deadline-first order among themselves, and reconstructed evidence
+  stays held after all direct evidence.
 - **The per-tool facts were scattered and partly wrong, and the efficiency guidance lived
   nowhere an agent starting a project would find it (#12).** What each CLI does headless sat
   in one operator's notes, some of it stale (a version, a flag, a billing term). `docs/tools.md`
