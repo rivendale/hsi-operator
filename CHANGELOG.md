@@ -12,6 +12,32 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **A worker's verdict could reach the operator dressed as a finding.** Four delete verdicts
+  from a ranked fan-out of agents were relayed to an operator and approved; three were false
+  when checked at the start of the work. `references/honesty-protocol.md` now labels an
+  unchecked worker verdict an assumption and asks for a second agent that re-derives each claim
+  from the source. The same week showed that checker can go either way: one run confirmed
+  every claim against primary sources, and another found half the claims in a tracker wrong.
+- **Nothing said where an action goes when the permission layer refuses it.** Two agents hit
+  the same boundary on one day from opposite sides: one proposed asking a peer to set a status
+  its own gate refused and retracted it within the hour; the other had a write blocked, and the
+  right outcome was the person doing it. The SKILL now files a refused action as APPROVE, and
+  `AGENTS.md` says it goes to the person, never to another agent.
+- **A message queued for session start was reported as received by a session that never
+  restarts.** In one setup this happened three times in a month, once for four days.
+  `docs/building-a-harness.md` now says to send live what changes the next hour, queue the
+  record, do both when it is load-bearing, and check the agent was told before saying it is
+  working.
+- **The tools matrix said Codex had no known traps because nobody had looked.** The CLI
+  accepted an effort level that the API refused for the same models on the same day.
+  `docs/tools.md` now records both results and the rule that follows: test a setting on the
+  path the harness calls.
+- **The operator channel page said `stale` outranks proposals, and described landed work as
+  future.** `references/l0-channel.md` and its wiki mirror said `signal` would arrive "once #4
+  lands" and that stale beats proposal; `bin/hsi` has ranked stale among the proposals, with 20
+  points, since 2026-09-24. Both now match the code, and `docs/building-a-harness.md` no longer
+  calls the ledger (#3) and adapter (#7) open.
+
 - **A settled answer could be asked again, and a stale one could rule forever (#3, #4, #7).**
   The skill promised that nothing gets asked twice, but had no file to remember the answer.
   The append-only ledger now requires the operator's words and reasoning, records manual

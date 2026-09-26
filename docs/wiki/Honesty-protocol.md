@@ -13,6 +13,8 @@ Adapted from [ferdinandobons/startup-skill](https://github.com/ferdinandobons/st
 
 Never present an estimate as data. A confident fabrication is worse than “I don't know.”
 
+A worker's verdict is an assumption until a second agent re-derives it from the source. Check hardest where the verdict is a delete.
+
 A section that finds nothing **says so**. On L0: “Nothing needs you” is the update.
 
 “Can we build X” is usually a problem wearing a solution. [[The-loop]] Door 2 undresses it.

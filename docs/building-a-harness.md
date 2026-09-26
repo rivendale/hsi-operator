@@ -137,6 +137,12 @@ their own economics: the short jobs are where the cheaper models compete.
 - **A provider-agnostic loop can erase a routing rule.** If some data may go to only one provider,
   an abstraction that makes providers interchangeable strings removes that rule without a word
   (`repo-triage` step 6).
+- **A message queued for the next session start never reaches a session that never restarts.**
+  In one setup this happened three times in a month; once, instructions to an always-on agent sat
+  undelivered for four days while the coordinator told the person the agent was working on them.
+  If a message changes what another agent does in the next hour, send it over a live channel; a
+  durable record goes to the queue; anything load-bearing goes to both. Before telling the person
+  an agent is on it, check that the agent was told.
 - **Replacing the phone door first.** Keep the person's current way in until the new one has carried
   real questions and answers for a week.
 
@@ -151,8 +157,9 @@ them.
 **Proposed, not built:** a `jobs` contract beside `items` and `setpoint` in `hsi --schema` (task id,
 setpoint id, owning repo, author lane, model, result path, and a handoff listing what was done,
 findings, concerns, deletions and cost), and a review-verdict contract that refuses a reviewer from
-the author's lane. The ledger ([#3](https://github.com/rivendale/hsi-operator/issues/3)) and a real
-adapter ([#7](https://github.com/rivendale/hsi-operator/issues/7)) are still open.
+the author's lane. The ledger ([#3](https://github.com/rivendale/hsi-operator/issues/3)) and the real
+adapter ([#7](https://github.com/rivendale/hsi-operator/issues/7)) landed on 2026-09-24: `hsi record` and
+`adapters/ledger/`.
 
 ## Measure, then ratchet
 

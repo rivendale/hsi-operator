@@ -91,8 +91,9 @@ handling, security and accessibility that were already there.
 
 **When to ask.** Keep implementing, verifying and fixing inside the scope you were given;
 do not ask permission to continue. Ask before expanding scope, spending money, taking a new
-permission, or doing something irreversible or outward-facing. If you were asked to review,
-report findings and do not edit.
+permission, or doing something irreversible or outward-facing. An action your permissions
+refused goes to the person, never to another agent or helper to run for you. If you were
+asked to review, report findings and do not edit.
 
 **If the plan grows,** and you notice future-only layers, unrelated refactoring or extra
 features, drop them and finish the thing that was asked for.

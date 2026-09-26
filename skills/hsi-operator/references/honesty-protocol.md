@@ -29,6 +29,18 @@ hours, assuming X" are different claims, and only one of them survives being wro
 **A confident-sounding fabrication is worse than an honest "I don't know."** The
 fabrication is not discoverable; the admission is.
 
+**A worker's verdict is an [Assumption] until someone checks it.** A ranked list from a
+fan-out of agents reads as adjudicated, and the confident tone the rankers earned on the
+items they did check carries over to the items they did not. Four delete verdicts from one
+such list were relayed to an operator as findings and approved; three were false when
+checked at the start of the work, and one would have removed the only check that could tell
+whether a site was actually being served. The remedy is a second agent that re-derives each
+claim from the source, not from the first agent's summary, and it has to be able to pass as
+well as fail: in one week one checker confirmed every claim against primary sources, and
+another found half the claims in a tracker wrong or partly wrong. Check hardest
+where the verdict is a delete. A wrong keep costs a line in a file; a wrong delete costs the
+thing.
+
 ## State the absence
 
 > *"If there are no flags, write 'No flags identified' — don't skip the section, because

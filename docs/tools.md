@@ -28,12 +28,12 @@ How each tool loads an instruction file, and the traps in proving it, is measure
 | **Structured output and cost fields** | `--output-format json`: `total_cost_usd`, `usage` (input, output, cache read, cache creation with a 5m/1h split), `modelUsage`. (host, a real run, 2026-09-24) | `--json` streams events with token counts (input, cached input, output). No dollar figure. (host, undated) | `--output-format json`: `text`, `usage` (input, cache read, cache creation, output, reasoning tokens), `total_cost_usd`, `stopReason`. Other values: `plain`, `streaming-json`, `streaming-messages-json`. (host, 2026-09-24) | Not checked. |
 | **Sign-in and billing** | Your own CLI on your subscription is the normal path; products built on the Agent SDK use API keys. (docs, Anthropic Agent SDK overview, read 2026-09-23) `--bare` never uses the subscription login. (docs, `claude --help`, 2026-09-24) | ChatGPT sign-in is subscription access; an API key is usage-based; OpenAI recommends the key for CI. (docs, [Codex auth](https://developers.openai.com/codex/auth), read 2026-09-23) Allowances differ by model. (docs, Codex pricing page, read 2026-09-23) | Prefers a stored sign-in session over `XAI_API_KEY` in the environment, with no error. (host, 2026-09, no day recorded) | New individual Google sign-ins were refused with `IneligibleTierError`; existing credentials kept working. (host, 2026-09-08) |
 | **Version drift** | 2.1.278 on 2026-09-21 ([AGENTS.md](../AGENTS.md)); 2.1.281 on 2026-09-24 (host). It updates itself. | 0.155.1 on 2026-09-21 ([AGENTS.md](../AGENTS.md)); 0.156.1 on 2026-09-24 (host). | 1.0.34 to 1.0.40 within hours on 2026-09-21 ([AGENTS.md](../AGENTS.md)); 1.0.41 on 2026-09-24 (host). | 0.60.0 on 2026-09-21 ([AGENTS.md](../AGENTS.md)) and on 2026-09-24 (host). |
-| **Known traps** | See below. | Not checked beyond the rows above. | See below. | See below. |
+| **Known traps** | See below. | See below. | See below. | See below. |
 
 Where a cell says docs, the pages are Anthropic's Agent SDK overview, OpenAI's
 [Codex authentication page](https://developers.openai.com/codex/auth) and its Codex pricing page,
-all read 2026-09-23, plus each CLI's `--help` on 2026-09-24. The one peer measurement is the
-Claude Code allow-list trap below (2026-09-05). Everything marked host was measured on one Linux
+all read 2026-09-23, plus each CLI's `--help` on 2026-09-24. The peer measurements are the
+Claude Code allow-list trap (2026-09-05) and the Codex API result (2026-09-24), both below. Everything marked host was measured on one Linux
 host. For where the money goes once you drive these tools, see
 [`building-a-harness.md`](building-a-harness.md).
 
@@ -57,6 +57,16 @@ host. For where the money goes once you drive these tools, see
   as the only model provider, and per the docs "a local session can't be part of a project"
   (read 2026-09-24). New threads are limited to 200 per day, and a project draws on your plan
   faster than one session does.
+
+## Codex CLI
+
+- **An effort level the CLI accepts can be refused by the API.** `codex exec -m gpt-6-luna -c
+  model_reasoning_effort="max"` reported `reasoning effort: max` and answered (host, Codex CLI
+  0.156.1 on a subscription sign-in, 2026-09-24). The same GPT-6 models called through the Chat
+  Completions API with an API key returned 400 and listed the supported efforts as none, low,
+  medium, high and xhigh (peer, 2026-09-24). Whether the server applied max or quietly lowered it
+  is not observable from the CLI. A setting proven on one path does not carry to another; test it
+  on the path your harness will actually call.
 
 ## Grok CLI
 
