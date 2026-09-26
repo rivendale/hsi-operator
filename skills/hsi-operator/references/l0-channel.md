@@ -54,7 +54,8 @@ structure needed to close it in one sitting.
 
 - `I'd suggest:` one sentence
 - `BY <hard external date>` only — soft revisits are not deadlines
-- `signal` once #4 lands: `error` / `stale` / `proposal`. Error and stale outrank proposal.
+- `signal` (#4): `error` / `stale` / `proposal`. An error with direct evidence ranks ahead of
+  every proposal; `stale` adds 20 points and ranks among the proposals, not ahead of them.
 - Door 2's five questions, in order, when work has no setpoint
 
 **Forbidden** — these are how the channel dies
@@ -75,8 +76,9 @@ sentence may appear as context *for a real question*. It cannot *be* the questio
 
 ## Two doors are two modes of the same channel
 
-**Door 1 — “how can I help”** is the error channel in operations. After #3–#4 exist
-it should prefer `error` and `stale` over fresh `proposal`. A board of new ideas
+**Door 1 — “how can I help”** is the error channel in operations. Since #3 and #4
+landed it does: errors rank ahead of every proposal, and a `stale` answer outscores a fresh
+`proposal` by 20 points. A board of new ideas
 while last week's setpoint is false is L0 used as a suggestion box.
 
 **Door 2 — “what does done mean”** is setpoint-setting (#2). Still L0: five
@@ -92,7 +94,8 @@ on a triage list.
 ## The unit of work is a sitting, not a session
 
 L0 is budgeted per **sitting** (one stretch of human attention), not per agent
-context window. #5 instruments this. The rules, once they exist:
+context window. #5 measured the fourteen-day rule (`hsi answered --use FILE`); the other
+rules are protocol, kept by whoever speaks on L0:
 
 - Last sitting's unanswered #1 stays #1. New work fights for slots 2–3.
 - If all three are unanswered, L0 is those three. `--all` still exists.
@@ -195,7 +198,7 @@ then irreversibility, who is blocked, and the cost of doing nothing for 30 days.
 
 Door 2 is the same density: five questions, answers in their words, one checkable
 sentence, out of scope, what would change it. See `examples/done-criteria.example.md`
-and, once #2 lands, the setpoint JSON beside it.
+and the setpoint JSON beside it, `examples/setpoint.example.json` (#2).
 
 ---
 

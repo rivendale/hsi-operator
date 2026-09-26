@@ -23,13 +23,13 @@ Quota: **three answerable questions per sitting**, plus one Door 2 conversation 
 
 **Required:** ranking rule said out loud; at most three questions (not status lines) with kind, 2–4 options, why-you, ignore-cost, their-cost; count held back plus `hsi … --all`.
 
-**Allowed short:** one-line suggestion; hard external `BY` date; `signal` once #4 lands (`error` / `stale` beat `proposal`); Door 2's five questions when there is no setpoint.
+**Allowed short:** one-line suggestion; hard external `BY` date; `signal` (#4): an `error` with direct evidence ranks ahead of every `proposal`, and `stale` adds 20 points among the proposals; Door 2's five questions when there is no setpoint.
 
 **Forbidden:** facts, housekeeping, unused-thing maintenance, caution-APPROVE, dumps, reconstructed numbers as data, session recaps, a second copy of a fact that already has a path.
 
 ## Two doors, same channel
 
-Door 1 is operations (prefer residual over new proposals once #3–#4 exist). Door 2 is setpoint-setting (#2). Do not multiplex in one sitting unless asked.
+Door 1 is operations (residual ranks over new proposals; #3 and #4 landed 2026-09-24). Door 2 is setpoint-setting (#2). Do not multiplex in one sitting unless asked.
 
 ## Sitting, not session
 
