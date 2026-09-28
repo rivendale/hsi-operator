@@ -997,6 +997,12 @@ def main():
                       and all(scroll <= client for scroll, client, _ in cards),
                       f"control {blind} (must overflow, or the measurement is blind); tables {cards} "
                       "as (scrollWidth, clientWidth, overflow-wrap)")
+            # The kind cell does not wrap on a desktop, and an unrecognized kind is shown raw.
+            rc, out, page = timeline(ledger_file("tl-cards-kind.jsonl", [row("odd-kind", kind="W" * 60)]))
+            cards = card_tables(os.path.join(tmp, "tl-cards-kind.jsonl.html"), 390)
+            check("timeline: at 390 px a long unrecognized kind does not widen the event table either",
+                  rc == 0 and cards is not None and len(cards) == 2 and all(scroll <= client for scroll, client, _ in cards),
+                  f"tables {cards} as (scrollWidth, clientWidth, overflow-wrap)")
             wide = card_tables(os.path.join(tmp, "tl-cards-55.jsonl.html"), 1280)
             check("timeline: at 1280 px the tables' cells keep their desktop wrapping, so the phone rule stays in its query",
                   wide is not None and len(wide) == 2 and all(wrap == "break-word" for _, _, wrap in wide),
