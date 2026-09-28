@@ -693,6 +693,8 @@ def render(name, events, skipped, lines, strict):
     human = [e for e in events if e["category"] in KINDS]
     waits = [e for e in human if e["wait"]]
     backwards = [e for e in human if e["wait_text"] == "answered before it was asked"]
+    other = sum(1 for e in events if e["category"] == OTHER)
+    invalidations = sum(1 for e in events if e["category"] == INVALIDATED)
     in_table = {e["line"] for e in events[:TABLE_LIMIT]}
     out = ["<!doctype html>", '<html lang="en"><head><meta charset="utf-8">',
            '<meta name="viewport" content="width=device-width,initial-scale=1">',
@@ -706,11 +708,16 @@ def render(name, events, skipped, lines, strict):
     elif human:
         by_kind = ", ".join(f"{sum(1 for e in human if e['category'] == k):,} {k}" for k in KINDS
                             if any(e["category"] == k for e in human))
-        out.append(f'<p class="headline">The human was needed {plural(len(human), "time")}: {by_kind}.</p>')
-    elif any(e["category"] == OTHER for e in events):
+        unknown = f" {plural(other, 'more event')} had no recognized kind, shown as other." if other else ""
+        out.append(f'<p class="headline">The human was needed {plural(len(human), "time")}: {by_kind}.{unknown}</p>')
+    elif other:
         # A mistyped kind is not evidence that the human was not needed.
-        other = sum(1 for e in events if e["category"] == OTHER)
-        out.append(f'<p class="headline">No event had a recognized kind ({other:,} shown as other).</p>'
+        if invalidations:
+            known = (f"No answer had a recognized kind ({other:,} shown as other); "
+                     f"{plural(invalidations, 'invalidation')} {'was' if invalidations == 1 else 'were'} recognized.")
+        else:
+            known = f"No event had a recognized kind ({other:,} shown as other)."
+        out.append(f'<p class="headline">{known}</p>'
                    f"<p>An answer counts as the human being needed only when its kind is {', '.join(KINDS[:-1])} or {KINDS[-1]}, "
                    "so this page cannot say whether the human was needed.</p>")
     else:
