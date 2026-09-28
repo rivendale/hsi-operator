@@ -14,11 +14,13 @@ March. That flag exists for this and nothing else.
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
 import time
 from html.parser import HTMLParser
+from pathlib import Path
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -700,6 +702,184 @@ def main():
         check("timeline: the committed example page matches a fresh render of the example ledger",
               page != "" and page == committed,
               "re-render: hsi timeline examples/timeline.example.jsonl -o examples/timeline.example.html")
+
+        # From an independent review of the timeline, each written and watched failing
+        # before the fix it names.
+
+        # A lone UTF-16 surrogate is valid JSON and not valid Unicode. JavaScript writes one
+        # whenever a string is clipped in the middle of an emoji: "ok 😀".slice(0, 4).
+        half = "\ud83d"
+        surrogate_ledger = ledger_file("tl-surrogate.jsonl", [
+            row(f"item{half}", question=f"q{half}", answer=f"a{half}", actor=f"actor{half}",
+                evidence=f"ref{half}", supersedes_reason=f"why{half}", asked_at=f"asked{half}",
+                at="2026-09-20T10:00:00Z"),
+            row("kind-item", kind=f"K{half}", at=f"at{half}"),
+            row("link-item", evidence=f"https://example.com/{half}"),
+            row("nested-item", evidence={f"key{half}": [f"value{half}"]}),
+            json.dumps({"item_id": f"item{half}",
+                        "invalidated": {"date": "2026-09-21", "evidence": f"fired{half}", "at": f"inv{half}"}}),
+        ])
+        rc, out, page = timeline(surrogate_ledger)
+        shown = [f"{text}�" for text in ("item", "q", "a", "actor", "ref", "why", "asked", "K", "at",
+                                              "example.com/", "key", "value", "fired", "inv")]
+        check("timeline: a lone surrogate in any text field renders as U+FFFD, not a crash",
+              rc == 0 and "Traceback" not in out and "5 lines read: 5 events, 0 skipped" in page
+              and all(text in page for text in shown),
+              out + str([text for text in shown if text not in page]))
+
+        # The file name is text on the page too, and a name that is not UTF-8 reaches Python
+        # as a surrogate.
+        try:
+            odd_name = os.path.join(os.fsencode(tmp), b"tl-latin1-\xe9.jsonl")
+            with open(odd_name, "wb") as f:
+                f.write(row("plain").encode() + b"\n")
+        except (OSError, ValueError):
+            odd_name = None
+        if odd_name:
+            r = subprocess.run([sys.executable, HSI, "timeline", odd_name], capture_output=True)
+            check("timeline: a ledger file name that is not UTF-8 renders, not a crash",
+                  r.returncode == 0 and b"tl-latin1-\xef\xbf\xbd.jsonl" in r.stdout and b"Traceback" not in r.stderr,
+                  r.stderr.decode("utf-8", "replace"))
+        else:
+            print("SKIP  timeline: a ledger file name that is not UTF-8 (this file system refuses one)")
+
+        kept = os.path.join(tmp, "tl-kept.html")
+        previous = b"the previous page\n" * 64
+        with open(kept, "wb") as f:
+            f.write(previous)
+        rc, out = run("timeline", surrogate_ledger, "-o", kept)
+        after = open(kept, "rb").read()
+        check("timeline: an existing -o file is replaced by the new page, never left truncated",
+              rc == 0 and after.startswith(b"<!doctype html>") and after.endswith(b"</html>\n"),
+              f"{len(after)} bytes; " + out)
+
+        r = subprocess.run([sys.executable, HSI, "timeline", surrogate_ledger], capture_output=True)
+        check("timeline: and to stdout, the same ledger gives a whole page and exit 0",
+              r.returncode == 0 and r.stdout.startswith(b"<!doctype html>")
+              and r.stdout.endswith(b"</html>\n") and b"Traceback" not in r.stderr,
+              r.stderr.decode("utf-8", "replace"))
+
+        try:
+            import resource
+        except ImportError:
+            resource = None
+        if resource is not None and hasattr(resource, "RLIMIT_FSIZE"):
+            # A write that fails partway, the way a full disk fails it: past 4 KB the
+            # process may not grow a file. The old page must survive whole.
+            full = os.path.join(tmp, "tl-full")
+            os.makedirs(full)
+            kept = os.path.join(full, "kept.html")
+            with open(kept, "wb") as f:
+                f.write(previous)
+
+            def small_files():
+                resource.setrlimit(resource.RLIMIT_FSIZE, (4096, 4096))
+
+            r = subprocess.run([sys.executable, HSI, "timeline", TIMELINE_LEDGER, "-o", kept],
+                               capture_output=True, text=True, preexec_fn=small_files)
+            check("timeline: a write that fails partway leaves the previous page whole, and no temp file",
+                  r.returncode == 2 and "cannot write" in r.stderr and open(kept, "rb").read() == previous
+                  and os.listdir(full) == ["kept.html"],
+                  f"rc {r.returncode}, {os.path.getsize(kept)} bytes, {os.listdir(full)}; {r.stderr}")
+        else:
+            print("SKIP  timeline: a write that fails partway (no RLIMIT_FSIZE on this platform)")
+
+        # The page must not scroll sideways at phone width. Measured by a browser, because
+        # only a browser knows where a line of text breaks.
+        browser = next((shutil.which(n) for n in ("google-chrome", "google-chrome-stable", "chromium",
+                                                  "chromium-browser") if shutil.which(n)), None)
+
+        def page_width(path, width):
+            """The document's scrollWidth with the page laid out `width` px wide. The page
+            sits in an iframe of exactly that width, because a window has a minimum size."""
+            wrapper = os.path.join(tmp, f"measure-{width}.html")
+            with open(wrapper, "w", encoding="utf-8") as f:
+                f.write(f'<!doctype html><body style="margin:0"><iframe id="f" src="{Path(path).as_uri()}" '
+                        f'style="border:0;width:{width}px;height:2000px"></iframe><pre id="m">none</pre>'
+                        '<script>document.getElementById("f").addEventListener("load",function(){'
+                        'document.getElementById("m").textContent="scrollWidth="+'
+                        'this.contentDocument.documentElement.scrollWidth})</script>')
+            try:
+                r = subprocess.run([browser, "--headless=new", "--no-sandbox", "--disable-gpu",
+                                    "--allow-file-access-from-files", "--virtual-time-budget=5000",
+                                    f"--user-data-dir={os.path.join(tmp, 'chrome-profile')}",
+                                    "--dump-dom", Path(wrapper).as_uri()],
+                                   capture_output=True, text=True, timeout=120)
+            except subprocess.TimeoutExpired:
+                return None
+            found = re.search(r"scrollWidth=(\d+)", r.stdout)
+            return int(found.group(1)) if found else None
+
+        if browser:
+            token = "export_scope_for_the_quarterly_customer_report_v2_final"
+            rc, out, page = timeline(ledger_file("tl-longtoken.jsonl", [
+                row(token, actor="planner_agent_with_a_long_name", question="Q " + token * 3,
+                    asked_at="2026-09-26T08:00:00Z", at="2026-09-26T10:00:00Z", evidence="ref:" + token * 2),
+            ]))
+            control = os.path.join(tmp, "tl-control.html")
+            with open(control, "w", encoding="utf-8") as f:
+                f.write('<!doctype html><meta name="viewport" content="width=device-width">'
+                        '<p style="width:900px">wider than a phone</p>')
+            seen, wide = page_width(control, 390), page_width(os.path.join(tmp, "tl-longtoken.jsonl.html"), 390)
+            check("timeline: at 390 px a long unbroken item id or actor does not scroll the page sideways",
+                  rc == 0 and seen is not None and seen > 390 and wide is not None and wide <= 390,
+                  f"control page measured {seen} (must be over 390, or the measurement is blind); "
+                  f"the timeline measured {wide}")
+        elif os.environ.get("CI"):
+            check("timeline: the 390 px layout check needs Chrome, and CI has none", False, "install Chrome")
+        else:
+            print("SKIP  timeline: the 390 px layout check (no Chrome on this machine)")
+
+        rc, out, page = timeline(ledger_file("tl-unknown-kinds.jsonl", [
+            row("lowercase", kind="decide"), row("maybe", kind="MAYBE"), row("null", kind=None),
+        ]))
+        check("timeline: when no event has a recognized kind, the headline says so, not that the human was not needed",
+              rc == 0 and "The human was not needed" not in page
+              and "No event had a recognized kind (3 shown as other)" in page, page[:1500])
+        rc, out, page = timeline(ledger_file("tl-invalidations-only.jsonl", [
+            json.dumps({"item_id": "gone", "invalidated": {"date": "2026-09-21", "evidence": "it changed"}}),
+        ]))
+        check("timeline: a ledger of invalidations alone still says the human was not needed",
+              rc == 0 and "The human was not needed in any event this ledger recorded" in page, page[:1500])
+
+        rc, out, page = timeline(ledger_file("tl-bidi.jsonl", [
+            row("deploy‮", actor="builder⁧", question="‭swap‬ this⁦",
+                asked_at="2026-09-20T10:00:00Z", at="2026-09-20T11:00:00Z", evidence="‮gnp.exe"),
+        ]))
+        controls = sorted({f"U+{ord(c):04X}" for c in re.findall("[‪-‮⁦-⁩]", page)})
+        check("timeline: bidi controls from the ledger are removed, so the page's own words never reverse",
+              rc == 0 and not controls and "(DECIDE, deploy, asked by builder)." in page and "gnp.exe" in page,
+              str(controls) + " " + page[:1200])
+
+        long_actor, long_item = "B" * 100_000, "I" * 100_000
+        # Invalidations take their item's lane, so 48 short lines once carried 48 copies of
+        # the actor into the chart's tooltips.
+        amplify = ledger_file("tl-amplify.jsonl", [
+            row("x", actor=long_actor, at="2026-09-20T07:00:00Z"),
+            row(long_item, actor=long_actor, asked_at="2026-09-20T08:00:00Z", at="2026-09-20T10:00:00Z"),
+        ] + [json.dumps({"item_id": "x", "invalidated": {"at": f"2026-09-20T{11 + n // 12:02d}:{n % 12 * 5:02d}:00Z"}})
+             for n in range(48)])
+        rc, out, page = timeline(amplify)
+        longest = max((len(m) for m in re.findall(r"B+|I+", page)), default=0)
+        check("timeline: a long actor or item id is clipped everywhere, so the page stays smaller than the ledger",
+              rc == 0 and longest <= 200 and len(page.encode()) < os.path.getsize(amplify),
+              f"longest run {longest:,}, page {len(page.encode()):,} bytes, ledger {os.path.getsize(amplify):,}")
+
+        barecr = os.path.join(tmp, "tl-barecr.jsonl")
+        with open(barecr, "wb") as f:
+            f.write(row("first-record").encode() + b"\r" + row("second-record").encode() + b"\n")
+        rc, out, page = timeline(barecr)
+        check("timeline: records split by a bare CR are read the way hsi record reads them",
+              rc == 0 and "2 lines read: 2 events, 0 skipped" in page
+              and "hsi record reads this ledger without error" in page, page[:1500])
+
+        rc, out, page = timeline(ledger_file("tl-year-one.jsonl", [
+            row("ancient", date="0001-01-01", at="0001-01-01T00:00:00Z"),
+            row("modern", at="2026-09-20T10:00:00Z"),
+        ]))
+        check("timeline: a year below 1000 prints with four digits",
+              rc == 0 and "0001-01-01 00:00 UTC" in page and not re.search(r"(?<![\d-])1-01-01", page),
+              page[:1500])
 
     print(f"\n{failures} failure(s)")
     return 1 if failures else 0
