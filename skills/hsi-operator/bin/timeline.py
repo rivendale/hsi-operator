@@ -648,7 +648,7 @@ tr:target{background:var(--target)}
 @media (max-width:700px){table.cards{min-width:0}
 table.cards thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 table.cards tr{display:block;padding:8px 10px;border-top:1px solid var(--rule)}
-table.cards td{display:block;border:0;padding:1px 0}
+table.cards td{display:block;border:0;padding:1px 0;overflow-wrap:anywhere}
 table.cards td[data-label]::before{content:attr(data-label) ": ";color:var(--ink-3);font-size:12px}}
 footer{margin-top:32px;font-size:12px;color:var(--ink-3)}
 """
