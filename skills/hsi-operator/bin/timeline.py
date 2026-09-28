@@ -34,9 +34,7 @@ import json
 import math
 import os
 import re
-import stat
 import sys
-import tempfile
 
 from ledger import KINDS, LedgerError, invalid_answer_field, read_ledger, valid_date
 
@@ -831,54 +829,13 @@ def render(name, events, skipped, lines, strict):
     return "".join(out)
 
 
-def replaceable(info, target, folder):
-    """Whether a new page may be written beside `target` and renamed over it with nothing
-    lost: a regular file with one name, owned and writable by this user, in a folder this
-    user can write, and not a file mounted on its own. Anything else is written in place."""
-    return (stat.S_ISREG(info.st_mode) and info.st_nlink == 1
-            and (not hasattr(os, "geteuid") or info.st_uid == os.geteuid())
-            and os.access(target, os.W_OK) and os.access(folder, os.W_OK | os.X_OK)
-            and os.stat(folder).st_dev == info.st_dev)
-
-
 def write_page(path, data):
-    """Put the page at `path`. A missing file, or one `replaceable` accepts, is written
-    beside its destination and moved into place, so a failure at any point leaves whatever
-    was there before, whole. Anything else is opened and written where it is, as
-    `open(path, "w")` would: a device such as /dev/null, a FIFO, a file with a second name,
-    a file in a folder this user cannot write. A read-only file is refused by that open and
-    left as it was. A symlink is written through, and an existing file keeps its permissions."""
-    try:
-        info = os.stat(path)
-    except FileNotFoundError:
-        info = None
-    target = os.path.realpath(path)
-    folder = os.path.dirname(target)
-    if info is not None and not replaceable(info, target, folder):
-        with open(path, "wb") as out:
-            out.write(data)
-        return
-    if info is None:
-        os.makedirs(folder, exist_ok=True)
-        mask = os.umask(0)
-        os.umask(mask)
-        mode = 0o666 & ~mask
-    else:
-        mode = stat.S_IMODE(info.st_mode)
-    # A short name, never grown from the target's: a target named near the 255-byte limit
-    # would otherwise leave no room for the temp file's name.
-    handle, temp = tempfile.mkstemp(dir=folder, prefix=".hsi-", suffix=".tmp")
-    try:
-        with os.fdopen(handle, "wb") as out:
-            out.write(data)
-        os.chmod(temp, mode)
-        os.replace(temp, target)
-    except BaseException:
-        try:
-            os.unlink(temp)
-        except OSError:
-            pass
-        raise
+    """Write the page, already encoded to bytes, to `path`, as `open(path, "w")` would.
+    Because the content is bytes before the file is opened, nothing in a ledger can fail
+    after the open truncates what was there. A failure of the write itself, such as a full
+    disk, still leaves a partial file, as any write in place does."""
+    with open(path, "wb") as out:
+        out.write(data)
 
 
 def cli(argv):
@@ -903,12 +860,14 @@ def cli(argv):
     data = page.encode("utf-8")  # before anything is opened, so an encoding error cannot cost a file
     try:
         if args.out:
+            os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
             write_page(args.out, data)
         else:
             sys.stdout.buffer.write(data)
             sys.stdout.flush()
     except OSError as error:
-        print(f"hsi timeline: cannot write {args.out or 'stdout'}: {type(error).__name__}", file=sys.stderr)
+        print(f"hsi timeline: cannot write {args.out or 'stdout'}: {error.strerror or type(error).__name__}",
+              file=sys.stderr)
         return 2
     human = [e for e in events if e["category"] in KINDS]
     print(f"hsi timeline: {plural(lines, 'line')}, {plural(len(events), 'event')}, {len(skipped):,} skipped, "
