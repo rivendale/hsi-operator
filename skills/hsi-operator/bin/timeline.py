@@ -277,17 +277,28 @@ def measure_wait(event, asked_value):
     event["wait_text"] = duration(seconds, approximate)
 
 
+def split_lines(raw):
+    """One chunk read up to b"\\n", split where `read_ledger` splits it: text mode ends a line
+    at "\\n", "\\r\\n" or a bare "\\r", so both readers give a record the same line number."""
+    if raw.endswith(b"\r\n"):
+        raw = raw[:-2]
+    elif raw.endswith(b"\n") or raw.endswith(b"\r"):
+        raw = raw[:-1]
+    return raw.split(b"\r")
+
+
 def read_events(path):
     """(events, skipped, lines read). Never raises on content; only on opening the file."""
     events, skipped, lines, lane_of_item = [], [], 0, {}
     with open(path, "rb") as source:
-        for number, raw in enumerate(source, 1):
-            lines = number
-            reason, row = parse_row(raw, number)
-            if reason:
-                skipped.append((number, reason))
-            else:
-                events.append(make_event(number, row, lane_of_item))
+        for raw in source:
+            for piece in split_lines(raw):
+                lines += 1
+                reason, row = parse_row(piece, lines)
+                if reason:
+                    skipped.append((lines, reason))
+                else:
+                    events.append(make_event(lines, row, lane_of_item))
     return events, skipped, lines
 
 
