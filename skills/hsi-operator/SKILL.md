@@ -186,6 +186,9 @@ and `hsi record --ledger FILE --lookup ITEM_ID` before asking a question again.
 When a recorded condition fires, a person or agent runs `hsi record --ledger FILE --invalidate ITEM_ID --evidence TEXT`;
 `adapters/ledger/collect.py FILE` then surfaces it as
 `stale`. The ledger does not detect conditions by itself, and the adapter watches only the ledger.
+Put `actor` (who asked) and `asked_at` (when the question reached the operator) on the answer
+too, and `hsi timeline FILE -o timeline.html` can show where the operator was needed and how
+long each question waited; without them it says the wait was not recorded.
 
 ## Keep a stale answer from ruling forever
 

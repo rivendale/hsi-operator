@@ -76,11 +76,38 @@ hsi items.json --all    # everything, grouped by kind
 hsi items.json --why ID # the arithmetic for one item
 hsi done setpoint.json  # Door 2 as a file; exit 2 if done has no check
 hsi record --ledger .hsi/ledger.jsonl --from answer.json  # append an accountable answer
+hsi timeline .hsi/ledger.jsonl -o timeline.html            # draw the ledger as one page
 hsi --schema            # the full contract
 ```
 
 An **adapter** turns your world into that contract. `adapters/jsonl-tasks/` is a worked one
 reading a line-delimited task file; copy it and change the reader for your tracker. The skill never changes.
+
+## The timeline
+
+`hsi timeline LEDGER -o timeline.html` draws the ledger as one HTML page and answers one
+question at a glance: **where was the human actually needed, and how long did each wait?**
+One lane per actor, one row per kind inside it (DECIDE a diamond, APPROVE a square, EXECUTE a
+triangle, TASTE a circle, each with its letter), and a bar from the moment a question was
+asked to the moment it was answered. A per-actor summary and a table of every event sit
+below the chart, and each mark links to its row.
+
+![The timeline drawn from the example ledger](examples/timeline.example.png)
+
+That is [`examples/timeline.example.html`](examples/timeline.example.html), drawn from
+[`examples/timeline.example.jsonl`](examples/timeline.example.jsonl), a synthetic afternoon.
+The page is inline CSS and SVG: no script, no request, no model, and the same ledger always
+gives the same bytes.
+
+A ledger answer records the day and the kind, not who asked or when. Four optional fields
+fill that in, and without them the page says "not recorded" rather than guessing: `actor`
+(who asked, and so the lane), `asked_at` (when the question reached the operator), `at`
+(when it was answered, finer than `date`) and `evidence` (a link). `hsi record` keeps them.
+
+It reads leniently where `hsi record` reads strictly: a malformed line is skipped, counted
+and listed, an unknown kind is shown as "other", and the page says whether `hsi record`
+would accept the file. It shows answered questions only, because a question still waiting
+has no ledger line yet.
 
 ## Honest limitations
 
@@ -151,6 +178,10 @@ request. The idea is from
 Human-systems integration is the other parent. What we took from NASA/DAU/Endsley, what
 we refused (seven-domain matrices, learned rankers), and the restricted three-body reading
 of L0 live in `skills/hsi-operator/references/hsi-se.md`. Steal patterns; do not vendor them.
+
+The timeline's lane per actor, with a kind on every event, is an idea from
+[microsoft/TinyTroupe](https://github.com/microsoft/TinyTroupe) (MIT), whose simulations print
+each agent's stream with its action kind. We took the idea; no code.
 
 ## License
 

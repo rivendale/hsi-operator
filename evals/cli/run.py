@@ -488,7 +488,7 @@ def main():
             return p
 
         def timeline(ledger, *extra):
-            out_path = ledger + ".html"
+            out_path = os.path.join(tmp, os.path.basename(ledger) + ".html")
             if os.path.exists(out_path):
                 os.remove(out_path)
             rc, out = run("timeline", ledger, "-o", out_path, *extra)
@@ -557,8 +557,13 @@ def main():
               "Skipped lines: 2, 3, 4, 6, 7" in page, page[-1500:])
         check("timeline: an unknown kind is shown as other and does not count as the human",
               "The human was needed 2 times" in page and ">other<" in page and "MAYBE" in page, page[:1500])
-        check("timeline: the page says the strict reader would refuse this ledger, and where",
-              "hsi record would refuse this ledger" in page and "line 2" in page, page[:1500])
+        check("timeline: the page says the strict reader would refuse that ledger",
+              "hsi record would refuse this ledger" in page, page[:1500])
+        # A separate ledger for "where": read_ledger decodes in buffered chunks, so a bad byte
+        # anywhere in the first chunk fails before line 2 is parsed, and names no line.
+        rc, out, page = timeline(ledger_file("tl-strict.jsonl", [row("first-item"), "{not json at all"]))
+        check("timeline: and where it would stop, when the strict reader can say",
+              rc == 0 and "hsi record would refuse this ledger: ledger line 2" in page, page[:1500])
 
         rc, out, page = timeline(ledger_file("tl-bom-crlf.jsonl", [
             b"\xef\xbb\xbf" + row("bom-first").encode() + b"\r",
@@ -572,7 +577,7 @@ def main():
             row("a\"b'c<i>", question=payload, answer="</style><svg onload=alert(3)>",
                 actor="\"><img src=x onerror=alert(2)>", evidence="  JavaScript:alert(4)"),
             json.dumps({"item_id": "x", "kind": "<b>X</b>", "question": "<iframe src=//evil>"}),
-            row("linked", evidence="https://example.com/pr/12"),
+            row("linked", evidence="https://example.com/pr/12", question='x" onmouseover="alert(5)'),
         ]))
         found = tags(page)
         names = {name for name, _ in found}
@@ -678,9 +683,10 @@ def main():
         check("timeline: a 20,000-event run renders in under a minute",
               rc == 0 and elapsed < 60 and "20,000 lines read: 20,000 events, 0 skipped" in page,
               f"{elapsed:.1f}s " + out)
+        marks = page.count('class="mark')
         check("timeline: and the page stays bounded: under 3 MB, marks grouped, lanes merged",
-              len(page.encode()) < 3_000_000 and page.count('class="mark') < 5000
-              and "other actors" in page, f"{len(page.encode())} bytes, {page.count('class=\"mark')} marks")
+              len(page.encode()) < 3_000_000 and marks < 5000 and "other actors" in page,
+              f"{len(page.encode())} bytes, {marks} marks")
         check("timeline: the event table says how much of the run it shows",
               "The table shows the first 2,000 of 20,000 events" in page, page[-2000:])
 

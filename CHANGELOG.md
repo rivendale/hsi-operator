@@ -12,6 +12,15 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **Nothing showed where the operator was needed over a run, or how long each question
+  waited.** The ledger held every answer as a line, and recorded neither who asked nor when.
+  `hsi timeline LEDGER -o OUT.html` now draws it as one self-contained page, reads four
+  optional answer fields (`actor`, `asked_at`, `at`, `evidence`), and says "not recorded"
+  when they are absent. It skips and counts malformed lines where `hsi record` stops, and
+  says whether `hsi record` would accept the file. The failure list was written first, and a
+  mutation pass still found a hole in it: no injection payload put a quote inside an
+  attribute, so unescaped quotes passed every injection check until one did.
+
 - **A worker's verdict could reach the operator dressed as a finding.** Four delete verdicts
   from a ranked fan-out of agents were relayed to an operator and approved; three were false
   when checked at the start of the work. `references/honesty-protocol.md` now labels an
