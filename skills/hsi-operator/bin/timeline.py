@@ -816,23 +816,46 @@ def render(name, events, skipped, lines, strict):
     return "".join(out)
 
 
+def replaceable(info, target, folder):
+    """Whether a new page may be written beside `target` and renamed over it with nothing
+    lost: a regular file with one name, owned and writable by this user, in a folder this
+    user can write, and not a file mounted on its own. Anything else is written in place."""
+    return (stat.S_ISREG(info.st_mode) and info.st_nlink == 1
+            and (not hasattr(os, "geteuid") or info.st_uid == os.geteuid())
+            and os.access(target, os.W_OK) and os.access(folder, os.W_OK | os.X_OK)
+            and os.stat(folder).st_dev == info.st_dev)
+
+
 def write_page(path, data):
-    """Write the page beside its destination, then move it into place: a failure at any
-    point leaves whatever was there before, whole. A symlink is written through, as
-    `open(path, "w")` would, and an existing file keeps its permissions."""
+    """Put the page at `path`. A missing file, or one `replaceable` accepts, is written
+    beside its destination and moved into place, so a failure at any point leaves whatever
+    was there before, whole. Anything else is opened and written where it is, as
+    `open(path, "w")` would: a device such as /dev/null, a FIFO, a file with a second name,
+    a file in a folder this user cannot write. A read-only file is refused by that open and
+    left as it was. A symlink is written through, and an existing file keeps its permissions."""
+    try:
+        info = os.stat(path)
+    except FileNotFoundError:
+        info = None
     target = os.path.realpath(path)
     folder = os.path.dirname(target)
-    os.makedirs(folder, exist_ok=True)
-    handle, temp = tempfile.mkstemp(dir=folder, prefix="." + os.path.basename(target) + ".", suffix=".tmp")
+    if info is not None and not replaceable(info, target, folder):
+        with open(path, "wb") as out:
+            out.write(data)
+        return
+    if info is None:
+        os.makedirs(folder, exist_ok=True)
+        mask = os.umask(0)
+        os.umask(mask)
+        mode = 0o666 & ~mask
+    else:
+        mode = stat.S_IMODE(info.st_mode)
+    # A short name, never grown from the target's: a target named near the 255-byte limit
+    # would otherwise leave no room for the temp file's name.
+    handle, temp = tempfile.mkstemp(dir=folder, prefix=".hsi-", suffix=".tmp")
     try:
         with os.fdopen(handle, "wb") as out:
             out.write(data)
-        try:
-            mode = stat.S_IMODE(os.stat(target).st_mode)
-        except FileNotFoundError:
-            mask = os.umask(0)
-            os.umask(mask)
-            mode = 0o666 & ~mask
         os.chmod(temp, mode)
         os.replace(temp, target)
     except BaseException:
