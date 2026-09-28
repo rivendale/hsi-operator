@@ -11,6 +11,7 @@ trust.
 The clock is fixed with --today so a test written in September still means something in
 March. That flag exists for this and nothing else.
 """
+import errno
 import json
 import os
 import re
@@ -767,7 +768,8 @@ def main():
             resource = None
         if resource is not None and hasattr(resource, "RLIMIT_FSIZE"):
             # A write that fails partway, the way a full disk fails it: past 4 KB the
-            # process may not grow a file. The old page must survive whole.
+            # process may not grow a file. -o is written in place, as main writes it, so the
+            # file is left partial; what must hold is exit 2 and a message that says why.
             full = os.path.join(tmp, "tl-full")
             os.makedirs(full)
             kept = os.path.join(full, "kept.html")
@@ -779,16 +781,17 @@ def main():
 
             r = subprocess.run([sys.executable, HSI, "timeline", TIMELINE_LEDGER, "-o", kept],
                                capture_output=True, text=True, preexec_fn=small_files)
-            check("timeline: a write that fails partway leaves the previous page whole, and no temp file",
-                  r.returncode == 2 and "cannot write" in r.stderr and open(kept, "rb").read() == previous
-                  and os.listdir(full) == ["kept.html"],
+            check("timeline: a write that fails partway exits 2 and says why, with no Traceback",
+                  r.returncode == 2 and f"cannot write {kept}: {os.strerror(errno.EFBIG)}" in r.stderr
+                  and "Traceback" not in r.stderr and os.listdir(full) == ["kept.html"],
                   f"rc {r.returncode}, {os.path.getsize(kept)} bytes, {os.listdir(full)}; {r.stderr}")
         else:
             print("SKIP  timeline: a write that fails partway (no RLIMIT_FSIZE on this platform)")
 
-        # From a second review: a temp file and a rename suit a regular file this user owns
-        # and may replace, and nothing else. Every other -o is written where it is, as the
-        # first version wrote it, and a file nobody may write is still refused.
+        # -o is opened and written where it is, as main writes it: into a device, a FIFO or a
+        # file with a second name, through a symlink, and refused where the file cannot be
+        # written. A temp file and a rename were tried here and removed, because two reviews
+        # in a row found them changing what the plain write did.
         want = subprocess.run([sys.executable, HSI, "timeline", TIMELINE_LEDGER], capture_output=True).stdout
 
         def write_to(target, **kw):
@@ -895,12 +898,66 @@ def main():
             long_name = None
         if long_name:
             r = write_to(long_name)
-            check("timeline: an -o name of 250 bytes is written, because the temp name no longer grows from it",
+            check("timeline: an -o name of 250 bytes is written",
                   r.returncode == 0 and open(long_name, "rb").read() == want
                   and os.listdir(long_dir) == [os.path.basename(long_name)],
                   f"rc {r.returncode}, {len(os.listdir(long_dir))} entries; " + r.stderr.decode("utf-8", "replace"))
         else:
             print("SKIP  timeline: a 250-byte -o name (this file system refuses one)")
+
+        # From a third review, each a way the rename changed what the plain write does.
+        grouped = os.path.join(tmp, "tl-group.html")
+        with open(grouped, "wb") as f:
+            f.write(previous)
+        other_group = None
+        if hasattr(os, "getgroups") and hasattr(os, "chown"):
+            for gid in os.getgroups():
+                if gid == os.getegid():
+                    continue
+                try:
+                    os.chown(grouped, -1, gid)
+                except OSError:
+                    continue
+                other_group = gid
+                break
+        if other_group is not None:
+            os.chmod(grouped, 0o640)
+            r = write_to(grouped)
+            info = os.stat(grouped)
+            check("timeline: an -o file with a secondary group keeps that group and its mode",
+                  r.returncode == 0 and open(grouped, "rb").read() == want and info.st_gid == other_group
+                  and stat.S_IMODE(info.st_mode) == 0o640,
+                  f"rc {r.returncode}, group {info.st_gid} (was {other_group}), mode {oct(stat.S_IMODE(info.st_mode))}; "
+                  + r.stderr.decode("utf-8", "replace"))
+        else:
+            print("SKIP  timeline: an -o file with a secondary group (this user has no supplementary group to give it)")
+
+        slashed = os.path.join(tmp, "tl-newname")
+        r = write_to(slashed + os.sep)
+        check("timeline: an -o name that ends in a slash and does not exist exits 2 and creates nothing",
+              r.returncode == 2 and b"cannot write" in r.stderr and not os.path.lexists(slashed),
+              f"rc {r.returncode}, created: {os.path.lexists(slashed)}; " + r.stderr.decode("utf-8", "replace"))
+
+        gone = os.path.join(tmp, "tl-gone")
+        dangling = os.path.join(tmp, "tl-dangling.html")
+        try:
+            os.symlink(os.path.join(gone, "deeper", "page.html"), dangling)
+        except (OSError, NotImplementedError, AttributeError):
+            dangling = None
+        if dangling:
+            r = write_to(dangling)
+            check("timeline: -o a symlink into missing directories exits 2 and creates none of them",
+                  r.returncode == 2 and b"cannot write" in r.stderr and not os.path.exists(gone)
+                  and os.path.islink(dangling),
+                  f"rc {r.returncode}, created: {os.path.exists(gone)}; " + r.stderr.decode("utf-8", "replace"))
+        else:
+            print("SKIP  timeline: -o a dangling symlink (this file system refuses a symlink)")
+
+        fresh = os.path.join(tmp, "tl-new-dir", "deeper", "page.html")
+        r = write_to(fresh)
+        check("timeline: -o a new file under missing directories creates them, as main does",
+              r.returncode == 0 and os.path.exists(fresh) and open(fresh, "rb").read() == want,
+              f"rc {r.returncode}, exists: {os.path.exists(fresh)}; " + r.stderr.decode("utf-8", "replace"))
 
         # The page must not scroll sideways at phone width. Measured by a browser, because
         # only a browser knows where a line of text breaks.
