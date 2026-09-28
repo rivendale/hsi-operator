@@ -684,6 +684,12 @@ def render(name, events, skipped, lines, strict):
         by_kind = ", ".join(f"{sum(1 for e in human if e['category'] == k):,} {k}" for k in KINDS
                             if any(e["category"] == k for e in human))
         out.append(f'<p class="headline">The human was needed {plural(len(human), "time")}: {by_kind}.</p>')
+    elif any(e["category"] == OTHER for e in events):
+        # A mistyped kind is not evidence that the human was not needed.
+        other = sum(1 for e in events if e["category"] == OTHER)
+        out.append(f'<p class="headline">No event had a recognized kind ({other:,} shown as other).</p>'
+                   f"<p>An answer counts as the human being needed only when its kind is {', '.join(KINDS[:-1])} or {KINDS[-1]}, "
+                   "so this page cannot say whether the human was needed.</p>")
     else:
         out.append('<p class="headline">The human was not needed in any event this ledger recorded.</p>')
     if human:
