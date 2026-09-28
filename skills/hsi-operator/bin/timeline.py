@@ -79,11 +79,16 @@ SECOND_STEPS = (1, 5, 15, 30, 60, 300, 900, 1800, 3600, 7200, 10800, 21600, 4320
 # as UTF-8, so it is shown as U+FFFD. A pair that JSON joins into one character never
 # reaches this pattern.
 SURROGATE = re.compile("[\ud800-\udfff]")
+# Bidi embeddings, overrides and isolates (U+202A-202E, U+2066-2069). One left open in a
+# ledger field reverses the page's own words after it, in HTML and in SVG tooltips alike,
+# and can make "gnp.exe" read "exe.png". Removed. Hebrew or Arabic text needs none of them
+# to display in its own direction.
+BIDI_CONTROL = re.compile("[\u202a-\u202e\u2066-\u2069]")
 
 
 def clean(text):
     """Ledger text made safe to print."""
-    return SURROGATE.sub("\ufffd", text)
+    return BIDI_CONTROL.sub("", SURROGATE.sub("\ufffd", text))
 
 
 def esc(value):
