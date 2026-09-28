@@ -856,7 +856,8 @@ def main():
         # the actor into the chart's tooltips.
         amplify = ledger_file("tl-amplify.jsonl", [
             row("x", actor=long_actor, at="2026-09-20T07:00:00Z"),
-            row(long_item, actor=long_actor, asked_at="2026-09-20T08:00:00Z", at="2026-09-20T10:00:00Z"),
+            row(long_item, actor=long_actor, question="Ship it?",  # the default question holds the item id
+                asked_at="2026-09-20T08:00:00Z", at="2026-09-20T10:00:00Z"),
         ] + [json.dumps({"item_id": "x", "invalidated": {"at": f"2026-09-20T{11 + n // 12:02d}:{n % 12 * 5:02d}:00Z"}})
              for n in range(48)])
         rc, out, page = timeline(amplify)

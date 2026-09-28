@@ -62,6 +62,7 @@ MAX_LANES = 12          # more actors than this merge into one lane that says ho
 TABLE_LIMIT = 2000      # event rows in the table; the rest are counted and pointed at
 MAX_BARS = 1500         # wait bars drawn, longest first
 TEXT_LIMIT = 600        # characters shown from any one ledger field
+NAME_LIMIT = 120        # characters shown from an actor or item id, which can repeat on every mark
 
 LABEL_W, CHART_W, AXIS_H, HEAD_H, SUB_H, LANE_GAP, SIDE_W, COL, EDGE = 120, 900, 30, 20, 24, 8, 120, 18, 16
 
@@ -446,9 +447,9 @@ def marker(category, extra=""):
 
 
 def describe(e):
-    parts = [f"{e['category']} · {e['lane']} · line {e['line']}", show_time(e["when"])]
+    parts = [f"{e['category']} · {clip(e['lane'], NAME_LIMIT)} · line {e['line']}", show_time(e["when"])]
     if e["category"] == INVALIDATED:
-        parts.append(f"invalidated {e['item'] or '(no item id)'}: {clip(label(e['evidence']), 200)}")
+        parts.append(f"invalidated {clip(e['item'] or '(no item id)', NAME_LIMIT)}: {clip(label(e['evidence']), 200)}")
     else:
         if e["question"] or e["answer"]:
             parts.append(clip(e["question"], 200) + (" → " + clip(e["answer"], 200) if e["answer"] else ""))
@@ -513,7 +514,7 @@ def draw_chart(events, geo, groups, drawable, in_table):
         else:
             timed = [e["when"] for e in members if e["when"]]
             waits = [e for e in members if e["wait"]]
-            tip = f"{len(members):,} {g['category']} events · {g['lane']}"
+            tip = f"{len(members):,} {g['category']} events · {clip(g['lane'], NAME_LIMIT)}"
             if timed:
                 tip += f"\n{show_time(min(timed))} to {show_time(max(timed))}"
             if waits:
@@ -546,7 +547,7 @@ def draw_labels(geo):
     out = [f'<svg class="labels" width="{LABEL_W}" height="{height}" viewBox="0 0 {LABEL_W} {height}" aria-hidden="true">']
     for name, top, subs in geo["geometry"]:
         out.append(f'<line class="rule" x1="0" x2="{LABEL_W}" y1="{top:.1f}" y2="{top:.1f}"/>')
-        out.append(f'<text class="lane-name" x="2" y="{top + 14:.1f}"><title>{esc(name)}</title>{esc(clip(name, 17))}</text>')
+        out.append(f'<text class="lane-name" x="2" y="{top + 14:.1f}"><title>{esc(clip(name, NAME_LIMIT))}</title>{esc(clip(name, 17))}</text>')
         for category, y in subs.items():
             out.append(f'<text class="sub-name" x="{LABEL_W - 8}" y="{y + 3.5:.1f}">{esc(category)}</text>')
     out.append("</svg>")
@@ -648,9 +649,9 @@ def kind_cell(e):
 def what_cell(e):
     parts = []
     if e["item"]:
-        parts.append(f'<div class="item">{esc(clip(e["item"], 120))}</div>')
+        parts.append(f'<div class="item">{esc(clip(e["item"], NAME_LIMIT))}</div>')
     if e["category"] == INVALIDATED:
-        parts.append(f'<div class="q">The standing answer to {esc(clip(e["item"] or "(no item id)", 120))} was invalidated</div>')
+        parts.append(f'<div class="q">The standing answer to {esc(clip(e["item"] or "(no item id)", NAME_LIMIT))} was invalidated</div>')
     else:
         parts.append(f'<div class="q">{esc(clip(e["question"])) if e["question"] else "(no question recorded)"}</div>')
         if e["answer"]:
@@ -701,9 +702,9 @@ def render(name, events, skipped, lines, strict):
         sentence = f"Waits recorded for {len(waits):,} of {len(human):,}"
         if waits:
             longest = max(waits, key=lambda e: (e["wait"]["seconds"], -e["line"]))
-            who = f", asked by {longest['lane']}" if longest["lane"] != DEFAULT_LANE else ""
+            who = f", asked by {clip(longest['lane'], NAME_LIMIT)}" if longest["lane"] != DEFAULT_LANE else ""
             sentence += (f": {total([e['wait'] for e in waits])} in total, longest {longest['wait_text']} "
-                         f"({longest['category']}, {longest['item'] or 'no item id'}{who}).")
+                         f"({longest['category']}, {clip(longest['item'] or 'no item id', NAME_LIMIT)}{who}).")
         else:
             sentence += ". No answer here says when its question was asked; an answer with asked_at gets its wait measured."
         out.append(f"<p>{esc(sentence)}</p>")
@@ -771,7 +772,7 @@ def render(name, events, skipped, lines, strict):
                               if any(e["category"] == k for e in h))
             rest = ", ".join(f"{sum(1 for e in mine if e['category'] == c):,} {c}" for c in (INVALIDATED, OTHER)
                              if any(e["category"] == c for e in mine))
-            out.append(f'<tr><td><strong>{esc(clip(name, 120))}</strong></td>'
+            out.append(f'<tr><td><strong>{esc(clip(name, NAME_LIMIT))}</strong></td>'
                        f'<td data-label="Needed the human">{len(h):,}{": " + kinds if kinds else ""}</td>'
                        f'<td data-label="Waits recorded">{len(w):,} of {len(h):,}</td>'
                        f'<td data-label="Total wait">{esc(total(w)) if w else "not recorded"}</td>'
@@ -789,7 +790,7 @@ def render(name, events, skipped, lines, strict):
         for e in events[:TABLE_LIMIT]:
             out.append(f'<tr id="line-{e["line"]}"><td class="num" data-label="Line">{e["line"]:,}</td>'
                        f'<td data-label="Time">{esc(show_time(e["when"]))}</td>'
-                       f'<td data-label="Actor">{esc(clip(e["lane"], 120))}</td>'
+                       f'<td data-label="Actor">{esc(clip(e["lane"], NAME_LIMIT))}</td>'
                        f'<td class="tight">{kind_cell(e)}</td><td class="wrap">{what_cell(e)}</td>'
                        f'<td data-label="Wait">{esc(e["wait_text"])}</td><td class="wrap">{evidence_cell(e)}</td></tr>')
         out.append("</tbody></table></div></section>")
