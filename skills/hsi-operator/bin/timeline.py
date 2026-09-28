@@ -489,9 +489,12 @@ def draw_chart(events, geo, groups, drawable, in_table):
                 tip += f"\nlongest wait {longest['wait_text']} (line {longest['line']})"
             lines = ", ".join(str(e["line"]) for e in members[:8])
             tip += f"\nlines {lines}" + (", …" if len(members) > 8 else "")
-        neighbor = any(0 < x - g["x"] < COL * 1.6 for x in occupied[(g["lane"], g["category"])])
         count = f"×{len(members):,}"
-        place = 'x="10"' if g["x"] + 10 + 6 * len(count) <= CHART_W else 'x="-10" text-anchor="end"'
+        right = g["x"] + 10 + 6 * len(count) <= CHART_W
+        place = 'x="10"' if right else 'x="-10" text-anchor="end"'
+        # Drawn only where its own side is clear: toward the next mark, a badge covers it.
+        neighbor = any(0 < (x - g["x"] if right else g["x"] - x) < COL * 1.6
+                       for x in occupied[(g["lane"], g["category"])])
         badge = f'<text class="count" {place} y="-6">{count}</text>' if len(members) > 1 and not neighbor else ""
         body = f'<title>{esc(tip)}</title><circle class="hit" r="11"/>{marker(g["category"], badge)}'
         where = f'transform="translate({g["x"]:.1f},{g["y"]:.1f})"'
