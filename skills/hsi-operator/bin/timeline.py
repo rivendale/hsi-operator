@@ -34,7 +34,9 @@ import json
 import math
 import os
 import re
+import stat
 import sys
+import tempfile
 
 from ledger import KINDS, LedgerError, invalid_answer_field, read_ledger, valid_date
 
@@ -72,6 +74,18 @@ SECOND_STEPS = (1, 5, 15, 30, 60, 300, 900, 1800, 3600, 7200, 10800, 21600, 4320
                 86400, 172800, 604800, 1209600)
 
 
+# A lone UTF-16 surrogate is a valid JSON escape and not valid Unicode: a JavaScript writer
+# produces one whenever it clips a string in the middle of an emoji. It cannot be encoded
+# as UTF-8, so it is shown as U+FFFD. A pair that JSON joins into one character never
+# reaches this pattern.
+SURROGATE = re.compile("[\ud800-\udfff]")
+
+
+def clean(text):
+    """Ledger text made safe to print."""
+    return SURROGATE.sub("\ufffd", text)
+
+
 def esc(value):
     return html.escape(value, quote=True)
 
@@ -85,9 +99,9 @@ def label(value):
     if value is None:
         return ""
     if isinstance(value, str):
-        return value
+        return clean(value)
     try:
-        return json.dumps(value, ensure_ascii=False)[:TEXT_LIMIT + 1]
+        return clean(json.dumps(value, ensure_ascii=False)[:TEXT_LIMIT + 1])
     except (ValueError, RecursionError):
         return "(unreadable value)"
 
@@ -187,9 +201,17 @@ def parse_row(raw, number):
     return None, row
 
 
+def text_or_none(value, strip=False):
+    """A string field, cleaned, or None when it is not a string or holds nothing to show."""
+    if not isinstance(value, str):
+        return None
+    text = clean(value)
+    return (text.strip() if strip else text) if text.strip() else None
+
+
 def make_event(number, row, lane_of_item):
-    item = row.get("item_id") if isinstance(row.get("item_id"), str) and row["item_id"].strip() else None
-    actor = row.get("actor").strip() if isinstance(row.get("actor"), str) and row["actor"].strip() else None
+    item = text_or_none(row.get("item_id"))
+    actor = text_or_none(row.get("actor"), strip=True)
     event = {"line": number, "item": item, "notes": [], "question": "", "answer": "", "raw_kind": None,
              "asked": None, "wait": None, "wait_text": "n/a"}
     invalidation = row.get("invalidated")
@@ -197,14 +219,14 @@ def make_event(number, row, lane_of_item):
         event["category"] = INVALIDATED
         event["lane"] = lane_of_item.get(item) or actor or DEFAULT_LANE
         event["when"], bad = pick_time(invalidation.get("at"), invalidation.get("date"))
-        event["evidence"] = invalidation.get("evidence")
+        event["evidence"] = evidence_of(invalidation)
     else:
         kind = row.get("kind")
         event["category"] = kind if isinstance(kind, str) and kind in KINDS else OTHER
         event["raw_kind"] = clip(label(kind) or "null", 40) if "kind" in row else None
         event["lane"] = actor or DEFAULT_LANE
         event["when"], bad = pick_time(row.get("at"), row.get("date"))
-        event["evidence"] = row.get("evidence")
+        event["evidence"] = evidence_of(row)
         event["question"], event["answer"] = label(row.get("question")), label(row.get("answer"))
     if bad is not None:
         event["notes"].append(f"unreadable time {clip(label(bad), 40)!r}")
@@ -216,9 +238,14 @@ def make_event(number, row, lane_of_item):
             event["notes"].append(f"not a complete ledger answer: {missing} is missing or invalid")
         reason = row.get("supersedes_reason")
         if isinstance(reason, str) and reason.strip():
-            event["notes"].append("replaces an earlier answer: " + reason)
+            event["notes"].append("replaces an earlier answer: " + clean(reason))
         measure_wait(event, row.get("asked_at"))
     return event
+
+
+def evidence_of(row):
+    value = row.get("evidence")
+    return clean(value) if isinstance(value, str) else value
 
 
 def measure_wait(event, asked_value):
@@ -262,7 +289,7 @@ def strict_verdict(path):
     try:
         read_ledger(path)
     except (LedgerError, ValueError, OSError, RecursionError) as error:
-        return f"hsi record would refuse this ledger: {clip(str(error), 200)}."
+        return f"hsi record would refuse this ledger: {clip(clean(str(error)), 200)}."
     return "hsi record reads this ledger without error."
 
 
@@ -760,6 +787,33 @@ def render(name, events, skipped, lines, strict):
     return "".join(out)
 
 
+def write_page(path, data):
+    """Write the page beside its destination, then move it into place: a failure at any
+    point leaves whatever was there before, whole. A symlink is written through, as
+    `open(path, "w")` would, and an existing file keeps its permissions."""
+    target = os.path.realpath(path)
+    folder = os.path.dirname(target)
+    os.makedirs(folder, exist_ok=True)
+    handle, temp = tempfile.mkstemp(dir=folder, prefix="." + os.path.basename(target) + ".", suffix=".tmp")
+    try:
+        with os.fdopen(handle, "wb") as out:
+            out.write(data)
+        try:
+            mode = stat.S_IMODE(os.stat(target).st_mode)
+        except FileNotFoundError:
+            mask = os.umask(0)
+            os.umask(mask)
+            mode = 0o666 & ~mask
+        os.chmod(temp, mode)
+        os.replace(temp, target)
+    except BaseException:
+        try:
+            os.unlink(temp)
+        except OSError:
+            pass
+        raise
+
+
 def cli(argv):
     parser = argparse.ArgumentParser(prog="hsi timeline",
                                      description="Draw the ledger: where the human was needed, and how long each wait was.")
@@ -778,14 +832,13 @@ def cli(argv):
     except OSError as error:
         print(f"hsi timeline: cannot read {args.ledger}: {type(error).__name__}", file=sys.stderr)
         return 2
-    page = render(os.path.basename(args.ledger), events, skipped, lines, strict_verdict(args.ledger))
+    page = render(clean(os.path.basename(args.ledger)), events, skipped, lines, strict_verdict(args.ledger))
+    data = page.encode("utf-8")  # before anything is opened, so an encoding error cannot cost a file
     try:
         if args.out:
-            os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
-            with open(args.out, "w", encoding="utf-8", newline="\n") as target:
-                target.write(page)
+            write_page(args.out, data)
         else:
-            sys.stdout.buffer.write(page.encode("utf-8"))
+            sys.stdout.buffer.write(data)
             sys.stdout.flush()
     except OSError as error:
         print(f"hsi timeline: cannot write {args.out or 'stdout'}: {type(error).__name__}", file=sys.stderr)
