@@ -151,13 +151,19 @@ def pick_time(*values):
     return None, bad
 
 
+def day(moment):
+    """YYYY-MM-DD with four digits of year: strftime's %Y does not pad a year below 1000 on
+    glibc, and does on macOS."""
+    return f"{moment.year:04d}-{moment.month:02d}-{moment.day:02d}"
+
+
 def show_time(moment):
     if moment is None:
         return "not recorded"
     when, precision = moment
     if precision == "day":
-        return f"{when:%Y-%m-%d} (day only)"
-    return f"{when:%Y-%m-%d %H:%M}" + (f":{when:%S}" if when.second else "") + " UTC"
+        return f"{day(when)} (day only)"
+    return f"{day(when)} {when:%H:%M}" + (f":{when:%S}" if when.second else "") + " UTC"
 
 
 def duration(seconds, approximate=False):
@@ -354,7 +360,7 @@ def ticks(t0, t1):
 
 def tick_label(moment, style, mode):
     if style == "full":
-        return f"{moment:%Y-%m-%d %H:%M}" if mode == "clock" else f"{moment:%Y-%m-%d}"
+        return f"{day(moment)} {moment:%H:%M}" if mode == "clock" else day(moment)
     if style in ("seconds", "clock") and moment.time() == datetime.time():
         return f"{MONTHS[moment.month - 1]} {moment.day}"
     if style == "seconds":
@@ -364,8 +370,8 @@ def tick_label(moment, style, mode):
     if style == "day":
         return f"{MONTHS[moment.month - 1]} {moment.day}"
     if style == "month":
-        return f"{MONTHS[moment.month - 1]} {moment.year}"
-    return str(moment.year)
+        return f"{MONTHS[moment.month - 1]} {moment.year:04d}"
+    return f"{moment.year:04d}"
 
 
 def assign_lanes(events):
