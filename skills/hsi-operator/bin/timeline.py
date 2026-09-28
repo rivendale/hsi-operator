@@ -60,6 +60,7 @@ MAX_LANES = 12          # more actors than this merge into one lane that says ho
 TABLE_LIMIT = 2000      # event rows in the table; the rest are counted and pointed at
 MAX_BARS = 1500         # wait bars drawn, longest first
 TEXT_LIMIT = 600        # characters shown from any one ledger field
+NAME_LIMIT = 120        # characters shown from an actor or item id, which can repeat on every mark
 
 LABEL_W, CHART_W, AXIS_H, HEAD_H, SUB_H, LANE_GAP, SIDE_W, COL, EDGE = 120, 900, 30, 20, 24, 8, 120, 18, 16
 
@@ -70,6 +71,30 @@ EPOCH = datetime.datetime(1970, 1, 1)
 MONTHS = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 SECOND_STEPS = (1, 5, 15, 30, 60, 300, 900, 1800, 3600, 7200, 10800, 21600, 43200,
                 86400, 172800, 604800, 1209600)
+
+
+# A lone UTF-16 surrogate is a valid JSON escape and not valid Unicode: a JavaScript writer
+# produces one whenever it clips a string in the middle of an emoji. It cannot be encoded
+# as UTF-8, so it is shown as U+FFFD. A pair that JSON joins into one character never
+# reaches this pattern.
+SURROGATE = re.compile("[\ud800-\udfff]")
+# Bidi embeddings, overrides and isolates (U+202A-202E, U+2066-2069). One left open in a
+# ledger field reverses the page's own words after it, in HTML and in SVG tooltips alike,
+# and can make "gnp.exe" read "exe.png". Removed. Hebrew or Arabic text needs none of them
+# to display in its own direction.
+BIDI_CONTROL = re.compile("[\u202a-\u202e\u2066-\u2069]")
+
+
+def clean(text):
+    """Ledger text made safe to print."""
+    return BIDI_CONTROL.sub("", SURROGATE.sub("\ufffd", text))
+
+
+def visible(text):
+    """Ledger text with every character that prints as nothing written out as \\uXXXX: an
+    unrecognized kind like "DE\\u202eCIDE" or "APP\\u200bROVE" would otherwise read as a
+    kind the page knows."""
+    return "".join(c if c.isprintable() else f"\\u{ord(c):04x}" for c in SURROGATE.sub("\ufffd", text))
 
 
 def esc(value):
@@ -85,9 +110,9 @@ def label(value):
     if value is None:
         return ""
     if isinstance(value, str):
-        return value
+        return clean(value)
     try:
-        return json.dumps(value, ensure_ascii=False)[:TEXT_LIMIT + 1]
+        return clean(json.dumps(value, ensure_ascii=False)[:TEXT_LIMIT + 1])
     except (ValueError, RecursionError):
         return "(unreadable value)"
 
@@ -131,13 +156,19 @@ def pick_time(*values):
     return None, bad
 
 
+def day(moment):
+    """YYYY-MM-DD with four digits of year: strftime's %Y does not pad a year below 1000 on
+    glibc, and does on macOS."""
+    return f"{moment.year:04d}-{moment.month:02d}-{moment.day:02d}"
+
+
 def show_time(moment):
     if moment is None:
         return "not recorded"
     when, precision = moment
     if precision == "day":
-        return f"{when:%Y-%m-%d} (day only)"
-    return f"{when:%Y-%m-%d %H:%M}" + (f":{when:%S}" if when.second else "") + " UTC"
+        return f"{day(when)} (day only)"
+    return f"{day(when)} {when:%H:%M}" + (f":{when:%S}" if when.second else "") + " UTC"
 
 
 def duration(seconds, approximate=False):
@@ -187,9 +218,17 @@ def parse_row(raw, number):
     return None, row
 
 
+def text_or_none(value, strip=False):
+    """A string field, cleaned, or None when it is not a string or holds nothing to show."""
+    if not isinstance(value, str):
+        return None
+    text = clean(value)
+    return (text.strip() if strip else text) if text.strip() else None
+
+
 def make_event(number, row, lane_of_item):
-    item = row.get("item_id") if isinstance(row.get("item_id"), str) and row["item_id"].strip() else None
-    actor = row.get("actor").strip() if isinstance(row.get("actor"), str) and row["actor"].strip() else None
+    item = text_or_none(row.get("item_id"))
+    actor = text_or_none(row.get("actor"), strip=True)
     event = {"line": number, "item": item, "notes": [], "question": "", "answer": "", "raw_kind": None,
              "asked": None, "wait": None, "wait_text": "n/a"}
     invalidation = row.get("invalidated")
@@ -197,14 +236,15 @@ def make_event(number, row, lane_of_item):
         event["category"] = INVALIDATED
         event["lane"] = lane_of_item.get(item) or actor or DEFAULT_LANE
         event["when"], bad = pick_time(invalidation.get("at"), invalidation.get("date"))
-        event["evidence"] = invalidation.get("evidence")
+        event["evidence"] = evidence_of(invalidation)
     else:
         kind = row.get("kind")
         event["category"] = kind if isinstance(kind, str) and kind in KINDS else OTHER
-        event["raw_kind"] = clip(label(kind) or "null", 40) if "kind" in row else None
+        shown = visible(kind) if isinstance(kind, str) else label(kind)
+        event["raw_kind"] = clip(shown or "null", 40) if "kind" in row else None
         event["lane"] = actor or DEFAULT_LANE
         event["when"], bad = pick_time(row.get("at"), row.get("date"))
-        event["evidence"] = row.get("evidence")
+        event["evidence"] = evidence_of(row)
         event["question"], event["answer"] = label(row.get("question")), label(row.get("answer"))
     if bad is not None:
         event["notes"].append(f"unreadable time {clip(label(bad), 40)!r}")
@@ -216,9 +256,14 @@ def make_event(number, row, lane_of_item):
             event["notes"].append(f"not a complete ledger answer: {missing} is missing or invalid")
         reason = row.get("supersedes_reason")
         if isinstance(reason, str) and reason.strip():
-            event["notes"].append("replaces an earlier answer: " + reason)
+            event["notes"].append("replaces an earlier answer: " + clean(reason))
         measure_wait(event, row.get("asked_at"))
     return event
+
+
+def evidence_of(row):
+    value = row.get("evidence")
+    return clean(value) if isinstance(value, str) else value
 
 
 def measure_wait(event, asked_value):
@@ -244,17 +289,28 @@ def measure_wait(event, asked_value):
     event["wait_text"] = duration(seconds, approximate)
 
 
+def split_lines(raw):
+    """One chunk read up to b"\\n", split where `read_ledger` splits it: text mode ends a line
+    at "\\n", "\\r\\n" or a bare "\\r", so both readers give a record the same line number."""
+    if raw.endswith(b"\r\n"):
+        raw = raw[:-2]
+    elif raw.endswith(b"\n") or raw.endswith(b"\r"):
+        raw = raw[:-1]
+    return raw.split(b"\r")
+
+
 def read_events(path):
     """(events, skipped, lines read). Never raises on content; only on opening the file."""
     events, skipped, lines, lane_of_item = [], [], 0, {}
     with open(path, "rb") as source:
-        for number, raw in enumerate(source, 1):
-            lines = number
-            reason, row = parse_row(raw, number)
-            if reason:
-                skipped.append((number, reason))
-            else:
-                events.append(make_event(number, row, lane_of_item))
+        for raw in source:
+            for piece in split_lines(raw):
+                lines += 1
+                reason, row = parse_row(piece, lines)
+                if reason:
+                    skipped.append((lines, reason))
+                else:
+                    events.append(make_event(lines, row, lane_of_item))
     return events, skipped, lines
 
 
@@ -262,7 +318,7 @@ def strict_verdict(path):
     try:
         read_ledger(path)
     except (LedgerError, ValueError, OSError, RecursionError) as error:
-        return f"hsi record would refuse this ledger: {clip(str(error), 200)}."
+        return f"hsi record would refuse this ledger: {clip(clean(str(error)), 200)}."
     return "hsi record reads this ledger without error."
 
 
@@ -310,7 +366,7 @@ def ticks(t0, t1):
 
 def tick_label(moment, style, mode):
     if style == "full":
-        return f"{moment:%Y-%m-%d %H:%M}" if mode == "clock" else f"{moment:%Y-%m-%d}"
+        return f"{day(moment)} {moment:%H:%M}" if mode == "clock" else day(moment)
     if style in ("seconds", "clock") and moment.time() == datetime.time():
         return f"{MONTHS[moment.month - 1]} {moment.day}"
     if style == "seconds":
@@ -320,8 +376,8 @@ def tick_label(moment, style, mode):
     if style == "day":
         return f"{MONTHS[moment.month - 1]} {moment.day}"
     if style == "month":
-        return f"{MONTHS[moment.month - 1]} {moment.year}"
-    return str(moment.year)
+        return f"{MONTHS[moment.month - 1]} {moment.year:04d}"
+    return f"{moment.year:04d}"
 
 
 def assign_lanes(events):
@@ -414,9 +470,9 @@ def marker(category, extra=""):
 
 
 def describe(e):
-    parts = [f"{e['category']} · {e['lane']} · line {e['line']}", show_time(e["when"])]
+    parts = [f"{e['category']} · {clip(e['lane'], NAME_LIMIT)} · line {e['line']}", show_time(e["when"])]
     if e["category"] == INVALIDATED:
-        parts.append(f"invalidated {e['item'] or '(no item id)'}: {clip(label(e['evidence']), 200)}")
+        parts.append(f"invalidated {clip(e['item'] or '(no item id)', NAME_LIMIT)}: {clip(label(e['evidence']), 200)}")
     else:
         if e["question"] or e["answer"]:
             parts.append(clip(e["question"], 200) + (" → " + clip(e["answer"], 200) if e["answer"] else ""))
@@ -481,7 +537,7 @@ def draw_chart(events, geo, groups, drawable, in_table):
         else:
             timed = [e["when"] for e in members if e["when"]]
             waits = [e for e in members if e["wait"]]
-            tip = f"{len(members):,} {g['category']} events · {g['lane']}"
+            tip = f"{len(members):,} {g['category']} events · {clip(g['lane'], NAME_LIMIT)}"
             if timed:
                 tip += f"\n{show_time(min(timed))} to {show_time(max(timed))}"
             if waits:
@@ -514,7 +570,7 @@ def draw_labels(geo):
     out = [f'<svg class="labels" width="{LABEL_W}" height="{height}" viewBox="0 0 {LABEL_W} {height}" aria-hidden="true">']
     for name, top, subs in geo["geometry"]:
         out.append(f'<line class="rule" x1="0" x2="{LABEL_W}" y1="{top:.1f}" y2="{top:.1f}"/>')
-        out.append(f'<text class="lane-name" x="2" y="{top + 14:.1f}"><title>{esc(name)}</title>{esc(clip(name, 17))}</text>')
+        out.append(f'<text class="lane-name" x="2" y="{top + 14:.1f}"><title>{esc(clip(name, NAME_LIMIT))}</title>{esc(clip(name, 17))}</text>')
         for category, y in subs.items():
             out.append(f'<text class="sub-name" x="{LABEL_W - 8}" y="{y + 3.5:.1f}">{esc(category)}</text>')
     out.append("</svg>")
@@ -551,7 +607,7 @@ CSS = """
 --k-approve:#d95926;--k-execute:#199e70;--k-taste:#c98500;--k-other:#8f8e87}
 *{box-sizing:border-box}
 body{margin:0;background:var(--surface);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
-main{max-width:1120px;margin:0 auto;padding:24px 16px 48px}
+main{max-width:1120px;margin:0 auto;padding:24px 16px 48px;overflow-wrap:break-word}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:32px 0 8px}
 p{margin:6px 0}a{color:var(--link)}.muted,.meta{color:var(--ink-2)}.meta{font-size:13px;overflow-wrap:anywhere}
 .headline{font-size:19px;font-weight:600;margin-top:18px}
@@ -598,7 +654,7 @@ tr:target{background:var(--target)}
 @media (max-width:700px){table.cards{min-width:0}
 table.cards thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 table.cards tr{display:block;padding:8px 10px;border-top:1px solid var(--rule)}
-table.cards td{display:block;border:0;padding:1px 0}
+table.cards td{display:block;border:0;padding:1px 0;overflow-wrap:anywhere;white-space:normal}
 table.cards td[data-label]::before{content:attr(data-label) ": ";color:var(--ink-3);font-size:12px}}
 footer{margin-top:32px;font-size:12px;color:var(--ink-3)}
 """
@@ -616,9 +672,9 @@ def kind_cell(e):
 def what_cell(e):
     parts = []
     if e["item"]:
-        parts.append(f'<div class="item">{esc(clip(e["item"], 120))}</div>')
+        parts.append(f'<div class="item">{esc(clip(e["item"], NAME_LIMIT))}</div>')
     if e["category"] == INVALIDATED:
-        parts.append(f'<div class="q">The standing answer to {esc(clip(e["item"] or "(no item id)", 120))} was invalidated</div>')
+        parts.append(f'<div class="q">The standing answer to {esc(clip(e["item"] or "(no item id)", NAME_LIMIT))} was invalidated</div>')
     else:
         parts.append(f'<div class="q">{esc(clip(e["question"])) if e["question"] else "(no question recorded)"}</div>')
         if e["answer"]:
@@ -643,6 +699,8 @@ def render(name, events, skipped, lines, strict):
     human = [e for e in events if e["category"] in KINDS]
     waits = [e for e in human if e["wait"]]
     backwards = [e for e in human if e["wait_text"] == "answered before it was asked"]
+    other = sum(1 for e in events if e["category"] == OTHER)
+    invalidations = sum(1 for e in events if e["category"] == INVALIDATED)
     in_table = {e["line"] for e in events[:TABLE_LIMIT]}
     out = ["<!doctype html>", '<html lang="en"><head><meta charset="utf-8">',
            '<meta name="viewport" content="width=device-width,initial-scale=1">',
@@ -656,16 +714,27 @@ def render(name, events, skipped, lines, strict):
     elif human:
         by_kind = ", ".join(f"{sum(1 for e in human if e['category'] == k):,} {k}" for k in KINDS
                             if any(e["category"] == k for e in human))
-        out.append(f'<p class="headline">The human was needed {plural(len(human), "time")}: {by_kind}.</p>')
+        unknown = f" {plural(other, 'more event')} had no recognized kind, shown as other." if other else ""
+        out.append(f'<p class="headline">The human was needed {plural(len(human), "time")}: {by_kind}.{unknown}</p>')
+    elif other:
+        # A mistyped kind is not evidence that the human was not needed.
+        if invalidations:
+            known = (f"No answer had a recognized kind ({other:,} shown as other); "
+                     f"{plural(invalidations, 'invalidation')} {'was' if invalidations == 1 else 'were'} recognized.")
+        else:
+            known = f"No event had a recognized kind ({other:,} shown as other)."
+        out.append(f'<p class="headline">{known}</p>'
+                   f"<p>An answer counts as the human being needed only when its kind is {', '.join(KINDS[:-1])} or {KINDS[-1]}, "
+                   "so this page cannot say whether the human was needed.</p>")
     else:
         out.append('<p class="headline">The human was not needed in any event this ledger recorded.</p>')
     if human:
         sentence = f"Waits recorded for {len(waits):,} of {len(human):,}"
         if waits:
             longest = max(waits, key=lambda e: (e["wait"]["seconds"], -e["line"]))
-            who = f", asked by {longest['lane']}" if longest["lane"] != DEFAULT_LANE else ""
+            who = f", asked by {clip(longest['lane'], NAME_LIMIT)}" if longest["lane"] != DEFAULT_LANE else ""
             sentence += (f": {total([e['wait'] for e in waits])} in total, longest {longest['wait_text']} "
-                         f"({longest['category']}, {longest['item'] or 'no item id'}{who}).")
+                         f"({longest['category']}, {clip(longest['item'] or 'no item id', NAME_LIMIT)}{who}).")
         else:
             sentence += ". No answer here says when its question was asked; an answer with asked_at gets its wait measured."
         out.append(f"<p>{esc(sentence)}</p>")
@@ -733,7 +802,7 @@ def render(name, events, skipped, lines, strict):
                               if any(e["category"] == k for e in h))
             rest = ", ".join(f"{sum(1 for e in mine if e['category'] == c):,} {c}" for c in (INVALIDATED, OTHER)
                              if any(e["category"] == c for e in mine))
-            out.append(f'<tr><td><strong>{esc(clip(name, 120))}</strong></td>'
+            out.append(f'<tr><td><strong>{esc(clip(name, NAME_LIMIT))}</strong></td>'
                        f'<td data-label="Needed the human">{len(h):,}{": " + kinds if kinds else ""}</td>'
                        f'<td data-label="Waits recorded">{len(w):,} of {len(h):,}</td>'
                        f'<td data-label="Total wait">{esc(total(w)) if w else "not recorded"}</td>'
@@ -751,13 +820,22 @@ def render(name, events, skipped, lines, strict):
         for e in events[:TABLE_LIMIT]:
             out.append(f'<tr id="line-{e["line"]}"><td class="num" data-label="Line">{e["line"]:,}</td>'
                        f'<td data-label="Time">{esc(show_time(e["when"]))}</td>'
-                       f'<td data-label="Actor">{esc(clip(e["lane"], 120))}</td>'
+                       f'<td data-label="Actor">{esc(clip(e["lane"], NAME_LIMIT))}</td>'
                        f'<td class="tight">{kind_cell(e)}</td><td class="wrap">{what_cell(e)}</td>'
                        f'<td data-label="Wait">{esc(e["wait_text"])}</td><td class="wrap">{evidence_cell(e)}</td></tr>')
         out.append("</tbody></table></div></section>")
     out.append("<footer>Drawn by hsi timeline from the ledger alone: no model and no network. "
                "Per-actor lanes are an idea from microsoft/TinyTroupe (MIT).</footer></main></body></html>\n")
     return "".join(out)
+
+
+def write_page(path, data):
+    """Write the page, already encoded to bytes, to `path`, as `open(path, "w")` would.
+    Because the content is bytes before the file is opened, nothing in a ledger can fail
+    after the open truncates what was there. A failure of the write itself, such as a full
+    disk, still leaves a partial file, as any write in place does."""
+    with open(path, "wb") as out:
+        out.write(data)
 
 
 def cli(argv):
@@ -778,17 +856,18 @@ def cli(argv):
     except OSError as error:
         print(f"hsi timeline: cannot read {args.ledger}: {type(error).__name__}", file=sys.stderr)
         return 2
-    page = render(os.path.basename(args.ledger), events, skipped, lines, strict_verdict(args.ledger))
+    page = render(clean(os.path.basename(args.ledger)), events, skipped, lines, strict_verdict(args.ledger))
+    data = page.encode("utf-8")  # before anything is opened, so an encoding error cannot cost a file
     try:
         if args.out:
             os.makedirs(os.path.dirname(os.path.abspath(args.out)), exist_ok=True)
-            with open(args.out, "w", encoding="utf-8", newline="\n") as target:
-                target.write(page)
+            write_page(args.out, data)
         else:
-            sys.stdout.buffer.write(page.encode("utf-8"))
+            sys.stdout.buffer.write(data)
             sys.stdout.flush()
     except OSError as error:
-        print(f"hsi timeline: cannot write {args.out or 'stdout'}: {type(error).__name__}", file=sys.stderr)
+        print(f"hsi timeline: cannot write {args.out or 'stdout'}: {error.strerror or type(error).__name__}",
+              file=sys.stderr)
         return 2
     human = [e for e in events if e["category"] in KINDS]
     print(f"hsi timeline: {plural(lines, 'line')}, {plural(len(events), 'event')}, {len(skipped):,} skipped, "

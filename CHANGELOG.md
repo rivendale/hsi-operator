@@ -12,6 +12,20 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **The timeline merged before its review fixes, with a crash that emptied its output file.**
+  A lone UTF-16 surrogate in a ledger field, which JavaScript writes whenever it clips a
+  string mid-emoji, raised an error after `-o` was opened and left the previous page at 0
+  bytes. Ledger text is now cleaned when read, and the page is encoded before `-o` is
+  opened, so nothing in a ledger can cost the previous page. `-o` is still written in place,
+  as before. A temp file renamed over the target was tried, and two reviews in a row found it
+  changing what the plain write did, from `-o /dev/null` and FIFOs to a file's group, so it
+  was removed. A disk that fills partway through the write still leaves a partial file, and
+  `cannot write` now says why, such as "No space left on device". The same pass stopped the
+  page and its tables scrolling sideways at 390 px, bidi controls reversing the page's own
+  words, a mistyped kind reading as "the human was not needed", and a 1 MB ledger giving a
+  52 MB page. Bare CR line ends are now read as `hsi record` reads them, and a year below
+  1000 prints with four digits. Each fix has an eval that failed first.
+
 - **Nothing showed where the operator was needed over a run, or how long each question
   waited.** The ledger held every answer as a line, and recorded neither who asked nor when.
   `hsi timeline LEDGER -o OUT.html` now draws it as one self-contained page, reads four
