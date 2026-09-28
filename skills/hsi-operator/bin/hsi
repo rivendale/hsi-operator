@@ -12,6 +12,8 @@
   hsi record --ledger FILE --lookup ITEM_ID     inspect the standing answer
   hsi record --ledger FILE --invalidate ITEM_ID --evidence TEXT
                                  record that its invalidation condition fired
+  hsi timeline FILE -o OUT.html  draw the ledger as one HTML page: where the human was
+                                 needed, and how long each wait was
   hsi --schema                   the input contract
 
 WHY A HARD CAP OF THREE. A list of twenty-seven is a list of zero. The scarce resource
@@ -45,6 +47,7 @@ import sys
 import argparse
 
 from ledger import BASES, KINDS, LedgerError, invalid_answer_field, read_ledger
+from timeline import cli as timeline_cli
 
 
 # Two weeks, taken from the README's own sentence rather than tuned. It is the number that
@@ -113,8 +116,13 @@ SCHEMA = {
             "date": "YYYY-MM-DD", "invalidated_by": "condition in prose, never a timer",
             "basis": "Data | Estimate | Assumption | Opinion",
             "supersedes_reason": "optional: reason a still-standing answer was replaced",
+            "actor": "optional: who asked; its lane in `hsi timeline`",
+            "asked_at": "optional: when the question reached the operator, ISO 8601; the timeline measures the wait from it",
+            "at": "optional: when it was answered, ISO 8601 date-time, finer than date",
+            "evidence": "optional: a link or reference for the answer",
         },
-        "invalidation": {"item_id": "item id", "invalidated": {"date": "YYYY-MM-DD", "evidence": "what fired"}},
+        "invalidation": {"item_id": "item id", "invalidated": {
+            "date": "YYYY-MM-DD", "evidence": "what fired", "at": "optional: ISO 8601 date-time, finer than date"}},
     },
 }
 
@@ -459,6 +467,8 @@ def main(argv):
         return answered_cmd(argv)
     if len(argv) > 1 and argv[1] == "record":
         return record_cmd(argv[2:])
+    if len(argv) > 1 and argv[1] == "timeline":
+        return timeline_cli(argv[2:])
     rc = refuse_unknown_flags(argv)
     if rc:
         return rc

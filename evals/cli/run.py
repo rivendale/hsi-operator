@@ -13,15 +13,21 @@ March. That flag exists for this and nothing else.
 """
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
+import time
+from html.parser import HTMLParser
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, "..", ".."))
 HSI = os.path.join(ROOT, "skills", "hsi-operator", "bin", "hsi")
 ITEMS = os.path.join(ROOT, "examples", "items.example.json")
 SETPOINT = os.path.join(ROOT, "examples", "setpoint.example.json")
+EXAMPLE_LEDGER = os.path.join(ROOT, "examples", "ledger.example.jsonl")
+TIMELINE_LEDGER = os.path.join(ROOT, "examples", "timeline.example.jsonl")
+TIMELINE_PAGE = os.path.join(ROOT, "examples", "timeline.example.html")
 LEDGER_ADAPTER = os.path.join(ROOT, "adapters", "ledger", "collect.py")
 
 
@@ -469,6 +475,231 @@ def main():
         rc, out = run(rt_board, "--why", "renewal-terms")
         check("round trip: --why shows the +20 for the invalidated standing answer",
               rc == 0 and "+20" in out and "invalidated standing answer" in out, out)
+
+        # `hsi timeline LEDGER -o OUT.html`: the ledger drawn as a page. Written before the
+        # code, against the failure list in the pull request. The assertions read the page,
+        # because the page is what a person reads.
+        def ledger_file(name, lines):
+            p = os.path.join(tmp, name)
+            with open(p, "wb") as f:
+                for line in lines:
+                    f.write(line if isinstance(line, bytes) else line.encode("utf-8"))
+                    f.write(b"\n")
+            return p
+
+        def timeline(ledger, *extra):
+            out_path = os.path.join(tmp, os.path.basename(ledger) + ".html")
+            if os.path.exists(out_path):
+                os.remove(out_path)
+            rc, out = run("timeline", ledger, "-o", out_path, *extra)
+            page = open(out_path, encoding="utf-8").read() if os.path.exists(out_path) else ""
+            return rc, out, page
+
+        def row(item_id, **kw):
+            return json.dumps(answer(item_id, **kw))
+
+        allowed_tags = {"html", "head", "meta", "title", "style", "body", "main", "header",
+                        "footer", "section", "figure", "figcaption", "h1", "h2", "p", "ol",
+                        "ul", "li", "div", "span", "strong", "code", "a", "table", "caption",
+                        "thead", "tbody", "tr", "th", "td", "svg", "g", "rect", "line", "path",
+                        "circle", "polygon", "text"}
+
+        class Tags(HTMLParser):
+            """The tags a browser would build, read by a parser rather than a regex: escaped
+            text inside an attribute is not a tag, and a regex cannot tell the difference."""
+            def __init__(self):
+                super().__init__(convert_charrefs=True)
+                self.found = []
+
+            def handle_starttag(self, tag, attrs):
+                self.found.append((tag, attrs))
+
+            handle_startendtag = handle_starttag
+
+        def tags(page):
+            parser = Tags()
+            parser.feed(page)
+            parser.close()
+            return parser.found
+
+        missing = os.path.join(tmp, "no-such-ledger.jsonl")
+        rc, out = run("timeline", missing, "-o", missing + ".html")
+        check("timeline: a missing ledger is refused, not drawn as an empty run",
+              rc == 2 and "not found" in out.lower() and not os.path.exists(missing + ".html"), out)
+
+        rc, out = run("timeline", tmp, "-o", os.path.join(tmp, "dir.html"))
+        check("timeline: a directory is refused without a traceback",
+              rc == 2 and "cannot read" in out and "Traceback" not in out, out)
+
+        rc, out, page = timeline(ledger_file("tl-empty.jsonl", []))
+        check("timeline: an empty ledger renders a page that says it is empty",
+              rc == 0 and "The ledger is empty" in page and 'class="mark' not in page, out + page[:300])
+
+        rc, out, page = timeline(ledger_file("tl-single.jsonl", [row("only-one", at="2026-09-20T14:00:00Z")]))
+        check("timeline: a single event renders, with one tick and no zero-span crash",
+              rc == 0 and "The human was needed 1 time" in page
+              and "Keep doing the thing for only-one?" in page and page.count('class="tick"') == 1,
+              out + page[:300])
+
+        rc, out, page = timeline(ledger_file("tl-malformed.jsonl", [
+            row("first-item"),
+            "{not json at all",
+            "[1, 2]",
+            "",
+            row("unknown-kind", kind="MAYBE"),
+            b"\xff\xfe not utf-8 \xc3",
+            "[" * 100000,
+            row("last-item", kind="APPROVE"),
+        ]))
+        check("timeline: malformed lines are skipped and counted, never fatal",
+              rc == 0 and "8 lines read: 3 events, 5 skipped" in page, out + page[:500])
+        check("timeline: the skipped line numbers are listed",
+              "Skipped lines: 2, 3, 4, 6, 7" in page, page[-1500:])
+        check("timeline: an unknown kind is shown as other and does not count as the human",
+              "The human was needed 2 times" in page and ">other<" in page and "MAYBE" in page, page[:1500])
+        check("timeline: the page says the strict reader would refuse that ledger",
+              "hsi record would refuse this ledger" in page, page[:1500])
+        # A separate ledger for "where": read_ledger decodes in buffered chunks, so a bad byte
+        # anywhere in the first chunk fails before line 2 is parsed, and names no line.
+        rc, out, page = timeline(ledger_file("tl-strict.jsonl", [row("first-item"), "{not json at all"]))
+        check("timeline: and where it would stop, when the strict reader can say",
+              rc == 0 and "hsi record would refuse this ledger: ledger line 2" in page, page[:1500])
+
+        rc, out, page = timeline(ledger_file("tl-bom-crlf.jsonl", [
+            b"\xef\xbb\xbf" + row("bom-first").encode() + b"\r",
+            row("crlf-second").encode() + b"\r",
+        ]))
+        check("timeline: a byte-order mark and CRLF endings parse",
+              rc == 0 and "2 lines read: 2 events, 0 skipped" in page, out + page[:500])
+
+        payload = "<script>alert(1)</script>"
+        rc, out, page = timeline(ledger_file("tl-inject.jsonl", [
+            row("a\"b'c<i>", question=payload, answer="</style><svg onload=alert(3)>",
+                actor="\"><img src=x onerror=alert(2)>", evidence="  JavaScript:alert(4)"),
+            json.dumps({"item_id": "x", "kind": "<b>X</b>", "question": "<iframe src=//evil>"}),
+            row("linked", evidence="https://example.com/pr/12", question='x" onmouseover="alert(5)'),
+        ]))
+        found = tags(page)
+        names = {name for name, _ in found}
+        attrs = [(name, key, value or "") for name, pairs in found for key, value in pairs]
+        check("timeline: every tag in the page is one the renderer writes",
+              rc == 0 and bool(found) and names <= allowed_tags, str(sorted(names - allowed_tags)))
+        check("timeline: no tag carries an event handler or a src",
+              rc == 0 and not [a for a in attrs if a[1].startswith("on") or a[1] == "src"], str(attrs[:5]))
+        check("timeline: every link is an anchor on the page or an http(s) address",
+              bool(found) and all(re.match(r"#|https?://", v) for _, k, v in attrs if k == "href"),
+              str([v for _, k, v in attrs if k == "href"][:5]))
+        check("timeline: the escaped payload is present, so escaping did not just drop it",
+              "&lt;script&gt;alert(1)&lt;/script&gt;" in page and "&lt;img src=x" in page
+              and "&lt;b&gt;X&lt;/b&gt;" in page, page[:500])
+        check("timeline: a javascript: evidence value is text, never a link",
+              "JavaScript:alert(4)" in page
+              and not [v for _, k, v in attrs if k == "href" and "javascript" in v.lower()], out)
+        check("timeline: an https evidence value is a link",
+              'href="https://example.com/pr/12"' in page, out)
+        check("timeline: the page makes no request of its own",
+              page.startswith("<!doctype html>") and "<script" not in page.lower() and "<link" not in page.lower()
+              and "@import" not in page and "url(" not in page
+              and not [a for a in attrs if a[1] in ("src", "srcset", "data", "poster")], out)
+
+        tl_ledger = ledger_file("tl-waits.jsonl", [
+            row("long-wait", kind="TASTE", actor="builder",
+                asked_at="2026-09-20T10:00:00Z", at="2026-09-20T11:30:00Z"),
+            row("short-wait", kind="APPROVE", actor="reviewer",
+                asked_at="2026-09-20T12:00:00Z", at="2026-09-20T12:20:00Z"),
+        ])
+        rc, out, page = timeline(tl_ledger)
+        check("timeline: recorded waits are totaled and the longest is named",
+              rc == 0 and "Waits recorded for 2 of 2: 1h 50m in total, longest 1h 30m" in page,
+              out + page[:1500])
+        check("timeline: one lane per actor", "builder" in page and "reviewer" in page, page[:1500])
+        first = page
+        rc, out, page = timeline(tl_ledger)
+        check("timeline: the same ledger renders byte-identical pages",
+              rc == 0 and first != "" and first == page, out)
+
+        rc, out, page = timeline(ledger_file("tl-zones.jsonl", [
+            row("offset-wait", asked_at="2026-09-20T10:00:00-04:00", at="2026-09-20T14:30:00Z"),
+            row("naive-wait", asked_at="2026-09-20T14:00:00", at="2026-09-20T14:45:00+00:00"),
+        ]))
+        check("timeline: offsets convert to UTC and a naive time is read as UTC, without a crash",
+              rc == 0 and "Waits recorded for 2 of 2: 1h 15m in total, longest 45m" in page
+              and "read as UTC" in page, out + page[:1500])
+
+        rc, out, page = timeline(ledger_file("tl-negative.jsonl", [
+            row("backwards", asked_at="2026-09-20T12:00:00Z", at="2026-09-20T11:00:00Z"),
+        ]))
+        check("timeline: an answer before its question is flagged and left out of the totals",
+              rc == 0 and "answered before it was asked" in page and "Waits recorded for 0 of 1" in page,
+              out + page[:1500])
+
+        rc, out, page = timeline(ledger_file("tl-untimed.jsonl", [
+            row("dated"),
+            json.dumps(omit(answer("undated"), "date")),
+        ]))
+        check("timeline: an event with no time is listed apart, never placed by guess",
+              rc == 0 and "1 event has no time recorded" in page and "not recorded" in page,
+              out + page[:1500])
+
+        rc, out, page = timeline(ledger_file("tl-dayonly.jsonl", [
+            row("clocked", at="2026-09-20T14:00:00Z"),
+            json.dumps({"item_id": "clocked", "invalidated": {"date": "2026-09-20", "evidence": "it changed"}}),
+        ]))
+        check("timeline: a day-only event beside clock times is listed apart, marked day only",
+              rc == 0 and "1 event is recorded to the day only" in page and "(day only)" in page,
+              out + page[:1500])
+
+        rc, out, page = timeline(EXAMPLE_LEDGER)
+        check("timeline: today's ledger shape renders, and claims no wait it cannot see",
+              rc == 0 and "The human was needed 1 time" in page and "Waits recorded for 0 of 1" in page
+              and "longest" not in page, out + page[:1500])
+
+        same = ledger_file("tl-self.jsonl", [row("keep-me")])
+        before = open(same, "rb").read()
+        rc, out = run("timeline", same, "-o", os.path.join(tmp, ".", "tl-self.jsonl"))
+        check("timeline: writing the page over the ledger itself is refused",
+              rc == 2 and "ledger itself" in out and open(same, "rb").read() == before, out)
+
+        rc, out = run("timeline", same, "--bogus")
+        check("timeline: an unknown flag is refused", rc == 2 and "hsi timeline" in out
+              and "--bogus" in out, out)
+
+        r = subprocess.run([sys.executable, HSI, "timeline", same], capture_output=True, text=True)
+        check("timeline: with no -o the page goes to stdout and the summary to stderr",
+              r.returncode == 0 and r.stdout.startswith("<!doctype html>")
+              and "hsi timeline:" in r.stderr and "hsi timeline:" not in r.stdout, r.stderr)
+
+        big_lines = []
+        for n in range(20000):
+            minute = n
+            big_lines.append(row(f"item-{n}", kind=("DECIDE", "APPROVE", "EXECUTE", "TASTE", "NOTE")[n % 5],
+                                 actor=f"agent-{n % 30}",
+                                 asked_at=f"2026-09-{1 + minute // 1440:02d}T{minute % 1440 // 60:02d}:{minute % 60:02d}:00Z",
+                                 at=f"2026-09-{1 + (minute + 2) // 1440:02d}T{(minute + 2) % 1440 // 60:02d}:{(minute + 2) % 60:02d}:00Z"))
+        big = ledger_file("tl-big.jsonl", big_lines)
+        started = time.monotonic()
+        rc, out, page = timeline(big)
+        elapsed = time.monotonic() - started
+        check("timeline: a 20,000-event run renders in under a minute",
+              rc == 0 and elapsed < 60 and "20,000 lines read: 20,000 events, 0 skipped" in page,
+              f"{elapsed:.1f}s " + out)
+        marks = page.count('class="mark')
+        check("timeline: and the page stays bounded: under 3 MB, marks grouped, lanes merged",
+              len(page.encode()) < 3_000_000 and marks < 5000 and "other actors" in page,
+              f"{len(page.encode())} bytes, {marks} marks")
+        check("timeline: the event table says how much of the run it shows",
+              "The table shows the first 2,000 of 20,000 events" in page, page[-2000:])
+
+        rc, out = run("record", "--ledger", TIMELINE_LEDGER, "--lookup", "staging-login")
+        check("timeline: the example ledger, optional fields and all, still reads with hsi record",
+              rc == 0 and "invalidated: no" in out, out)
+        rc, out, page = timeline(TIMELINE_LEDGER)
+        check("timeline: the example ledger passes the strict reader, and the page says so",
+              rc == 0 and "hsi record reads this ledger without error" in page, out)
+        committed = open(TIMELINE_PAGE, encoding="utf-8").read() if os.path.exists(TIMELINE_PAGE) else ""
+        check("timeline: the committed example page matches a fresh render of the example ledger",
+              page != "" and page == committed,
+              "re-render: hsi timeline examples/timeline.example.jsonl -o examples/timeline.example.html")
 
     print(f"\n{failures} failure(s)")
     return 1 if failures else 0
