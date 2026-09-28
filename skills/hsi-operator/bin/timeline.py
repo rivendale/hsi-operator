@@ -92,6 +92,13 @@ def clean(text):
     return BIDI_CONTROL.sub("", SURROGATE.sub("\ufffd", text))
 
 
+def visible(text):
+    """Ledger text with every character that prints as nothing written out as \\uXXXX: an
+    unrecognized kind like "DE\\u202eCIDE" or "APP\\u200bROVE" would otherwise read as a
+    kind the page knows."""
+    return "".join(c if c.isprintable() else f"\\u{ord(c):04x}" for c in SURROGATE.sub("\ufffd", text))
+
+
 def esc(value):
     return html.escape(value, quote=True)
 
@@ -235,7 +242,8 @@ def make_event(number, row, lane_of_item):
     else:
         kind = row.get("kind")
         event["category"] = kind if isinstance(kind, str) and kind in KINDS else OTHER
-        event["raw_kind"] = clip(label(kind) or "null", 40) if "kind" in row else None
+        shown = visible(kind) if isinstance(kind, str) else label(kind)
+        event["raw_kind"] = clip(shown or "null", 40) if "kind" in row else None
         event["lane"] = actor or DEFAULT_LANE
         event["when"], bad = pick_time(row.get("at"), row.get("date"))
         event["evidence"] = evidence_of(row)
