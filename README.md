@@ -89,8 +89,10 @@ reading a line-delimited task file; copy it and change the reader for your track
 question at a glance: **where was the human actually needed, and how long did each wait?**
 One lane per actor, one row per kind inside it (DECIDE a diamond, APPROVE a square, EXECUTE a
 triangle, TASTE a circle, each with its letter), and a bar from the moment a question was
-asked to the moment it was answered. A per-actor summary and a table of every event sit
-below the chart, and each mark links to its row.
+asked to the moment it was answered. Past twelve actors, the smallest merge into one lane
+that says how many it holds. A per-actor summary and a table of events sit below the chart,
+and each mark links to its row. The table stops at 2,000 rows and says where the rest start;
+a mark past that point is not a link.
 
 ![The timeline drawn from the example ledger](examples/timeline.example.png)
 
