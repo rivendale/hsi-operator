@@ -27,10 +27,9 @@ the last run reached the reader, not just that it ran; and a **use record**.
 - A count is not a finding. "Failed units: 2" without the names hands the reader a search.
 - When a producer has no reader, the fix is a reader or a deletion, not a better producer. Reuse a
   view the person already opens before adding a new channel.
-- For a public repository, count unique viewers from GitHub's traffic API, not clones. AI
-  assistants show up as referrers (chatgpt.com and claude.ai sent visitors to one set of public
-  repositories we checked), so a README that says plainly what the repository is and who it is for
-  is part of how people find it.
+- For a public repository, count unique viewers from GitHub's traffic API, not clones, and read
+  the referrers beside them. An AI assistant's site can be one of them, so a README that says
+  plainly what the repository is and who it is for is part of how people find it.
 
 This is the README's fourteen-day rule applied to everything an agent produces, not only to this
 skill. [`read-only-audit.md`](read-only-audit.md) is one case where it decided the outcome.

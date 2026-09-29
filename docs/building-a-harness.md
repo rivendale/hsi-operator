@@ -126,14 +126,14 @@ their own economics: the short jobs are where the cheaper models compete.
    - **Reviewers get no edit or write tools.** A reviewer that can edit becomes an implementer the
      first time a fix looks easy. Remove the tools; do not rely on asking.
    - **A fix that would grow the change goes to a person, and fixes prefer simplifying.**
-     [kunchenguid/no-mistakes#892](https://github.com/kunchenguid/no-mistakes/pull/892) (MIT;
-     merged 2026-08-29) changed only prompts in an AI review loop whose fix rounds kept "growing
-     into machinery nobody scoped": a finding whose smallest honest remedy would extend the change
-     beyond its stated intent goes to the user, because the remedy, not the defect, needs
-     authorization; fixers prefer "addressing a deeper architectural reason and simplifying it,
-     than introducing machinery to handle the symptoms"; and when defects sit in code an earlier
-     fix round added beyond what its finding required, the rereview recommends reverting to the
-     minimal fix.
+     [kunchenguid/no-mistakes#892](https://github.com/kunchenguid/no-mistakes/pull/892) (MIT; merged
+     2026-08-29) changed only prompt wording, with tests and docs to match, in an AI review loop
+     whose fix rounds kept "growing into machinery nobody scoped": a finding whose smallest honest
+     remedy would extend the change beyond its stated intent goes to the user, because the remedy,
+     not the defect, needs authorization; fixers prefer "addressing a deeper architectural reason
+     and simplifying it, than introducing machinery to handle the symptoms"; and when defects sit in
+     code an earlier fix round added beyond what its finding required, the rereview recommends
+     reverting to the minimal fix.
    - **When every round finds a new class of defect, change the design, not the patch.** The
      [opensource repository's lessons](https://github.com/rivendale/opensource/blob/main/lessons/README.md)
      ("Building with AI agents in the loop", item 4) have the case.

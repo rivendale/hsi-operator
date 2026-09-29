@@ -71,8 +71,9 @@ Two more about what arrives once a file does load, read 2026-09-29:
   instruction files once their combined size reaches `project_doc_max_bytes`, 32 KiB by
   default ([docs](https://learn.chatgpt.com/docs/agent-configuration/agents-md)). Claude Code
   loads the first 200 lines or 25KB of an auto-memory `MEMORY.md`, whichever comes first, and
-  warns the agent only after the agent's own write crosses a limit; it loads a `CLAUDE.md` of
-  up to 4 MiB in full and skips a larger one ([docs](https://code.claude.com/docs/en/memory)).
+  warns the agent only when the agent's own write leaves it near or over a limit; it loads a
+  `CLAUDE.md` of up to 4 MiB in full and skips a larger one
+  ([docs](https://code.claude.com/docs/en/memory)).
   On one machine, the Claude Code skill listing stayed at about 30,000 characters whether 80
   or 111 skills were installed, so each description got shorter as skills were added
   (measured September 2026; the budget is inferred, not documented). Put a sentinel line at

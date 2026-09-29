@@ -55,11 +55,12 @@ model one level lower, and which one wins changes from level to level.
   | xhigh | $1.19 (3 runs, mean 36.0) | $0.97 (3 runs, mean 36.0) |
   | max | $3.00 (3 runs, mean 51.3) | $1.40 (3 runs, mean 41.7) |
 
-  The model that is cheaper per token was cheaper per result up to high, and more expensive at
-  xhigh and max, where it also fixed more. At medium it was cheaper per bug while fixing far
-  fewer, which is why a quality bar comes before a price. And one run is not a figure: a screenshot of the same board shared earlier that
-  day showed Sonnet 5.5 at xhigh as $1.55 per bug from a single run, and its three max runs range
-  from $2.14 to $4.48 per bug.
+  The model that is cheaper per token was cheaper per result up to high and more expensive above
+  it: at xhigh both fixed the same mean of 36, and only at max did it fix more. At medium it was
+  cheaper per bug while fixing far fewer, which is why a quality bar comes before a price. And one
+  run is not a figure: a screenshot of the same board shared earlier that day showed Sonnet 5.5 at
+  xhigh as $1.55 per bug from a single run, and its three max runs range from $2.14 to $4.48 per
+  bug.
 - **Vals AI**, in a post on X about its MysteryMechanism benchmark (September 2026; figures from
   the post's chart, not re-read here): Opus 5.5 at high and at xhigh both scored about 41%, xhigh
   at about 3.6 times the cost.

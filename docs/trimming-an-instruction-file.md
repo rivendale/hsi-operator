@@ -42,9 +42,9 @@ What to learn from it:
    description, any memory index, and hook output. In one long-running setup we measured, the
    instruction file was under a fifth of about 105 KB loaded at start; the skill listing and the
    memory index were each larger.
-2. **Use one ruler.** A percentage does not change with the divisor, so two different "about 47%"
-   figures mean two different things were measured: in this case, the proposal's whole surface and
-   the PR's one file.
+2. **Use one ruler.** A percentage does not change with the divisor, so two close figures for one
+   change can still mean two different things were measured: in this case, the proposal's -48% was
+   the whole surface as proposed, and the PR's -47% was the one file as merged.
 3. **Sort each negative into harm or non-compliance.** A rule that was skipped needs rewording or
    reinforcing. Being skipped is not evidence for deleting it.
 4. **Two independent sightings before adding or rewriting a rule,** and a written reason for every
