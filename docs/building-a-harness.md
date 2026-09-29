@@ -122,8 +122,35 @@ their own economics: the short jobs are where the cheaper models compete.
    specific claims ("does anything still call the function this diff deletes?"), not "is anything
    wrong?", which one lane answered "no" to while real defects sat in the file. Settle a
    disagreement by reading the source: one three-model review went 2 to 1 the wrong way.
+   ([`writing-a-brief.md`](writing-a-brief.md) has the rest of a delegate's brief.)
+   - **Reviewers get no edit or write tools.** A reviewer that can edit becomes an implementer the
+     first time a fix looks easy. Remove the tools; do not rely on asking.
+   - **A fix that would grow the change goes to a person, and fixes prefer simplifying.**
+     [kunchenguid/no-mistakes#892](https://github.com/kunchenguid/no-mistakes/pull/892) (MIT; merged
+     2026-08-29) changed only prompt wording, with tests and docs to match, in an AI review loop
+     whose fix rounds kept "growing into machinery nobody scoped": a finding whose smallest honest
+     remedy would extend the change beyond its stated intent goes to the user, because the remedy,
+     not the defect, needs authorization; fixers prefer "addressing a deeper architectural reason
+     and simplifying it, than introducing machinery to handle the symptoms"; and when defects sit in
+     code an earlier fix round added beyond what its finding required, the rereview recommends
+     reverting to the minimal fix.
+   - **When every round finds a new class of defect, change the design, not the patch.** The
+     [opensource repository's lessons](https://github.com/rivendale/opensource/blob/main/lessons/README.md)
+     ("Building with AI agents in the loop", item 4) have the case.
+   - **A verifier works from a fresh clone and writes its own list of ways the change could fail
+     before checking anything.** Keep only the findings the verifier confirms or downgrades.
+   - **Never judge a gate by text the reviewed change can influence.** In one CI setup, a pull
+     request that edited the review workflow made the reviewer print the error patterns, and the
+     gate flagged itself; the fix was to judge only the exit code and empty output. For an AI
+     reviewer, the diff it reads is input an attacker can write.
 9. **Proof of what each worker loaded.** A worker started in a fresh folder may load no instructions
    at all and say nothing; see the loading notes in [`AGENTS.md`](../AGENTS.md).
+10. **Hand files over atomically.** When one agent leaves a file for another, write it under a
+    temporary name in the same directory and rename it into place, and refuse to copy across
+    mounts: a reader can otherwise pick up a half-written file. This is for handoff folders.
+    Writing to a path a user names is different, because a rename changes what a plain write does
+    to `/dev/null`, a FIFO or a file's group (see this repository's
+    [`CHANGELOG.md`](../CHANGELOG.md)).
 
 ## Where this goes wrong
 

@@ -161,6 +161,14 @@ what each of the four coding CLIs did when driven headless, dated, and
 [`docs/harness-efficiency.md`](docs/harness-efficiency.md) is a checklist for making a harness
 cheaper without making it worse, including the defaults a new project should start with.
 
+Shorter pages, one idea each: [choosing effort](docs/choosing-effort.md) by what a finished task
+costs; [writing a brief](docs/writing-a-brief.md) for another agent;
+[trimming an instruction file](docs/trimming-an-instruction-file.md) by evidence without losing
+the rules that work; [testing a detector with planted defects](docs/planted-defect-evals.md);
+[eval and hillclimb](docs/eval-and-hillclimb.md) with two gates a person holds (a draft until its
+first run); [naming the reader](docs/every-output-needs-a-reader.md) before building the
+producer; and [an overnight read-only audit](docs/read-only-audit.md) that someone reads.
+
 ## Changes
 
 `CHANGELOG.md`, where every entry names the **failure that caused the change**. What moved

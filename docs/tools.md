@@ -42,6 +42,13 @@ host. For where the money goes once you drive these tools, see
 - **Cost fields are client-side estimates.** Anthropic's headless documentation says so, and a
   run started with `--continue` or `--resume` reports the whole conversation's total, so log
   the difference from the previous run (read 2026-09-24).
+- **An API key in the environment changes who pays.** With `ANTHROPIC_API_KEY` set, `claude -p`
+  always uses the key, billed per token, even when a subscription login exists; interactive mode
+  asks once and remembers the answer ([docs](https://code.claude.com/docs/en/authentication),
+  read 2026-09-29). Grok CLI does the opposite and keeps its stored sign-in (the matrix above).
+  A setup guide that says to export API keys in your shell profile moves every headless run to
+  metered billing without a word. Check the environment an unattended job actually runs in, not
+  your own shell.
 - **`--bare`** skips hooks, plugins, `CLAUDE.md` discovery and auto-memory, and accepts only
   `ANTHROPIC_API_KEY` or an `apiKeyHelper` for Anthropic auth (`claude --help`, 2026-09-24).
   Pass instructions explicitly when you use it.

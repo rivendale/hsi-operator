@@ -65,6 +65,25 @@ Two more, both measured, both the kind that make a reader think they are finishe
 - **Trusted with zero instruction files is still unguided,** and it prints exactly like the
   untrusted case. "Trusted: yes, instructions: 0" means the rules are absent, not present.
 
+Two more about what arrives once a file does load, read 2026-09-29:
+
+- **Every harness drops what exceeds its budget, mostly without a word.** Codex stops adding
+  instruction files once their combined size reaches `project_doc_max_bytes`, 32 KiB by
+  default ([docs](https://learn.chatgpt.com/docs/agent-configuration/agents-md)). Claude Code
+  loads the first 200 lines or 25KB of an auto-memory `MEMORY.md`, whichever comes first, and
+  warns the agent only when the agent's own write leaves it near or over a limit; it loads a
+  `CLAUDE.md` of up to 4 MiB in full and skips a larger one
+  ([docs](https://code.claude.com/docs/en/memory)).
+  On one machine, the Claude Code skill listing stayed at about 30,000 characters whether 80
+  or 111 skills were installed, so each description got shorter as skills were added
+  (measured September 2026; the budget is inferred, not documented). Put a sentinel line at
+  the end of the file and ask the tool whether it saw it, and gate the file's size in CI at
+  the smallest limit among the tools that read it.
+- **A generator can write its own `AGENTS.md`.** One vendor's app builder left its own root
+  instruction file ("You are Grok Build, in an isolated Linux sandbox", about 18.9 KB) in four
+  generated repos, where every tool that reads the name takes it as the project's rules. Read
+  the root instruction file after any scaffold or builder runs.
+
 The repo's substance is in `skills/`. This page is the working agreement around it.
 
 ---
@@ -204,6 +223,9 @@ then implement from it. Judging a picture is fast and cheap; judging a page by r
 code that produces it is neither. Tools with a strong image model built in make this a single
 step: ask for the design, iterate on the image, then implement the version you accepted.
 
+For motion, name a reference, ask for a few storyboard variants, approve one still per scene
+before rendering anything, and give notes in camera terms: framing, movement, timing.
+
 ---
 
 ## Skills
@@ -213,6 +235,15 @@ step: ask for the design, iterate on the image, then implement the version you a
 - **Pin an installed skill to a reviewed commit rather than tracking `main`.** A skill is
   instructions: tracking a branch means a future push edits how an agent behaves with no
   review step on that machine. Check out a reviewed SHA, read the diff, then move the pin.
+- **Your vendor's own channel moves without your pin.** On 2026-09-28, on one machine, six
+  official Claude Code plugins moved to a new commit in the same second their marketplace
+  refreshed, and skills synced from the vendor's app change on their own. Decide in writing
+  whether first-party channels are exempt from the pin rule or have auto-update turned off,
+  and keep the rule strict for every third party.
+- **A skill generated from a notebook of sources inherits that tool's losses.** One published
+  technique turns a curated notebook into `SKILL.md` files; the same kind of tool has been seen
+  narrating blanks as content and dropping table headings. Read a generated skill against its
+  sources before installing it.
 - More skills, and the conventions they follow: [anthropics/skills](https://github.com/anthropics/skills).
 
 ---
