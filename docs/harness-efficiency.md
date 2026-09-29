@@ -51,7 +51,9 @@ demand. Do not offload a tool the model needs on turn one or tries to call when 
 **Cache layout.** Tool definitions, then system instructions, then a breakpoint, then a setup
 message with volatile facts, then the conversation. Keep the prefix byte-identical: fixed tool
 order, fixed serialization, timestamps and ids after the boundary. Switching models
-mid-conversation discards the cache; run the other model as a subagent instead.
+mid-conversation discards the cache; run the other model as a subagent instead. Changing the
+effort level discards it too on some paths and not others
+([`choosing-effort.md`](choosing-effort.md)).
 
 **Tool results.** Write large outputs to a file and return the path, the size and a short tail.
 Truncating loses data; inlining bloats every later request. Look for overhead repeated per

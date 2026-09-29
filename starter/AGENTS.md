@@ -11,7 +11,10 @@ asking a session what it read rather than by trusting a release note. Two ways t
 goes silently unread: some tools load a project's instructions only inside a folder you
 have told them to trust, and at least one skips `AGENTS.md` entirely whenever an older
 instruction filename exists anywhere above you. "Nothing loaded" prints exactly like "no
-file here".
+file here". And a file that loads can still be cut short: at least one tool stops adding
+instruction files at 32 KiB by default, without a word. Keep this file under the smallest
+limit among the tools that read it, and put a sentinel line at the end to ask about. After any
+scaffold or app builder runs, check that this file is still yours: one builder left its own.
 
 ---
 
@@ -136,6 +139,9 @@ For anything that is looked at rather than run, generate and refine the **image*
 implement from the version that was accepted. Judging a picture is fast; judging a page by
 reading its code is not.
 
+For motion, name a reference, ask for storyboard variants, approve one still per scene before
+rendering, and give notes in camera terms: framing, movement, timing.
+
 ---
 
 ## Skills and plugins
@@ -144,6 +150,9 @@ reading its code is not.
 - **Pin an installed skill to a reviewed commit rather than tracking `main`.** A skill is
   instructions: tracking a branch lets a future push change how the agent behaves with no
   review on that machine.
+- **Your vendor's own plugin channel moves without your pin.** [Say in writing whether
+  first-party plugins and synced skills are exempt from the pin rule or have auto-update
+  turned off.] Keep the rule strict for every third party.
 
 ---
 

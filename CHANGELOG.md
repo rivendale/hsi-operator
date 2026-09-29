@@ -12,6 +12,19 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **Lessons measured over two weeks lived only in one operator's private notes, and two had
+  drifted while they sat there.** A benchmark figure copied from a screenshot (Sonnet 5.5 at
+  xhigh, $1.55 per planted bug) came from one run; the raw data, re-read the day this was
+  written, gives $1.19 over three. A proposed one-liner said a change of effort clears the prompt
+  cache, and its correction said it keeps it; Anthropic's two posts describe two different paths,
+  and each was right about one. Seven pages in `docs/` now carry these lessons with every source
+  dated: choosing effort, writing a brief, trimming an instruction file, planted-defect evals,
+  eval and hillclimb (a draft until its first run), naming the reader, and a read-only audit.
+  `building-a-harness.md` item 8 gains five review rules and a new item 10 covers atomic handoff;
+  `AGENTS.md` gains the silent size budgets, a generator that writes its own `AGENTS.md`, the
+  first-party pin question and motion storyboards; the starter, `tools.md` (an API key changes
+  who pays) and three skill bodies get a line or two each. No skill description changed.
+
 - **The starter kit failed in any repo whose skills had other names.** `--selftest` mutated
   this repo's three skills by path, so a fresh repo with one skill of its own crashed with
   FileNotFoundError, and the starter workflow ran `evals/cli/run.py`, which tests this repo's

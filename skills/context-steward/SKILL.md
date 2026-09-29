@@ -63,7 +63,13 @@ what never does (system prompt, images, keys).
    are the highest-value and the first thing a summary drops.
 4. **What is RUNNING** — background jobs, how to check them, how to restart them.
 5. **What is blocked, and on whom.**
-6. **What must not be re-litigated**, with the date it was settled.
+6. **What must not be re-litigated**, with the date it was settled, including a
+   **tried-and-reverted list**: each approach already tried, why it was dropped, and "do not
+   rebuild".
+
+**Overwrite what is true now; append what happened.** A current-state file is rewritten and a
+log is appended, and the date line is stamped last. A stale current-state file is worse than a
+missing one: it gets found, read and believed.
 
 **A secret's location survives; its value never does.** A long session can hold a live credential,
 pasted into chat, printed by a command or read from a file, and it will score as important. Write
@@ -124,3 +130,6 @@ is live and unfixed · what must not be re-litigated · the lesson worth carryin
 
 **Write it at 80%.** A handoff written at 97% is written by someone who is already out of room to
 think about it.
+
+**Compact before you fork the session, too.** A fork inherits the parent's whole conversation, so
+forking a full window starts a second context that re-reads all of it on every call.

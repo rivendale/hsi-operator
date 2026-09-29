@@ -82,6 +82,11 @@ The question nobody asks, and the one that produces the sharpest no.
   strictly worse, never better.
 - Does it default something on that you would not switch on deliberately?
 - Does it create a second place for a fact that already lives somewhere?
+- **An MCP server for an app you can already script usually adds a socket, not a
+  capability.** Candidates tend to fall into three groups: a thin wrapper over a command-line
+  tool you already drive; one that needs the app's window open, so it cannot run headless; or
+  one that includes a tool running arbitrary code over a socket that stays open. Prefer driving
+  the tool from a script, and install a server only for live, interactive work someone asked for.
 
 ---
 
@@ -98,7 +103,9 @@ State one. Not a list of considerations.
 - **NOT YET** — with the trigger that would reopen it, and the date.
 
 **Record every verdict, including no, in the same turn**, where the project keeps decisions:
-the reason, and the condition that would reopen it.
+the reason, and the condition that would reopen it. Next to any verdict on an AI tool, record
+what it sends out by default, its default telemetry, and how to install and pin it, each with
+the date you read it.
 
 **Separate the artifact from the product.** *"Do not install it, read three files and take
 two ideas"* is a legitimate and common verdict.

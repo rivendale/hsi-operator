@@ -195,6 +195,10 @@ long each question waited; without them it says the wait was not recorded.
 An answer was true of the world when it was given. Record **what would change it**,
 and re-ask when that changes rather than on a timer.
 
+Where an answer rests on inputs you can hash (a price list, a config, a data file), store the
+hash beside the answer. "Has it changed?" then becomes a comparison a script can run instead of
+a memory someone must have.
+
 ## Label the basis of what you say
 
 `[Data]` sourced · `[Estimate]` calculated, assumptions stated · `[Assumption]`
