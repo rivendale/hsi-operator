@@ -286,7 +286,7 @@ def selftest():
          lambda t: re.sub(r'^description: "(.*)"$', r"description: \1",
                           re.sub(r"^(description: )(.*)$", r"\1here: a colon \2", t,
                                  count=1, flags=re.M), count=1, flags=re.M), "YAML"),
-        ("a near-miss relabelled as a string", f"evals/trigger/cases/{names[0]}.json",
+        ("a near-miss relabeled as a string", f"evals/trigger/cases/{names[0]}.json",
          lambda t: re.sub(r'"should_trigger"\s*:\s*false', '"should_trigger": "false"', t, count=1),
          "JSON boolean"),
     ]

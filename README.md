@@ -29,7 +29,7 @@ tool does not pretend to have made it.
 
 **`context-steward`** — when a long session nears its context limit, decide what must survive,
 write it somewhere durable *before* the window closes, and keep working memory small by moving
-detail **out** rather than summarising it **away**. A summary is a pointer, not a substitute: it
+detail **out** rather than summarizing it **away**. A summary is a pointer, not a substitute: it
 drops the file path, the exact error and the number, and it drops them silently. Includes the
 gauge rule that prompted it — check the actual context meter, not a token budget, and act at 80%
 rather than 95%.
@@ -172,7 +172,7 @@ The `references/` layout and the honesty protocol are adapted from
 [ferdinandobons/startup-skill](https://github.com/ferdinandobons/startup-skill) (MIT).
 Different domain, same failure mode: an assistant that cheerleads every idea and one that
 surfaces everything as important are the same defect wearing different clothes. Their
-four-way claim labelling — Data, Estimate, Assumption, Opinion — is a genuine refinement
+four-way claim labeling — Data, Estimate, Assumption, Opinion — is a genuine refinement
 on the three-way version this started with, because collapsing *estimate* into *assumption*
 is what lets a calculation pass as a finding.
 
