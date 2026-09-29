@@ -12,6 +12,17 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **The starter kit failed in any repo whose skills had other names.** `--selftest` mutated
+  this repo's three skills by path, so a fresh repo with one skill of its own crashed with
+  FileNotFoundError, and the starter workflow ran `evals/cli/run.py`, which tests this repo's
+  CLI and reported 148 failures there. The selftest now mutates whichever skill sorts first,
+  adds a twin of it to test a collision in a one-skill repo, clears a folded description's
+  indented lines, and fails by name when a mutation cannot apply. The starter copies only
+  `run.py` and no longer runs the CLI test. The same pass added a pinned lychee link check to
+  this repo's gate, since nothing checked a link; two context-steward rules (absolute dates,
+  and the transcript path to a fresh reviewer after compaction); repo-triage's rule to record
+  every verdict, including no, in the same turn; and the American spelling of license.
+
 - **The timeline merged before its review fixes, with a crash that emptied its output file.**
   A lone UTF-16 surrogate in a ledger field, which JavaScript writes whenever it clips a
   string mid-emoji, raised an error after `-o` was opened and left the previous page at 0
@@ -224,7 +235,7 @@ it does, the version goes above the date and this line goes away.
   requires stating an absence rather than omitting a section.
 - **`repo-triage` skill.** The failure: adopting on enthusiasm. A shared link arrives with
   stars and a launch post, and the only question that matters is whether it closes a gap
-  you measured. Cheapest kill first: licence, then maturity, then whether the runtime
+  you measured. Cheapest kill first: license, then maturity, then whether the runtime
   exists on the hardware you actually have.
 - **`context-steward` skill.** The failure: compaction summarizes, and a summary silently
   drops the file path, the exact error and the number. Move detail out to a path instead,

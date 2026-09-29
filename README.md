@@ -15,12 +15,12 @@ Three skills. The first has two doors:
 **`repo-triage`** — when someone shares a repo, model or tool and asks "is this useful?",
 evaluate it against **measured** gaps rather than its own pitch. Most verdicts should be
 no. The failure it prevents is adopting on enthusiasm, and its order is deliberate:
-licence first because it is the cheapest kill, then maturity, then **does the runtime exist
+license first because it is the cheapest kill, then maturity, then **does the runtime exist
 on the hardware you actually have** — the check most often skipped and the one that kills
 most confidently.
 
 ```
-triage owner/repo            licence, age, activity — the mechanical half
+triage owner/repo            license, age, activity — the mechanical half
 triage --hf org/model        same for a Hugging Face model
 ```
 

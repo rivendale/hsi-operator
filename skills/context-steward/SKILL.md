@@ -69,6 +69,8 @@ what never does (system prompt, images, keys).
 pasted into chat, printed by a command or read from a file, and it will score as important. Write
 where it is and what it unlocks, never the string itself, in notes and in the handoff alike.
 
+**Convert relative dates to absolute before you write them.** "Yesterday" is wrong by tomorrow.
+
 **What does NOT need to survive:** your reasoning chain, intermediate attempts that went nowhere,
 tool output you already acted on, anything reconstructible from a file you can name.
 
@@ -110,6 +112,8 @@ than the truth, because the reconstruction inherits the reconstructor's assumpti
 as agreement and is not.
 
 **If a decision depends on it, re-read or re-measure. Do not rebuild from prose.**
+
+**After a compaction, hand a fresh reviewer the transcript path**, not your summary of it.
 
 ## 7. The handoff, written before you need it
 

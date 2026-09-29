@@ -14,7 +14,7 @@ job with a different order: see [`../docs/adopting-an-existing-repo.md`](../docs
 ```
 cp starter/AGENTS.md starter/CHANGELOG.md starter/SETPOINT.md /path/to/your-repo/
 cp -r starter/.github /path/to/your-repo/   # only with the line below: the workflow runs it
-cp -r evals /path/to/your-repo/             # only if your repo has skills
+mkdir -p /path/to/your-repo/evals/trigger && cp evals/trigger/run.py /path/to/your-repo/evals/trigger/   # only if your repo has skills
 ```
 
 ## Then do the part that cannot be copied
@@ -35,8 +35,10 @@ cp -r evals /path/to/your-repo/             # only if your repo has skills
 ## If your repo has skills
 
 The check in [`../evals/trigger/`](../evals/trigger) tests that each skill's *description*
-would route the prompts it claims, which is the whole surface a harness sees. Copy that
-directory and write your own cases; the workflow above already runs it and its `--selftest`.
+would route the prompts it claims, which is the whole surface a harness sees. The copy line
+above takes only `run.py`: our cases name skills your repo does not have, and `evals/cli/`
+tests this repo's own CLI. Write one `evals/trigger/cases/<skill>.json` per skill, shaped
+like [ours](../evals/trigger/cases); the workflow above already runs the check and its `--selftest`.
 
 **Write the cases from outside the description.** Prompts paraphrased from the description
 grade it against itself and pass for that reason — the first version of that check in this

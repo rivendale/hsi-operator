@@ -20,12 +20,12 @@ defect as an assistant that approves everything. See `../hsi-operator/references
 
 ## The order matters. Cheapest kill first.
 
-### 1. LICENCE — before anything else
+### 1. LICENSE — before anything else
 
 The cheapest possible kill and the one most often skipped, because it takes ten seconds
 and feels like paperwork.
 
-- **No licence at all** is not permissive. It is all-rights-reserved. You may read it; you
+- **No license at all** is not permissive. It is all-rights-reserved. You may read it; you
   may not copy from it. Say that explicitly when recommending something as "a reference".
 - **Non-commercial** (CC-BY-NC and friends) rules out anything touching a business.
 - Check the **actual repo and the model card separately** — they disagree more often than
@@ -91,11 +91,14 @@ State one. Not a list of considerations.
 
 - **ADOPT** — name the measured gap it closes and what you will remove if it works.
 - **STEAL A PATTERN** — the common useful outcome. Take the idea, credit it, write none of
-  its code. Check the licence permits even this.
-- **NO** — and say which step killed it. *"Non-commercial licence."* *"Needs CUDA, we are
+  its code. Check the license permits even this.
+- **NO** — and say which step killed it. *"Non-commercial license."* *"Needs CUDA, we are
   AMD."* *"Fixes nothing we measured."* A no with a reason is reusable; a no without one
   gets re-litigated when the link is shared again.
 - **NOT YET** — with the trigger that would reopen it, and the date.
+
+**Record every verdict, including no, in the same turn**, where the project keeps decisions:
+the reason, and the condition that would reopen it.
 
 **Separate the artifact from the product.** *"Do not install it, read three files and take
 two ideas"* is a legitimate and common verdict.

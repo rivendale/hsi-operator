@@ -263,23 +263,31 @@ def selftest():
 
     Every mutation below was a real finding once. Asserting them here means the evidence
     is a command anyone can re-run, not a table in a pull request nobody reads twice.
+
+    The mutations target whichever skill sorts first in THIS repo. They once named this
+    repo's own three, so the starter kit crashed in any repo whose skills had other names.
     """
+    names = sorted(n for n in (os.listdir(SKILLS) if os.path.isdir(SKILLS) else [])
+                   if os.path.exists(os.path.join(SKILLS, n, "SKILL.md")))
+    if not names:
+        return check()  # nothing to mutate; check() says why and sets the exit code
+    first = f"skills/{names[0]}/SKILL.md"
     mutations = [
-        ("a vague description", "skills/repo-triage/SKILL.md",
-         lambda t: re.sub(r"^description: .*$", "description: Evaluates things carefully.",
+        # The indented lines too, or a folded `description: >` keeps its words.
+        ("a vague description", first,
+         lambda t: re.sub(r"^description:.*(?:\n[ \t]+.*)*", "description: Evaluates things carefully.",
                           t, count=1, flags=re.M), "FAIL"),
-        ("two colliding descriptions", "skills/hsi-operator/SKILL.md",
-         lambda t: re.sub(r"^description: .*$",
-                          "description: " + description(os.path.join(SKILLS, "repo-triage")),
-                          t, count=1, flags=re.M), "near-collide"),
-        ("a SKILL.md with no frontmatter", "skills/context-steward/SKILL.md",
+        # A second skill that copies the first, so this still runs in a repo with only one.
+        ("two colliding descriptions", f"skills/{names[0]}-twin/SKILL.md",
+         lambda t: open(os.path.join(ROOT, first), encoding="utf-8").read(), "near-collide"),
+        ("a SKILL.md with no frontmatter", first,
          lambda t: re.sub(r"^---\n.*?\n---\n", "", t, flags=re.S), "no frontmatter"),
-        ("frontmatter no installer would accept", "skills/repo-triage/SKILL.md",
+        ("frontmatter no installer would accept", first,
          lambda t: re.sub(r'^description: "(.*)"$', r"description: \1",
                           re.sub(r"^(description: )(.*)$", r"\1here: a colon \2", t,
                                  count=1, flags=re.M), count=1, flags=re.M), "YAML"),
-        ("a near-miss relabelled as a string", "evals/trigger/cases/repo-triage.json",
-         lambda t: t.replace('"should_trigger": false', '"should_trigger": "false"', 1),
+        ("a near-miss relabelled as a string", f"evals/trigger/cases/{names[0]}.json",
+         lambda t: re.sub(r'"should_trigger"\s*:\s*false', '"should_trigger": "false"', t, count=1),
          "JSON boolean"),
     ]
     ok = True
@@ -291,9 +299,16 @@ def selftest():
             # Read, then write. Opening the write handle inside the same expression
             # truncates the file before mutate() reads it, which silently turned three
             # of these mutations into "the file is empty" and passed for the wrong reason.
-            original = open(target, encoding="utf-8").read()
+            original = open(target, encoding="utf-8").read() if os.path.exists(target) else ""
+            mutated = mutate(original)
+            if mutated == original:
+                # Unchanged, it would be scored as the real tree and prove nothing.
+                ok = False
+                print(f"FAIL  could not apply {label} to {rel}: missing, or not the expected shape")
+                continue
+            os.makedirs(os.path.dirname(target), exist_ok=True)
             with open(target, "w", encoding="utf-8") as fh:
-                fh.write(mutate(original))
+                fh.write(mutated)
             r = subprocess.run([sys.executable, os.path.join(work, "evals/trigger/run.py")],
                                capture_output=True, text=True)
             passed = r.returncode == 1 and expect in r.stdout

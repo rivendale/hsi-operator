@@ -17,3 +17,6 @@ jobs:
       - run: python3 evals/trigger/run.py
       - run: python3 evals/trigger/run.py --selftest
       - run: python3 evals/cli/run.py
+      # Every link in the docs, on every PR. Nothing is excluded: the only placeholder links
+      # (example.com, in examples/) are already skipped by lychee's own defaults.
+      - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8  # v2.9.0
