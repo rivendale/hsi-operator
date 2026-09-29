@@ -4,12 +4,12 @@
   triage owner/repo [owner/repo ...]        GitHub
   triage --hf org/model [org/model ...]     Hugging Face
 
-Answers only what a machine can answer: licence, age, activity, and whether attention
+Answers only what a machine can answer: license, age, activity, and whether attention
 exceeds use. It does NOT tell you whether the thing is useful -- steps 3 to 6 of the SKILL
 are judgement and this deliberately does not attempt them.
 
-WHY LICENCE IS PRINTED FIRST AND LOUDEST. It is the cheapest kill and the one most often
-skipped, because it takes ten seconds and feels like paperwork. NO LICENCE IS NOT
+WHY LICENSE IS PRINTED FIRST AND LOUDEST. It is the cheapest kill and the one most often
+skipped, because it takes ten seconds and feels like paperwork. NO LICENSE IS NOT
 PERMISSIVE -- it is all-rights-reserved, and "useful as a reference" is exactly the framing
 that invites lifting code from something you may not lift from.
 
@@ -24,9 +24,9 @@ def days(iso):
     except Exception:
         return None
 
-def verdict_licence(spdx):
+def verdict_license(spdx):
     if not spdx or spdx in ("NOASSERTION", "null", None):
-        return "NO LICENCE — all rights reserved. Readable, NOT copyable.", True
+        return "NO LICENSE — all rights reserved. Readable, NOT copyable.", True
     if "NC" in spdx.upper() or "NonCommercial" in spdx:
         return f"{spdx} — NON-COMMERCIAL. Rules out anything touching a business.", True
     return f"{spdx}", False
@@ -41,12 +41,12 @@ def gh(repo):
     except Exception as e:
         print(f"  {repo}: {type(e).__name__}"); return
 
-    lic, lic_flag = verdict_licence((d.get("license") or {}).get("spdx_id"))
+    lic, lic_flag = verdict_license((d.get("license") or {}).get("spdx_id"))
     age, stale = days(d.get("created_at")), days(d.get("pushed_at"))
     stars, forks = d.get("stargazers_count", 0), d.get("forks_count", 0)
 
     print(f"\n{repo}")
-    print(f"  LICENCE   {'** ' + lic if lic_flag else lic}")
+    print(f"  LICENSE   {'** ' + lic if lic_flag else lic}")
     print(f"  age       created {age}d ago, last pushed {stale}d ago"
           + ("   ** stale" if stale and stale > 180 else ""))
     print(f"  attention {stars} stars, {forks} forks", end="")
@@ -64,14 +64,14 @@ def hf(model):
             d = json.loads(r.read())
     except Exception as e:
         print(f"  {model}: {type(e).__name__}"); return
-    lic, lic_flag = verdict_licence((d.get("cardData") or {}).get("license"))
+    lic, lic_flag = verdict_license((d.get("cardData") or {}).get("license"))
     dl, likes = d.get("downloads", 0), d.get("likes", 0)
     print(f"\n{model}")
-    print(f"  LICENCE   {'** ' + lic if lic_flag else lic}")
+    print(f"  LICENSE   {'** ' + lic if lic_flag else lic}")
     print(f"  use       {dl} downloads, {likes} likes"
           + ("   ** almost unused — nobody has found its failures yet" if dl < 1000 else ""))
     print(f"  modified  {(d.get('lastModified') or '?')[:10]}")
-    print(f"  NOTE      a model card licence is not a LICENSE file. Check the repo too.")
+    print(f"  NOTE      a model card license is not a LICENSE file. Check the repo too.")
 
 def main(argv):
     args = argv[1:]

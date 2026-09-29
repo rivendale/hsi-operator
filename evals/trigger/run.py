@@ -170,6 +170,14 @@ def check(verbose=False, out=print):
         # Copied into a repo that has no skills. That is not a failure: this repo's own
         # advice is not to add a gate for the sake of having one. Say so and pass, rather
         # than crashing the first CI run someone sees.
+        # Unless cases are still here: those are cases for skills that are gone, or for
+        # skills kept somewhere this check does not read (.claude/skills/, say).
+        stale = sorted(f for f in (os.listdir(CASES) if os.path.isdir(CASES) else [])
+                       if f.endswith(".json"))
+        if stale:
+            out(f"FAIL  {len(stale)} case file(s) in {CASES} but no skills/ directory at {SKILLS}: "
+                f"{', '.join(stale)}. This check reads skills/<name>/SKILL.md only.")
+            return 1
         out(f"no skills/ directory at {SKILLS} — nothing to check. "
             f"If this repo has no skills, delete this check and its workflow.")
         return 0
@@ -263,23 +271,37 @@ def selftest():
 
     Every mutation below was a real finding once. Asserting them here means the evidence
     is a command anyone can re-run, not a table in a pull request nobody reads twice.
+
+    The mutations target whichever skill sorts first in THIS repo. They once named this
+    repo's own three, so the starter kit crashed in any repo whose skills had other names.
     """
+    names = sorted(n for n in (os.listdir(SKILLS) if os.path.isdir(SKILLS) else [])
+                   if os.path.exists(os.path.join(SKILLS, n, "SKILL.md")))
+    if not names:
+        # A self-test that mutates nothing proves nothing, so it must not pass: green here
+        # would read as "the checker can still fail" when no mutation ever ran.
+        check()
+        print(f"FAIL  nothing to mutate: no skills/<name>/SKILL.md under {SKILLS}, so the "
+              f"self-test cannot show the check still fails. Skills elsewhere (.claude/skills/) "
+              f"are not read.")
+        return 1
+    first = f"skills/{names[0]}/SKILL.md"
     mutations = [
-        ("a vague description", "skills/repo-triage/SKILL.md",
-         lambda t: re.sub(r"^description: .*$", "description: Evaluates things carefully.",
+        # The indented lines too, or a folded `description: >` keeps its words.
+        ("a vague description", first,
+         lambda t: re.sub(r"^description:.*(?:\n[ \t]+.*)*", "description: Evaluates things carefully.",
                           t, count=1, flags=re.M), "FAIL"),
-        ("two colliding descriptions", "skills/hsi-operator/SKILL.md",
-         lambda t: re.sub(r"^description: .*$",
-                          "description: " + description(os.path.join(SKILLS, "repo-triage")),
-                          t, count=1, flags=re.M), "near-collide"),
-        ("a SKILL.md with no frontmatter", "skills/context-steward/SKILL.md",
+        # A second skill that copies the first, so this still runs in a repo with only one.
+        ("two colliding descriptions", f"skills/{names[0]}-twin/SKILL.md",
+         lambda t: open(os.path.join(ROOT, first), encoding="utf-8").read(), "near-collide"),
+        ("a SKILL.md with no frontmatter", first,
          lambda t: re.sub(r"^---\n.*?\n---\n", "", t, flags=re.S), "no frontmatter"),
-        ("frontmatter no installer would accept", "skills/repo-triage/SKILL.md",
+        ("frontmatter no installer would accept", first,
          lambda t: re.sub(r'^description: "(.*)"$', r"description: \1",
                           re.sub(r"^(description: )(.*)$", r"\1here: a colon \2", t,
                                  count=1, flags=re.M), count=1, flags=re.M), "YAML"),
-        ("a near-miss relabelled as a string", "evals/trigger/cases/repo-triage.json",
-         lambda t: t.replace('"should_trigger": false', '"should_trigger": "false"', 1),
+        ("a near-miss relabeled as a string", f"evals/trigger/cases/{names[0]}.json",
+         lambda t: re.sub(r'"should_trigger"\s*:\s*false', '"should_trigger": "false"', t, count=1),
          "JSON boolean"),
     ]
     ok = True
@@ -291,9 +313,16 @@ def selftest():
             # Read, then write. Opening the write handle inside the same expression
             # truncates the file before mutate() reads it, which silently turned three
             # of these mutations into "the file is empty" and passed for the wrong reason.
-            original = open(target, encoding="utf-8").read()
+            original = open(target, encoding="utf-8").read() if os.path.exists(target) else ""
+            mutated = mutate(original)
+            if mutated == original:
+                # Unchanged, it would be scored as the real tree and prove nothing.
+                ok = False
+                print(f"FAIL  could not apply {label} to {rel}: missing, or not the expected shape")
+                continue
+            os.makedirs(os.path.dirname(target), exist_ok=True)
             with open(target, "w", encoding="utf-8") as fh:
-                fh.write(mutate(original))
+                fh.write(mutated)
             r = subprocess.run([sys.executable, os.path.join(work, "evals/trigger/run.py")],
                                capture_output=True, text=True)
             passed = r.returncode == 1 and expect in r.stdout

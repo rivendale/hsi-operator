@@ -70,7 +70,8 @@ not immediately weakened to make it pass again.
 
 ## 5. Add the one gate, last
 
-If the repo has skills, take [`../evals/trigger/`](../evals/trigger) and the workflow in
+If the repo has skills, take [`../evals/trigger/run.py`](../evals/trigger/run.py) (not the whole folder: its
+`cases/` are this repo's, and the check fails them as cases for skills you do not have) and the workflow in
 [`../starter/.github/workflows/`](../starter/.github/workflows): the check plus its
 `--selftest`, so a green tick means both "the descriptions still route" and "the checker can
 still fail".
