@@ -54,13 +54,26 @@ An item asking a person for a **fact** is a search somebody skipped.
 
 ## Install
 
-All three:
+Pinned to a commit you have read (recommended):
+
+```
+git clone https://github.com/rivendale/hsi-operator && cd hsi-operator
+git checkout <commit-you-reviewed>
+npx skills add . --skill '*' -g -a claude-code --copy
+```
+
+A skill is instructions. Installing from the repository name tracks `main`, so a later push
+changes what your agent does with no review on your machine. `--copy` matters here: without
+it the installer symlinks into the clone, and the next `git pull` in that clone changes the
+installed skill too.
+
+Or track `main`, all three:
 
 ```
 npx skills add rivendale/hsi-operator --skill '*' -g -a claude-code
 ```
 
-Or one of them: `--skill hsi-operator`, `--skill repo-triage`, `--skill context-steward`.
+Either way, one of them: `--skill hsi-operator`, `--skill repo-triage`, `--skill context-steward`.
 
 Or read the `SKILL.md` you want and keep the file — each skill is one page of prose, and
 the prose is the skill. `bin/hsi` and `bin/triage` are scripts **inside** the skills, not
