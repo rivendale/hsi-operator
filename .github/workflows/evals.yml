@@ -17,6 +17,14 @@ jobs:
       - run: python3 evals/trigger/run.py
       - run: python3 evals/trigger/run.py --selftest
       - run: python3 evals/cli/run.py
-      # Every link in the docs, on every PR. Nothing is excluded: the only placeholder links
-      # (example.com, in examples/) are already skipped by lychee's own defaults.
+      # Every link in the docs, on every PR. Placeholder links (example.com, in examples/)
+      # are skipped by lychee's own defaults. One exclusion: dau.edu now redirects to
+      # waru.edu, which sits behind a bot challenge and answered 403 to the runner on
+      # main (run 36590433197, 2026-09-29) after passing on the PR run. A human browser
+      # still gets the page; a check that flips on a host's bot rules is not a link check.
       - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8  # v2.9.0
+        with:
+          args: >-
+            --verbose --no-progress
+            --exclude '^https?://(www\.)?(dau|waru)\.edu/'
+            './**/*.md' './**/*.html' './**/*.rst'
