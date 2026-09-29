@@ -17,6 +17,8 @@ cp -r starter/.github /path/to/your-repo/   # only with the line below: the work
 mkdir -p /path/to/your-repo/evals/trigger && cp evals/trigger/run.py /path/to/your-repo/evals/trigger/   # only if your repo has skills
 ```
 
+The check reads `skills/<name>/SKILL.md` only. Skills kept in `.claude/skills/` are not read, and with no `skills/` the self-test fails on purpose: a self-test that mutates nothing cannot show the check still fails.
+
 ## Then do the part that cannot be copied
 
 1. **Fill every bracket in `AGENTS.md`.** The bracketed parts are ownership, the hard

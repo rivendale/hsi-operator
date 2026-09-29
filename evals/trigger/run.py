@@ -170,6 +170,14 @@ def check(verbose=False, out=print):
         # Copied into a repo that has no skills. That is not a failure: this repo's own
         # advice is not to add a gate for the sake of having one. Say so and pass, rather
         # than crashing the first CI run someone sees.
+        # Unless cases are still here: those are cases for skills that are gone, or for
+        # skills kept somewhere this check does not read (.claude/skills/, say).
+        stale = sorted(f for f in (os.listdir(CASES) if os.path.isdir(CASES) else [])
+                       if f.endswith(".json"))
+        if stale:
+            out(f"FAIL  {len(stale)} case file(s) in {CASES} but no skills/ directory at {SKILLS}: "
+                f"{', '.join(stale)}. This check reads skills/<name>/SKILL.md only.")
+            return 1
         out(f"no skills/ directory at {SKILLS} — nothing to check. "
             f"If this repo has no skills, delete this check and its workflow.")
         return 0
@@ -270,7 +278,13 @@ def selftest():
     names = sorted(n for n in (os.listdir(SKILLS) if os.path.isdir(SKILLS) else [])
                    if os.path.exists(os.path.join(SKILLS, n, "SKILL.md")))
     if not names:
-        return check()  # nothing to mutate; check() says why and sets the exit code
+        # A self-test that mutates nothing proves nothing, so it must not pass: green here
+        # would read as "the checker can still fail" when no mutation ever ran.
+        check()
+        print(f"FAIL  nothing to mutate: no skills/<name>/SKILL.md under {SKILLS}, so the "
+              f"self-test cannot show the check still fails. Skills elsewhere (.claude/skills/) "
+              f"are not read.")
+        return 1
     first = f"skills/{names[0]}/SKILL.md"
     mutations = [
         # The indented lines too, or a folded `description: >` keeps its words.
