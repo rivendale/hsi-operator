@@ -59,13 +59,13 @@ Pinned to a commit you have read (recommended):
 ```
 git clone https://github.com/rivendale/hsi-operator && cd hsi-operator
 git checkout <commit-you-reviewed>
-npx skills add . --skill '*' -g -a claude-code --copy
+npx skills add . --skill '*' -g -a claude-code
 ```
 
 A skill is instructions. Installing from the repository name tracks `main`, so a later push
-changes what your agent does with no review on your machine. `--copy` matters here: without
-it the installer symlinks into the clone, and the next `git pull` in that clone changes the
-installed skill too.
+changes what your agent does with no review on your machine. The installer copies the files,
+so a later `git pull` in your clone changes nothing already installed; to move to a newer
+commit, review it, check it out, and run the same install again.
 
 Or track `main`, all three:
 
