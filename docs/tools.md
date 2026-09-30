@@ -94,8 +94,8 @@ host. For where the money goes once you drive these tools, see
   and at 20 seconds, each time to the second of turn end, with a `[killed]` marker written into
   the task's output file (2026-09-05, one host, observed on Claude Code 2.1.x, September 2026).
   The tool's own description says a background task keeps running across turns; on that host
-  it did not, so treat this as a conflict to check on your version, not an omission. `setsid` and `nohup` did not escape it, since
-  they stay inside the session's cgroup. A job longer than a turn runs under `systemd-run
+  it did not, so treat this as a conflict to check on your version, not an omission.
+  `setsid` and `nohup` did not escape it, since they stay inside the session's cgroup. A job longer than a turn runs under `systemd-run
   --user --collect`, which gives it its own cgroup; check `/proc/PID/cgroup`, then poll the
   unit's state on a later turn, because nothing re-invokes you.
 - **A wrapper's exit 0 is not the work.** Backgrounding a command that itself backgrounds

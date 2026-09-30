@@ -87,5 +87,5 @@ keep accuracy, cut cost, same model.
   builds was captured and diffed against the one that was measured. They matched. Without that
   refusal, a flag could be applied twice or measured once and shipped differently.
 - **The optimized call had no consumer until someone checked.** The scheduled job that runs it
-  had never been enabled (found 2026-09-30), so a cheaper call saved nothing. Check the consumer before the climb
-  as well as after.
+  had never been enabled (found 2026-09-30), so a cheaper call saved nothing. Check the
+  consumer before the climb as well as after.
