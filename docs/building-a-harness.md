@@ -164,7 +164,7 @@ their own economics: the short jobs are where the cheaper models compete.
     invoke is in scope whatever its instructions say, and a fan-out multiplies one unenforced
     sentence into many chances. Deny the capability, and better, give a survey agent no
     credential for the thing at all: a command-pattern deny has spellings around it, an absent
-    credential does not. The same holds for a shared working directory: three model seats told
+    credential does not. The same holds for a shared working directory: several agents told
     to play blind read each other's private briefs from the folder they shared, so give each
     participant its own directory and check for leaks every round. And for a sweep over mixed
     stores, a prompt that said in capitals never to open credential-shaped files still had

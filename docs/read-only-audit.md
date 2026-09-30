@@ -42,13 +42,12 @@ find a gap between that assumption and the world.
   scan said two. Four methods over one defective input are one measurement, and their agreement
   raised confidence instead of lowering it. When independent methods agree, ask whether they
   shared an input.
-- **Diff against the prior version, or a deletion does not exist.** One review of a versioned
-  document set found four items present in the earlier version and absent from the later one,
-  two of them affirmatively denied by the newer text. None was findable by reading the current
-  version carefully, by a person or a model. When a "condensed" version appears, diff it and
-  ask what class of thing left: in that case the verbose parts survived and the protective ones
-  (non-waiver language, caveats, scope definitions) did not. Three such items is a process
-  finding: re-derive from the last good version rather than chase items one at a time.
+- **Diff against the prior version, or a deletion does not exist.** In a versioned set of
+  governing documents, a later version silently dropped a clause the earlier one had. Nothing
+  in the current version pointed at the gap, so reading it carefully, by a person or a model,
+  could not find it. When a "condensed" version appears, diff it and ask what class of thing
+  left: protective language is what tends to go. More than one such item is a process finding:
+  re-derive from the last good version rather than chase items one at a time.
 - **Normalize every timestamp to one clock and one kind of event before reasoning about
   order.** Two verified facts about one service looked mutually exclusive because the timeline
   set local-time commit stamps beside a UTC container-creation time misread as a merge.

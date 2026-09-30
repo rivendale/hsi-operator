@@ -63,7 +63,8 @@ keep accuracy, cut cost, same model.
 
 - **Most of the cost was a cache the call never read.** The call wrote its whole input to a
   1-hour prompt cache and, running once a night, never read it back. Switching to the 5-minute
-  cache cut cost per call by about 29% without touching what the model saw or said. Read the
+  cache cut cost per call by about 28%, measured on one case, and by construction changed
+  nothing the model saw or said. Read the
   usage block's cache-write split before touching the prompt.
 - **Price every variant as production pays, not as the runner reports.** Two repetitions of
   a case within the cache window read each other's cache, so the runner's figure was lower than
@@ -80,11 +81,11 @@ keep accuracy, cut cost, same model.
   it met the minimum by one, inside noise, so it counted only after a repeat run held. Register
   the minimum before round one, and repeat any winner whose margin is inside noise.
 - **The sentence was written after reading the misses, and there was no held-out set,** so
-  its gain is partly tuned to these cases. The report says so.
+  its gain is partly tuned to these cases.
 - **The runner refused a production argv that already carried the flags it injects.** So the
   final flags went into production code after the climb, and the argv production actually
   builds was captured and diffed against the one that was measured. They matched. Without that
   refusal, a flag could be applied twice or measured once and shipped differently.
 - **The optimized call had no consumer until someone checked.** The scheduled job that runs it
-  had never been enabled, so a cheaper call saved nothing. Check the consumer before the climb
+  had never been enabled (found 2026-09-30), so a cheaper call saved nothing. Check the consumer before the climb
   as well as after.

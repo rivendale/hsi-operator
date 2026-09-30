@@ -52,9 +52,11 @@ host. For where the money goes once you drive these tools, see
   siblings and runs under whatever Node is first on `PATH`; one such copy failed with
   `SyntaxError: Invalid regular expression flags`, which looks like a corrupt download and is
   not (2026-08). Symlink the real bundle, or use a wrapper that `exec`s it.
-- **An empty answer may be the invocation, not the model.** `codex exec "..." > file` wrote
-  0 bytes and exited 0: the final answer goes to `-o FILE`, not stdout (2026-08-14). The other
-  three print it to stdout. Getting this wrong is indistinguishable from a bad model.
+- **An empty answer may be the invocation, not the model.** On Codex 0.156.0
+  (2026-09-30), `codex exec "..." < /dev/null > out.txt` wrote the final answer to stdout,
+  with the log on stderr. Without `< /dev/null`, the same command hung about 120 seconds with
+  0 bytes on stdout, waiting on the open stdin. For a headless run, close stdin with
+  `< /dev/null`. Getting this wrong is indistinguishable from a bad model.
 - **A scheduled probe must run once as the unit.** A daily real-request probe of every CLI
   failed every scheduled run for three days with exit 127, because its unit set no `PATH`, and
   its failures read as the CLIs being down (2026-09-27). Start a timer job by hand as the unit
@@ -90,7 +92,9 @@ host. For where the money goes once you drive these tools, see
 - **A background task can end with the turn, not the work.** A task started with the Bash
   tool's `run_in_background` was killed when the assistant's turn ended, twice, at 9 minutes
   and at 20 seconds, each time to the second of turn end, with a `[killed]` marker written into
-  the task's output file (2026-09-05, one host). `setsid` and `nohup` did not escape it, since
+  the task's output file (2026-09-05, one host, observed on Claude Code 2.1.x, September 2026).
+  The tool's own description says a background task keeps running across turns; on that host
+  it did not, so treat this as a conflict to check on your version, not an omission. `setsid` and `nohup` did not escape it, since
   they stay inside the session's cgroup. A job longer than a turn runs under `systemd-run
   --user --collect`, which gives it its own cgroup; check `/proc/PID/cgroup`, then poll the
   unit's state on a later turn, because nothing re-invokes you.

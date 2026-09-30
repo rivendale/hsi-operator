@@ -96,9 +96,12 @@ check that tests nothing anyone worried about is a tax with a tick next to it.
   gives secret scanning free on public repos and sells it for private ones, and the plan did
   not include it. That is a purchasing decision, not a setting someone forgot, and an
   unlicensed control looks identical to a forgotten one. Check the plan
-  (`gh api orgs/ORG --jq .plan.name`), and separate "scanned clean" from "never scanned":
+  (`gh api orgs/ORG --jq .plan.name`); only organization owners can read that field, so a 404
+  or a missing field means you cannot see the plan, not that the feature is free. Separate
+  "scanned clean" from "never scanned":
   `gh api repos/OWNER/REPO/secret-scanning/alerts --jq length` returns a live `0` when scanning
-  is on and 404 when it is not.
+  is on and 404 when it is not. Read the 404's message, because a token without access to the
+  repo also gets a 404.
 - **Do not add enforcement to win an argument about a rule.** If a rule is not kept, a hook
   becomes the thing people route around.
 - **Do not let the adoption become the work.** If a month of this has produced no cited line
