@@ -37,6 +37,23 @@ applies only to the slice a change touched.
 If the harness does not log usage by billing type, that is the first change. Everything else
 depends on it.
 
+GitHub's ["How we make AI coding more cost efficient without sacrificing task quality"](https://github.blog/ai-and-ml/github-copilot/how-we-make-ai-coding-more-cost-efficient-without-sacrificing-task-quality/)
+(Erik Kristensen and Napalys Klicius, 2026-09-02) reports three results that belong beside
+these rules:
+
+- **Measure the finished task, not the tool call.** A utility that compressed tool output made
+  each response shorter and the whole task more expensive, because the agent reopened the
+  original to recover what the summary left out. Check: count reads of the same source per task
+  before and after a compression change; a rise means the saving is being paid back.
+- **Evidence is local to the workload.** Tighter file-tool instructions helped in one product
+  surface and raised cost in another, so they did not ship broadly. Check: run a change on every
+  surface it will reach before calling it a saving, not only the one it was tuned on.
+- **An untested behavior can be deleted by a shorter prompt.** A model-rewritten prompt that
+  cut the task-tool guidance about in half also turned parallel subagents into serial ones. The
+  fix was one plain sentence plus a regression test that fails if the work stops running in
+  parallel. Check: before trimming a prompt, list the behaviors it produces and give each one a
+  test; a sentence with no test behind it is one edit from gone.
+
 ## 2. The layers
 
 **System prompt.** Label each line keep, rewrite, delete or move. Keep what the model cannot

@@ -67,4 +67,17 @@ what the first run showed is in [`eval-and-hillclimb.md`](eval-and-hillclimb.md)
   require the detector not to fire on it. When the third fix to a grader lands somewhere new,
   question the grader's shape rather than fixing it again.
 
+## Before a rewrite or port: record the old program, replay it on the new one
+
+**The old program's real behavior is the specification; record it before touching it.** Capture
+real invocations and their outputs from the current version, replay every one against the
+rewrite, and review each difference as either a bug or an intentional change written down with
+its reason. [pbakaus/impeccable#714](https://github.com/pbakaus/impeccable/pull/714) (merged
+2026-09-04) replaced a Node runtime with a Rust binary this way: an oracle suite replays 830
+recorded command invocations and 16,058 recorded function-call vectors, compared byte for byte,
+and the accepted differences are listed in `tests/oracle/DELTAS.md`. A test suite written for
+the rewrite tests what its author thought the program did; the recording tests what it did.
+Check: the replay runs in CI, the delta file is the only way a difference passes, and a new
+entry in it is reviewed like code.
+
 [`eval-and-hillclimb.md`](eval-and-hillclimb.md) is the loop these cases feed.
