@@ -86,5 +86,23 @@ and a higher level can buy nothing.
    reports `modelUsage`. A long-running session keeps the binary it started with, so check the
    running process, not `claude --version`; a subprocess runs whatever is first on `PATH`.
 
+## Let the lead agent choose per subagent, not a router
+
+A per-request router that picks a model for each call is a smaller model making the choice for
+a larger one: it sees less of the task than the model it routes for. If it is a hosted service,
+it is also one more hop that sees every prompt and writes the response the agent acts on
+([`building-a-harness.md`](building-a-harness.md), item 14). The alternative is to let the lead
+agent, which already holds the plan, set each subagent's model tier and effort when it
+dispatches it: cheap mechanical steps at low effort, judges and verifiers higher, and a return
+to a subagent it already briefed while its cache is warm. Replit describes this design in
+[Free the models](https://replit.com/blog/free-the-models) (read 2026-09-30) and reports it
+beating a single strong model on cost at similar accuracy; the benchmark it used is on Epoch AI's
+flawed list, so read it as direction.
+
+Whichever layer chooses, measure the levels before believing any of them. In one operator's
+eval ([`eval-and-hillclimb.md`](eval-and-hillclimb.md)), high matched xhigh on recall at about
+45% lower cost, and Anthropic's Fable 5.1 prompting guide gives the same starting advice: begin
+at high and go higher only where a gain is measured.
+
 [`harness-efficiency.md`](harness-efficiency.md) puts reasoning effort in the "write a proposal"
 tier. This page is what that proposal should measure.

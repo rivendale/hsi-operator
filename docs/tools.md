@@ -170,3 +170,12 @@ One operator's records, 2026-09. Small sample; treat as a starting default.
 - **Expect each model's habit.** Gemini found real defects and overstated their severity.
   Codex built working code and did not audit what its own change deleted.
 - **A reviewer with no shell cannot run the code or git.** Put the diff in the prompt.
+- **Pick each review lane's model by its role, not by the leaderboard.** A lane that gates
+  merges nobody watches should take the model whose reasoning is easier to monitor, which the
+  system card reports as chain-of-thought controllability: how often the model can steer its own
+  reasoning trace when told to. Lower means the trace is harder to shape and more trustworthy to
+  read. An advisory blind seat on a panel never gates anything, so it can take the stronger
+  model. Example, from OpenAI's GPT-6.1 Sol system card (released 2026-09-29, read 2026-09-30),
+  CoT control for traces of 750 to 1,250 tokens: GPT-6 Sol 23.2%, GPT-6.1 Sol 44.8%, GPT-6 Astra
+  60.9%. One operator kept the unattended merge gate on GPT-6 Sol and moved the advisory seat to
+  GPT-6.1 Sol the same day. Re-read the card for each new model; the figures are the vendor's.
