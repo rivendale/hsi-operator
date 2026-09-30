@@ -12,6 +12,33 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **The wiki page claimed a mirror that did not exist, and running the evals left bytecode to
+  commit.** `docs/wiki/Home.md` said its pages were mirrored to the GitHub wiki, which on
+  2026-09-30 still held only its default page. It now says the repo copy is the only current one
+  and any mirror is manual. A `.gitignore` covers `__pycache__/` and `*.pyc`, which the Python
+  evals write and nothing excluded.
+
+- **Twenty lessons that a stranger could use sat in one operator's private notes, where only
+  that operator's agents could learn from them, and the eval page still called itself a draft
+  after its first run.** Each lesson came from a real failure: an auth check that read HTTP 200
+  while the server refused the key in the body, a hook guard that never reached the always-on
+  session it was written for, a filter hardened through 21 review rounds that had never received
+  one line of input, four secret scans that agreed on a wrong count over a clone missing
+  pull-request refs, a redaction line that printed the token it was hiding, a grader that failed
+  answers for naming the trap they avoided. They are now in `building-a-harness.md` (hooks never
+  ask, scope enforced by tools, guards and long-lived sessions, status-code auth checks),
+  `planted-defect-evals.md` (a checker must reach several verdicts, old code against the new
+  test, prose detectors), `read-only-audit.md` (count the input, fetch pull-request refs, diff
+  against the prior version, one clock), `tools.md` (installed is not working, tools asserting
+  what they cannot see, background jobs and wrapper exits, Grok's stored session),
+  `writing-a-brief.md` (the latest message, mid-run redirects, handoffs as attacks),
+  `harness-efficiency.md` (fan-out results land in the parent), `adopting-an-existing-repo.md`
+  (an unlicensed control looks forgotten) and `AGENTS.md` (grants invisible until restart, the
+  redaction idiom, inspection commands that dump secrets). `eval-and-hillclimb.md` loses its
+  draft marker and records what its first run showed: most of the cost was a cache never read,
+  lower effort cost recall but not precision, and the optimized call had no consumer until
+  someone checked.
+
 - **Lessons measured over two weeks lived only in one operator's private notes, and two had
   drifted while they sat there.** A benchmark figure copied from a screenshot (Sonnet 5.5 at
   xhigh, $1.55 per planted bug) came from one run; the raw data, re-read the day this was
@@ -25,6 +52,14 @@ it does, the version goes above the date and this line goes away.
   first-party pin question and motion storyboards; the starter, `tools.md` (an API key changes
   who pays) and three skill bodies get a line or two each. No skill description changed.
 
+- **The link check went red on `main` after passing on its own pull request (#38).** A
+  documentation site now redirects to a host that serves a bot challenge, answering 403 to the
+  runner while a browser still gets the page. A check that flips on a host's bot rules is not a
+  link check, so the workflow excludes those two hosts with the reason and the run in a comment,
+  and lists lychee's default globs explicitly, because setting `args` replaces them. The two
+  links themselves were not rewritten, since the new targets could not be confirmed
+  automatically.
+
 - **The starter kit failed in any repo whose skills had other names.** `--selftest` mutated
   this repo's three skills by path, so a fresh repo with one skill of its own crashed with
   FileNotFoundError, and the starter workflow ran `evals/cli/run.py`, which tests this repo's
@@ -35,6 +70,13 @@ it does, the version goes above the date and this line goes away.
   this repo's gate, since nothing checked a link; two context-steward rules (absolute dates,
   and the transcript path to a fresh reviewer after compaction); repo-triage's rule to record
   every verdict, including no, in the same turn; and the American spelling of license.
+
+- **The README's only install command tracked `main` (#36).** A skill is instructions, so an
+  install by repository name let a later push change what an agent does with no review on the
+  user's machine. The README now leads with a pinned install: clone, check out the commit you
+  reviewed, and run the installer on the local copy. The first draft said a `--copy` flag was
+  needed to avoid a symlink into the clone; an independent review in throwaway homes showed the
+  installer copies anyway, so the claim and the flag were removed before merge.
 
 - **The timeline merged before its review fixes, with a crash that emptied its output file.**
   A lone UTF-16 surrogate in a ledger field, which JavaScript writes whenever it clips a

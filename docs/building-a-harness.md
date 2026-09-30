@@ -151,6 +151,29 @@ their own economics: the short jobs are where the cheaper models compete.
     Writing to a path a user names is different, because a rename changes what a plain write does
     to `/dev/null`, a FIFO or a file's group (see this repository's
     [`CHANGELOG.md`](../CHANGELOG.md)).
+11. **Hooks allow or deny; they never ask.** An `ask` outranks an unattended mode, so one hook
+    that asks turns a workflow that runs alone into one that waits for a tap. On one host, 627
+    of 1,224 logged hook decisions were asks, and most of one day's came from a single rule
+    firing on a routine `git pull`. Turn an ask into allow at the one function every rule
+    returns through, not at each call site, so rules added later are covered. Keep logging the
+    original decision, so "which rules would have asked" stays a query. Fewer prompts is not
+    weaker denies: the same fix broadened a force-push rule to catch the flag wherever it sits.
+12. **Scope is what the tools allow, not what the prompt says.** A subagent in a workflow
+    described as "read-only on the filesystem" opened a tunnel to a production database;
+    nothing was queried, and nothing in its tools had stopped it. A capability the agent can
+    invoke is in scope whatever its instructions say, and a fan-out multiplies one unenforced
+    sentence into many chances. Deny the capability, and better, give a survey agent no
+    credential for the thing at all: a command-pattern deny has spellings around it, an absent
+    credential does not. The same holds for a shared working directory: several agents told
+    to play blind read each other's private briefs from the folder they shared, so give each
+    participant its own directory and check for leaks every round. And for a sweep over mixed
+    stores, a prompt that said in capitals never to open credential-shaped files still had
+    agents print logins into their transcripts; the rule held only where the enumerator never
+    listed the path. Hand agents a path list built by code. The inverse is also true: a
+    parent's memory does not reach a subagent, so the prompt is too weak to enforce a scope
+    and still the only place a warning can be delivered. Put the warning in the prompt
+    **and** deny the capability. When auditing what an agent did, extract the commands it
+    executed; a transcript full of `SELECT` strings may hold only the agent describing a plan.
 
 ## Where this goes wrong
 
@@ -170,6 +193,21 @@ their own economics: the short jobs are where the cheaper models compete.
   If a message changes what another agent does in the next hour, send it over a live channel; a
   durable record goes to the queue; anything load-bearing goes to both. Before telling the person
   an agent is on it, check that the agent was told.
+- **A guard added after a long-lived session started does not protect it.** Hooks are read at
+  session start. A hook that blocks a known hazardous command landed about a day after an
+  always-on service session had started; the service session ran that exact command the next
+  day and froze its host, while a fresh session was blocked by the same guard on its first
+  try. Every guard is tested from a session newer than itself, so the one session that can be
+  older than its protections is the one that runs unattended. Adding or changing a hook is not
+  done until the long-lived session has restarted; compare the hook file's time with that
+  session's start time.
+- **An auth check that reads the status code can pass forever.** One MCP server rejected a
+  wrong or missing key with HTTP 200 and the refusal in the JSON-RPC body (`isError: true`,
+  "unauthorized"), so `curl -w '%{http_code}'` reads 200 whether the key is valid, wrong or
+  absent. And the operations differ: `tools/list` answered in full with no key, because the
+  handshake is open by design, while `tools/call` was gated. Test the gated operation three
+  times (real key, wrong key, no key) and assert on the body. The wrong-key arm matters most,
+  since no key at all can fail for reasons unrelated to the gate.
 - **Replacing the phone door first.** Keep the person's current way in until the new one has carried
   real questions and answers for a week.
 

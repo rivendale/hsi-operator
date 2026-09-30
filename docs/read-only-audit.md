@@ -20,3 +20,41 @@ Written 2026-09-29 from one run, 2026-09-27 into 2026-09-28.
 6. **Deliver it.** In that run, the main finding was that the existing nightly reports had no
    reader. What was missing was delivery, not more checks
    ([`every-output-needs-a-reader.md`](every-output-needs-a-reader.md)).
+
+## What depth cannot find
+
+More review rounds make code more correct against the input someone assumed. They cannot
+find a gap between that assumption and the world.
+
+- **Count the input before hardening the processor.** A chat filter went through 21
+  adversarial review rounds and 152 tests before anyone read the live server's logs: twenty
+  archives held no chat lines at all, and 16 of 34 join lines carried no name, which the
+  parser's pattern rejected, so about half of real joins were silently skipped. Every round had
+  read the code and the fixtures, and the fixtures encoded the assumed format. One grep of a
+  production log on the first round costs nothing, and its value only falls as work is stacked
+  on the assumption. A parser, filter or importer with no measured input is a hypothesis with
+  tests.
+- **An audit scan must fetch pull-request refs.** `git fetch --all` does not fetch
+  `refs/pull/*`, so a clone can be current on every branch and still lack a commit that exists
+  only on an unmerged pull request, while the hosting service still stores it. A secret scanner
+  alert said two findings; four different local scans said one, every time, all over the same
+  incomplete clone. After `git fetch origin '+refs/pull/*/head:refs/remotes/origin/pr/*'` the
+  scan said two. Four methods over one defective input are one measurement, and their agreement
+  raised confidence instead of lowering it. When independent methods agree, ask whether they
+  shared an input.
+- **Diff against the prior version, or a deletion does not exist.** In a versioned set of
+  governing documents, a later version silently dropped a clause the earlier one had. Nothing
+  in the current version pointed at the gap, so reading it carefully, by a person or a model,
+  could not find it. When a "condensed" version appears, diff it and ask what class of thing
+  left: protective language is what tends to go. More than one such item is a process finding:
+  re-derive from the last good version rather than chase items one at a time.
+- **Normalize every timestamp to one clock and one kind of event before reasoning about
+  order.** Two verified facts about one service looked mutually exclusive because the timeline
+  set local-time commit stamps beside a UTC container-creation time misread as a merge.
+  Normalized, the order inverted: the image was built from a branch tip about two minutes
+  before that branch merged, and two later merges were never deployed. One cause, not the three
+  proposed. When two trusted measurements conflict, suspect the ordering that connects them,
+  and settle it by hash or content identity. The remedy has its own trap: a direct check of the
+  running artifact aimed at a guessed path returned a confident "absent"; confirm the path
+  exists before trusting an absence inside it. A log line stamped with a time and no date gets
+  its date from the file or a date line before anyone cites it.
