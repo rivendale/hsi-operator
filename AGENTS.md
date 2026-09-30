@@ -273,9 +273,13 @@ before rendering anything, and give notes in camera terms: framing, movement, ti
 - **Pin an installed skill to a reviewed commit rather than tracking `main`.** A skill is
   instructions: tracking a branch means a future push edits how an agent behaves with no
   review step on that machine. Check out a reviewed SHA, read the diff, then move the pin.
-- **Install a third-party skill from a local clone at a reviewed commit, never with
-  `npx <skill>`.** The one-line installer runs whatever the registry serves that day, which is
-  the unpinned pattern in another form. Clone, check out the commit you read, and read the
+- **Install a third-party skill from a local clone at a reviewed commit, never from the
+  registry at whatever version is current.** What is forbidden is a one-line install that fetches
+  the latest published version, such as `npx <skill-package>` or `npx skills add <owner>/<repo>`:
+  it runs whatever the registry serves that day, which is the unpinned pattern in another form.
+  Installing from a local clone at a reviewed commit is fine, whatever the tool (the
+  [README](README.md#install)'s `npx skills add .` from a pinned clone is that path). Clone,
+  check out the commit you read, and read the
   scripts as well as `SKILL.md`: `grep -rnE 'curl|wget|fetch|requests|urllib|socket|eval|exec|subprocess|os\.system|child_process'`
   over its files tells you whether it calls the network or runs a shell, and every hit is either
   explained or a reason not to install. Then prove it from the consuming end with one real run

@@ -39,9 +39,11 @@ What to learn from it:
 ## Audit before you assume there is prose to delete
 
 Deleting steering prose as models improve is right. Anthropic's Fable 5.1 prompting guide tells
-you to remove old anti-formatting rules, Replit's "scaffold less" argues the same for harnesses,
-and Every cut instructions from its Compound Engineering plugin at v3.30 for the same reason. All
-three aim at style nudges, formatting rules and process a capable model follows anyway.
+you to remove old anti-formatting rules, and Replit's "scaffold less" argues the same for harnesses.
+Every's [announcement](https://every.to/compound-engineering) reported cutting instructions from
+its Compound Engineering plugin for the same reason (the v3.30 release notes themselves list bug
+fixes, not removals). All three aim at style nudges, formatting rules and process a capable model
+follows anyway.
 
 That does not mean any given file is full of it. One operator audited a months-old,
 roughly 20 KB instruction file against those three sources on 2026-09-30 and could justify

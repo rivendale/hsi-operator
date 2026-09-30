@@ -176,6 +176,7 @@ One operator's records, 2026-09. Small sample; treat as a starting default.
   reasoning trace when told to. Lower means the trace is harder to shape and more trustworthy to
   read. An advisory blind seat on a panel never gates anything, so it can take the stronger
   model. Example, from OpenAI's GPT-6.1 Sol system card (released 2026-09-29, read 2026-09-30),
-  CoT control for traces of 750 to 1,250 tokens: GPT-6 Sol 23.2%, GPT-6.1 Sol 44.8%, GPT-6 Astra
-  60.9%. One operator kept the unattended merge gate on GPT-6 Sol and moved the advisory seat to
+  CoT control for traces of 750 to 1,250 tokens: GPT-5.5 Thinking 1.7%, GPT-5.6 Sol 16.1%, GPT-6
+  Sol 23.2%, GPT-6.1 Sol 44.8%, GPT-6 Astra 60.9%. The card notes that controllability is
+  confounded by trace length, which is why the token range matters. One operator kept the unattended merge gate on GPT-6 Sol and moved the advisory seat to
   GPT-6.1 Sol the same day. Re-read the card for each new model; the figures are the vendor's.

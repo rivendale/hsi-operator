@@ -95,9 +95,9 @@ it is also one more hop that sees every prompt and writes the response the agent
 agent, which already holds the plan, set each subagent's model tier and effort when it
 dispatches it: cheap mechanical steps at low effort, judges and verifiers higher, and a return
 to a subagent it already briefed while its cache is warm. Replit describes this design in
-[Free the models](https://replit.com/blog/free-the-models) (read 2026-09-30) and reports it
-beating a single strong model on cost at similar accuracy; the benchmark it used is on Epoch AI's
-flawed list, so read it as direction.
+[Free the models](https://replit.com/blog/free-the-models) (read 2026-09-30) and reports
+72% at $2.11 against 74% at $4.43 for GPT-6 Astra at xhigh on DeepSWE; the benchmark is on Epoch
+AI's flawed list, so read it as direction.
 
 Whichever layer chooses, measure the levels before believing any of them. In one operator's
 eval ([`eval-and-hillclimb.md`](eval-and-hillclimb.md)), high matched xhigh on recall at about
