@@ -18,4 +18,4 @@ This wiki is the operator-facing shelf. The skill itself is still the prose in `
 - [references/](https://github.com/rivendale/hsi-operator/tree/main/skills/hsi-operator/references)
 - [Issues](https://github.com/rivendale/hsi-operator/issues)
 
-Wiki pages are mirrored from [`docs/wiki/`](https://github.com/rivendale/hsi-operator/tree/main/docs/wiki) because the wiki git remote is not writable from the GitHub App used here. Edit either place; prefer the repo if you want review.
+These pages live in [`docs/wiki/`](https://github.com/rivendale/hsi-operator/tree/main/docs/wiki), and that copy is the only one kept current. They were written to be mirrored to the GitHub wiki, but the wiki git remote is not writable from the GitHub App used here, so any mirror is manual; on 2026-09-30 the GitHub wiki still held only its default page. Read and edit them in the repo.
