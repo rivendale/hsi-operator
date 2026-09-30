@@ -94,7 +94,7 @@ host. For where the money goes once you drive these tools, see
   killed when the assistant's turn ended, twice, each time to the second of turn end, with a
   `[killed]` marker in its output file. On Claude Code 2.1.285 (2026-09-30) it did not
   reproduce: a four-minute ticker ran straight through turn end, finished, and its completion
-  notice woke the session, as the tool's description says. So this is version-dependent; test yours with a short ticker before relying on either behavior.
+  notice woke the session, as the tool's description says. So the behavior differs between those two sessions, most likely by version (the first was an unspecified 2.1.x host, the second a Remote Control session); test yours with a short ticker before relying on either behavior.
   A job that must survive the session itself, or a restart, runs under `systemd-run --user
   --collect`, which gives it its own cgroup; poll the unit's `ActiveState` (a oneshot reads
   `activating`, not `active`, while it runs).
