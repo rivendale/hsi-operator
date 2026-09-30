@@ -189,21 +189,25 @@ their own economics: the short jobs are where the cheaper models compete.
     prompts, the tool results and the credentials in plaintext, and it writes the response the
     agent acts on, so it can add tool calls the model never made.
     [Your Agent Is Mine](https://arxiv.org/abs/2604.08407) (arXiv 2604.08407, 2026) tested 428
-    routers, 28 paid and 400 free: 9 of them (one paid) injected malicious code into responses,
-    and 17 used canary cloud credentials the researchers had planted, 26 in all. Talk to the provider's
-    own endpoint, or to a gateway you run yourself. To check, list every base-URL override and
-    proxy the agent could inherit: `env | grep -iE 'base_url|api_base|endpoint|proxy'` in the
-    environment the unattended job actually runs in, then the same words across the CLIs' config
-    files and any `.env` beside them. Each hit is either the provider's domain or a decision
-    someone can name.
+    routers, 28 paid and 400 free: 9 (one paid) injected malicious code into responses, and 17
+    touched canary cloud credentials the researchers had planted. Talk to the provider's own
+    endpoint, or to a gateway you run yourself. To check, list the NAMES of every base-URL override
+    and proxy the agent could inherit, never their values, since a proxy URL can carry a password:
+    `env | grep -ioE '^[^=]*(base_url|api_base|endpoint|proxy)[^=]*'` in the environment the
+    unattended job actually runs in. For the CLIs' config files and any `.env` beside them, list
+    the matching files with `grep -ilE 'base_url|api_base|endpoint|proxy'`, then read only the
+    hostname from each hit. Each hit is either the provider's domain or a decision someone can
+    name.
 15. **Read `.claude/`, `.cursor/` and `.vscode/` in a cloned repo before opening it with an
     agent.** Project settings in those folders can define hooks, tasks and MCP servers that run
     commands when the tool opens the workspace, so opening the repo is running it. Google Threat
     Intelligence Group's [From prompting to autonomy](https://cloud.google.com/blog/topics/threat-intelligence/from-prompting-to-autonomy-the-evolution-of-adversarial-ai)
     (2026-09-08) describes a credential stealer that drops files into exactly those folders so
-    that it "executes automatically whenever the IDE or AI extension opens the workspace", and
-    trojanized MCP packages published with valid signed build attestations, which pass a
-    provenance check. So provenance is not review. Before the first agent session in a fresh
+    that it "executes automatically whenever the IDE or AI extension opens the workspace". It
+    also describes two separate supply-chain routes: trojanized forks of MCP servers published
+    from compromised developer accounts, and compromised versions of other packages published
+    with valid signed build attestations, which pass a provenance check. So provenance is not
+    review. Before the first agent session in a fresh
     clone, `git ls-files .claude .cursor .vscode .mcp.json` and read every file it lists, and
     re-read after any pull that touches them.
 

@@ -41,9 +41,11 @@ GitHub's ["How we make AI coding more cost efficient without sacrificing task qu
 (Erik Kristensen and Napalys Klicius, 2026-09-02) reports three results that belong beside
 these rules:
 
-- **Measure the finished task, not the tool call.** A utility that compressed tool output made
-  each response shorter and the whole task more expensive, because the agent reopened the
-  original to recover what the summary left out. Check: count reads of the same source per task
+- **Measure the finished task, not the tool call.** In the integration and workloads they
+  tested, a utility that compressed tool output made each response shorter and the whole task
+  more expensive, because the agent reopened the original or reran the command to recover what
+  the summary left out. They say the result does not extend to every configuration of that
+  tool or to output compression in general. Check: count reads of the same source per task
   before and after a compression change; a rise means the saving is being paid back.
 - **Evidence is local to the workload.** Tighter file-tool instructions helped in one product
   surface and raised cost in another, so they did not ship broadly. Check: run a change on every
