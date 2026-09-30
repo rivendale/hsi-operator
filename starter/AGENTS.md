@@ -72,7 +72,8 @@ For code. Each rule names its check; delete any rule you do not gate, and a rule
 without a check says so. The reasons and worked examples are in `docs/design-rules-for-code.md` in
 rivendale/hsi-operator.
 
-- **Reorganize first, then change.** A behavior-preserving refactor commit with the tests
+- **Reorganize first, then change,** when the change needs a reorganization (unrelated
+  refactoring is still dropped). A behavior-preserving refactor commit with the tests
   green, then the change commit: one pull request is fine, one commit never is. For a
   high-stakes calculation, diff an output dump from before and after the refactor.
   *Check: review, plus the empty output diff.*
@@ -89,11 +90,13 @@ rivendale/hsi-operator.
 - **No business logic in display code.** Templates, components, routes and view builders
   display values; they do not compute prices, totals or classifications. Who may see a value
   is decided on the server, not by a conditional in a component.
-  *Check: an import-boundary lint that refuses display code importing the rule owners.*
+  *Check, partial: an import-boundary lint refusing display code that imports the rule
+  owners (it misses inline template arithmetic), and a test that an unprivileged role's
+  response payload does not contain the restricted field.*
 - **When two principles conflict, choose the lowest future cost for this repo,** and say
   which and why in the commit message. *Check: review.*
 - **Gates, not promises.** A rule that matters ships with a lint, test or hook that fails
-  when it is broken, proven on a violation it must refuse. [List your gates here, e.g. model
+  when it is broken, proven on a violation it must refuse, or is labeled review-only. [List your gates here, e.g. model
   names only in the model-config file; every model in use has a price entry; no code path
   creates a parent record without its required child.]
 

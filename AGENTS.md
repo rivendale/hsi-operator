@@ -185,7 +185,7 @@ the thing being graded.
   the act (a time-of-check-to-time-of-use race). Once a rule has been broken after being
   acknowledged, turn it into a lint rule or a failing test that catches the pattern, and prove it
   on a sample it must reject. For a rule you are adding rather than one already broken, ship the check
-  with the rule; [`docs/design-rules-for-code.md`](docs/design-rules-for-code.md#6-gates-not-promises)
+  with the rule or label the rule review-only; [`docs/design-rules-for-code.md`](docs/design-rules-for-code.md#6-gates-not-promises)
   has worked examples.
 - **A known limitation needs a trigger, or it is permanent.** Give each one a failing test that
   goes green when it is fixed, an owner and a date, or an explicit won't-fix with the reason.

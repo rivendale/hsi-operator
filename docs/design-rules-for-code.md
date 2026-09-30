@@ -6,15 +6,18 @@ it hold. The idea of writing design principles as hard rules in `AGENTS.md`, rat
 list of virtues, is Tomas Vykruta's (@tvykruta on X, 2026-09-30); the wording and the checks
 here are ours.
 
-They extend what is already in [`AGENTS.md`](../AGENTS.md): the scope guard's "what the project
-already does, then the standard library" order and "delete what you replaced", and Testing's
-"a rule the agent agrees with and still breaks needs a mechanical check". The compact version
+They extend what is already here: the scope guard's "what the project already does, then the
+standard library" order and "delete what you replaced", in
+[`starter/AGENTS.md`](../starter/AGENTS.md#scope-guard), and Testing's "a rule the agent agrees
+with and still breaks needs a mechanical check", in [`AGENTS.md`](../AGENTS.md#testing). The compact version
 for a new repo is in [`starter/AGENTS.md`](../starter/AGENTS.md#design-rules).
 
 ## 1. Reorganize first, then change
 
-A behavior change goes in two commits: a refactor that preserves behavior, with the tests green,
-and then the change. They may share one pull request, never one commit. A reviewer has to be able
+When a change needs a reorganization, it goes in two commits: a refactor that preserves behavior, with the tests green,
+and then the change. This is not license for unrelated refactoring, which the scope guard
+still drops; it applies when the change cannot be made cleanly without moving code first. They
+may share one pull request, never one commit. A reviewer has to be able
 to verify that the first commit changes nothing, and a mixed diff makes that impossible: the
 behavior change hides among the moved lines.
 
@@ -70,7 +73,7 @@ decision from an accident, and it is the only part of the choice anyone can revi
 ## 6. Gates, not promises
 
 A rule that matters ships with a check (a lint rule, a test, a hook) that fails when the rule is
-broken. **Add a rule only together with its check**, and prove the check in the denying direction:
+broken. **Add a rule with its check, or label it review-only**, and prove the check in the denying direction:
 feed it a violation and watch it fail before trusting it green.
 
 Worked examples, each small enough to write in an afternoon:
@@ -86,10 +89,16 @@ Worked examples, each small enough to write in an afternoon:
   path.
 - **Display code cannot import the rule owners.** An import-boundary lint (import-linter in Python,
   `no-restricted-imports` in ESLint) refuses a template or component that imports the pricing or
-  permissions modules. This is the check for rule 4.
+  permissions modules. This only partly gates rule 4: it misses arithmetic written inline in a
+  template, which imports nothing, and it says nothing about visibility.
+- **A restricted field never reaches an unprivileged role.** A test requests the page or endpoint
+  as each unprivileged role and fails if the response payload contains the restricted field at
+  all, hidden or not. This gates the server-side half of rule 4. Prove it by moving the check back
+  into the component, so the field ships and the component hides it.
 
-Rules 1, 3 and 5 are mostly review items: a checker cannot tell a refactor from a change, or know
-a principle lost. Say so in the file rather than implying a gate exists. For rule 1 the output
+Rules 1, 3 and 5 are review-only, and rule 4 is partly gated: a checker cannot tell a refactor
+from a change, find every inline copy of a rule, or know a principle lost. Label them so in the
+file rather than implying a gate exists. For rule 1 the output
 diff is the check; for rule 3 the list of copies in the commit message is the evidence a reviewer
 reads.
 
