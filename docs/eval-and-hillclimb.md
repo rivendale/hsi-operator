@@ -57,6 +57,11 @@ noise, the report says so and recommends against merging. Nothing merges until t
   against an independent review, such as Epoch AI's Benchmark Reviews, before relying on it. A
   score on a flawed benchmark says little about your tasks. Look the benchmark up before quoting
   a vendor's number, and let your own cases decide.
+- **Ask whether the publisher sells the winner.** A vendor's chart that crowns the vendor's model,
+  or a benchmark run by a company that sells tooling for the approach that wins, is a lead to
+  check, not a result. Two questions before a chart moves a decision: is this benchmark on an
+  independent review's verified list or its flawed list, and does whoever ran it profit from the
+  answer? Tasks written for the method under test favor that method by construction.
 
 ## What the first run showed
 

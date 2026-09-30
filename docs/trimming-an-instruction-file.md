@@ -36,6 +36,26 @@ What to learn from it:
   addresses and account numbers pass through. Pin the backend, and read what gets sent, before
   pointing a tool like this at transcripts that mention people.
 
+## Audit before you assume there is prose to delete
+
+Deleting steering prose as models improve is right. Anthropic's Fable 5.1 prompting guide tells
+you to remove old anti-formatting rules, and Replit's "scaffold less" argues the same for harnesses.
+Every's [announcement](https://every.to/compound-engineering) reported cutting instructions from
+its Compound Engineering plugin for the same reason (the v3.30 release notes themselves list bug
+fixes, not removals). All three aim at style nudges, formatting rules and process a capable model
+follows anyway.
+
+That does not mean any given file is full of it. One operator audited a months-old,
+roughly 20 KB instruction file against those three sources on 2026-09-30 and could justify
+removing about 2% of it. Nearly every line was a hard rule the person had stated, a quote that
+grounded a rule, an identifier other systems depend on, or a trap written down after a real
+failure. The cuts that survived were a stale version pin, a duplicate inside the same file, and
+dated narrative whose rule stayed and whose story already lived elsewhere. No line was cut on
+the grounds that the model would follow it without being told.
+
+So classify each line before cutting: steering (a candidate), or a rule, grounding, identifier or
+trap (keep, or move with a pointer). A small result is a finding, not a failure of the audit.
+
 ## The method, by hand or with a tool
 
 1. **Measure the whole surface loaded at start, not one file:** the instruction file, every skill

@@ -158,6 +158,12 @@ the thing being graded.
   output that is wrong, so a reviewer reproduces it without you.
 - **Prove a regression test failed before the fix landed.** A test never seen failing has not
   been shown to test anything.
+- **Before settling on a cause, name two rival explanations that predict different evidence.**
+  Then check the evidence that tells them apart. The first plausible story (the upgrade that ran
+  just before the outage, the command that printed nothing so the thing must be absent) is the
+  one that stops the search. If you cannot name a rival, you have a guess. The habit is John
+  Dewey's, from *How We Think* (1910): hold the suggestion in suspense until it has been tested
+  against alternatives.
 
 **Three more about claims in the repo that nothing checks:**
 
@@ -218,6 +224,13 @@ A long context window is a bill, not just a limit.
   change. Installing is consent, and `context-steward` §5 is the rule that decides it:
   sending working memory to a third party is a data decision, not a performance one. The
   sliding threshold is free to copy; the hosted call is not free to make.
+- **A compaction or summary prompt should name what it must keep exactly.** Anthropic's
+  prompting guide for Fable 5.1 (platform.claude.com, read 2026-09-30) gives a client-side
+  summary instruction with six: problems hit and how each was handled; options tried or set
+  aside, and why; decisions, preferences and boundaries in the person's own words; where things
+  stand; what is still open; and details that are hard to rebuild (names, numbers, dates,
+  links). Use that list in any scripted step that summarizes a transcript, and check a sample
+  summary against it.
 - **Move detail out to a path rather than summarizing it away.** A summary is a pointer, and
   a bad one: it drops the file path, the exact error and the number, silently.
 
@@ -260,6 +273,19 @@ before rendering anything, and give notes in camera terms: framing, movement, ti
 - **Pin an installed skill to a reviewed commit rather than tracking `main`.** A skill is
   instructions: tracking a branch means a future push edits how an agent behaves with no
   review step on that machine. Check out a reviewed SHA, read the diff, then move the pin.
+- **Install a third-party skill from a local clone at a reviewed commit, never from the
+  registry at whatever version is current.** What is forbidden is a one-line install that fetches
+  the latest published version, such as `npx <skill-package>` or `npx skills add <owner>/<repo>`:
+  it runs whatever the registry serves that day, which is the unpinned pattern in another form.
+  Installing from a local clone at a reviewed commit is fine, whatever the tool (the
+  [README](README.md#install)'s `npx skills add .` from a pinned clone is that path). Clone,
+  check out the commit you read, and read the
+  scripts as well as `SKILL.md`: `grep -rnE 'curl|wget|fetch|requests|urllib|socket|eval|exec|subprocess|os\.system|child_process'`
+  over its files tells you whether it calls the network or runs a shell, and every hit is either
+  explained or a reason not to install. Then prove it from the consuming end with one real run
+  whose output you check (a file of the size, duration or format it promises), not with the
+  install exiting 0. Leave a `PINNED` note in the installed folder with the source URL, the
+  commit, the date and what the review found, so the next reader knows it was a decision.
 - **Your vendor's own channel moves without your pin.** On 2026-09-28, on one machine, six
   official Claude Code plugins moved to a new commit in the same second their marketplace
   refreshed, and skills synced from the vendor's app change on their own. Decide in writing

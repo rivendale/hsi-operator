@@ -12,6 +12,21 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **Eight additions from one operator's working notes, where they helped only that operator's
+  agents: a cause settled on with no rival named, a merge gate that could have moved to a model
+  whose reasoning is harder to monitor, a skill installed at whatever version the registry served,
+  a compaction prompt with no list of what to keep, an instruction-file trim that found almost
+  nothing to trim, reviewers who saw a diff but not the decisions or validation behind it, a
+  per-request router choosing for a stronger model, and a vendor chart crowning the vendor.**
+  `AGENTS.md` gains rival explanations (Testing), installing third-party skills from a pinned local
+  clone (Skills) and the six things a summary prompt keeps (Context); `tools.md` gains picking a
+  review lane's model by role, with chain-of-thought controllability figures from a system card;
+  `trimming-an-instruction-file.md` gains auditing before assuming there is steering prose to
+  delete; `writing-a-brief.md` gains the pull request as the reviewer's brief (decisions on the PR,
+  honest validation, repeated comments become checks); `choosing-effort.md` gains letting the lead
+  agent choose tier and effort per subagent instead of a router; `eval-and-hillclimb.md` gains
+  asking whether a benchmark's publisher sells the winner.
+
 - **Eleven more lessons, each from a failure someone published or measured: a compressed tool
   output that made the task dearer, a prompt trim that turned parallel work serial, LLM routers
   caught injecting code (9 of 428 tested) or touching planted credentials (17 of 428), malware

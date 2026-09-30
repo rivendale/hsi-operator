@@ -28,6 +28,22 @@ codebase or your conversation; it knows the brief.
 For a reviewer, the goal is a list of named claims to check, not "is anything wrong?"
 ([`building-a-harness.md`](building-a-harness.md), item 8).
 
+## The pull request is the reviewer's brief
+
+- **Put the session's decisions on the pull request, not only the diff.** State the intent and
+  the acceptance criteria as they were decided, in the decider's words where you have them, and
+  the options set aside. A reviewer who sees only the diff can check that the code does what it
+  does, not that it does what was wanted.
+- **Say exactly what ran, what did not, and claim nothing beyond it.** A public example:
+  [gakonst/nanocodex#675](https://github.com/gakonst/nanocodex/pull/675) (Apache-2.0, merged
+  2026-09-29) lists the smoke run and the tests that passed, then says the broader suite failed
+  one test before the merge, was not rerun after it, and ends: "No claim that the entire suite
+  passes." A reader can act on that; "tests pass" gives them nothing to check.
+- **A review comment made twice becomes a check.** When the same comment appears on a second pull
+  request, turn it into a lint rule, a test or a CI step and prove it on a sample it must reject
+  ([`AGENTS.md`](../AGENTS.md), Testing). Reviewers then spend their attention on what a machine
+  cannot see.
+
 ## What else reaches the delegate
 
 - **The delegate sees the brief and the newest user message, not the conversation.** A
