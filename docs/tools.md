@@ -94,13 +94,10 @@ host. For where the money goes once you drive these tools, see
   killed when the assistant's turn ended, twice, each time to the second of turn end, with a
   `[killed]` marker in its output file. On Claude Code 2.1.285 (2026-09-30) it did not
   reproduce: a four-minute ticker ran straight through turn end, finished, and its completion
-  notice woke the session, as the tool's description says. So this is version-dependent; test
-  yours with a short ticker before relying on either behavior. What did hold on both: a job
-  backgrounded *inside* a `run_in_background` command (`cmd &`, `nohup`, `setsid`) dies when that
-  wrapper exits, because it stays in the session's cgroup. A job that must survive the session
-  itself, or a restart, runs under `systemd-run --user --collect`, which gives it its own cgroup;
-  check `/proc/PID/cgroup`, and poll the unit's `ActiveState` (a oneshot reads `activating`, not
-  `active`, while it runs).
+  notice woke the session, as the tool's description says. So this is version-dependent; test yours with a short ticker before relying on either behavior.
+  A job that must survive the session itself, or a restart, runs under `systemd-run --user
+  --collect`, which gives it its own cgroup; poll the unit's `ActiveState` (a oneshot reads
+  `activating`, not `active`, while it runs).
 - **A wrapper's exit 0 is not the work.** Backgrounding a command that itself backgrounds
   (`nohup ... &` inside `run_in_background`) reported "completed (exit code 0)" in seconds
   while the real job was still running (2026-09-03). Pick one way to detach. Judge a job by its
