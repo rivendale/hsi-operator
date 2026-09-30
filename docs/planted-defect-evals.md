@@ -1,8 +1,8 @@
 # Testing a detector with planted defects
 
 For any step that reads a store and reports problems in it: contradictions, stale facts,
-duplicates, broken references. This is a design from 2026-09-29, written before its first run. The
-cases and grading are approved and audited; there are no results yet.
+duplicates, broken references. This is a design from 2026-09-29, written before its first run;
+what the first run showed is in [`eval-and-hillclimb.md`](eval-and-hillclimb.md).
 
 1. **Freeze the corpus.** Record the commit of the store and a hash of the code under test. Build
    each case in a scratch directory from that commit, never from the live store.
@@ -42,5 +42,29 @@ cases and grading are approved and audited; there are no results yet.
 - To capture cost and the served model without editing production code, put a small shim first on
   `PATH` that passes each call through and saves the response. Give it a fake mode that makes no
   model call, and run the plumbing through that first.
+
+## Where the grader goes wrong
+
+- **A checker that cannot pass is as worthless as one that cannot fail,** and more likely to be
+  believed, because a red check reads as diligence. Write discrimination tests: assert which
+  verdict each scenario produces, not that the check ran. One backup checker reported "no host
+  holds an identical copy" when another host held identical copies of two of three samples; two
+  conditions had collapsed into one word. It needed three: copies disagree (reconcile), no copy
+  exists (exposed), and no comparable sample (unknown, a failure to measure, which prints as
+  neither pass nor absence). Then add a meta-test that fails the suite if fewer than the
+  expected number of distinct verdicts are reachable, or if the passing verdict never is.
+- **Run the old code against the new test.** A sampling bug that could never reach files
+  sorting after one letter was fixed with a test asserting "fewer than 20 of 26 directories
+  touched". The buggy code touched 22, so the test would have passed the bug. Keep the broken
+  version long enough to fail the new test once.
+- **A detector over prose scores the warning as the offence.** One harness matched
+  anti-pattern strings anywhere in an answer, so an answer that named a trap in order to avoid
+  it failed exactly like one that fell in: five of six probes in one run were failed on text
+  rejecting the anti-pattern. The failure is directional. The treatment being tested is what
+  made answers explain their traps, so the better it worked, the worse it scored. Scoping the
+  match to code blocks would not have helped, since both answers were in code blocks. Add a
+  fixture that is correct and discursive, one that names the bad thing to reject it, and
+  require the detector not to fire on it. When the third fix to a grader lands somewhere new,
+  question the grader's shape rather than fixing it again.
 
 [`eval-and-hillclimb.md`](eval-and-hillclimb.md) is the loop these cases feed.

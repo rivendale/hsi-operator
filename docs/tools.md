@@ -37,6 +37,35 @@ Claude Code allow-list trap (2026-09-05) and the Codex API result (2026-09-24), 
 host. For where the money goes once you drive these tools, see
 [`building-a-harness.md`](building-a-harness.md).
 
+## Before trusting any of them
+
+- **Installed is not working.** `--version` and "the binary is on `PATH`" both passed on
+  hosts where the CLI could not complete one request; on one check, installed and working
+  disagreed on two of three machines (2026-08-06). Prove a CLI with a real prompt ("Reply with
+  exactly: PONG") and check the answer.
+- **A stale client can fail on the models list, not on your prompt.** An old Codex CLI died
+  parsing a reasoning level the server had started advertising, and the error named a model,
+  so it read as "that model is unavailable" rather than "this client is too old" (2026-08).
+  Upgrade before diagnosing the model.
+- **Never install by copying the entry script.** These CLIs ship as JavaScript bundles that
+  import sibling chunk files and target one Node major. A copied entry script loses its
+  siblings and runs under whatever Node is first on `PATH`; one such copy failed with
+  `SyntaxError: Invalid regular expression flags`, which looks like a corrupt download and is
+  not (2026-08). Symlink the real bundle, or use a wrapper that `exec`s it.
+- **An empty answer may be the invocation, not the model.** `codex exec "..." > file` wrote
+  0 bytes and exited 0: the final answer goes to `-o FILE`, not stdout (2026-08-14). The other
+  three print it to stdout. Getting this wrong is indistinguishable from a bad model.
+- **A scheduled probe must run once as the unit.** A daily real-request probe of every CLI
+  failed every scheduled run for three days with exit 127, because its unit set no `PATH`, and
+  its failures read as the CLIs being down (2026-09-27). Start a timer job by hand as the unit
+  before calling it installed.
+- **A tool can state what it cannot observe.** An agent-listing tool labeled a session with
+  "the name other sessions use to message it", a claim about other sessions' address books it
+  has no view of. Two machines listed the same agent under different names and different ids
+  the same minute, and switching to the name the peer's tool printed would have broken a
+  working channel silently (2026-09-17). Address a peer by the name your own listing gives it,
+  and treat any tool's claim about a remote system as belief, whoever printed it.
+
 ## Claude Code
 
 - **Cost fields are client-side estimates.** Anthropic's headless documentation says so, and a
@@ -58,6 +87,21 @@ host. For where the money goes once you drive these tools, see
 - **Allow-lists undo deny-lists.** `--disallowedTools` is a deny-list, but adding
   `--allowedTools` re-enables what it blocks, because allow patterns prefix-match. A peer saw a
   worker write a file it was meant to be unable to write (2026-09-05). Use one or the other.
+- **A background task can end with the turn, not the work.** A task started with the Bash
+  tool's `run_in_background` was killed when the assistant's turn ended, twice, at 9 minutes
+  and at 20 seconds, each time to the second of turn end, with a `[killed]` marker written into
+  the task's output file (2026-09-05, one host). `setsid` and `nohup` did not escape it, since
+  they stay inside the session's cgroup. A job longer than a turn runs under `systemd-run
+  --user --collect`, which gives it its own cgroup; check `/proc/PID/cgroup`, then poll the
+  unit's state on a later turn, because nothing re-invokes you.
+- **A wrapper's exit 0 is not the work.** Backgrounding a command that itself backgrounds
+  (`nohup ... &` inside `run_in_background`) reported "completed (exit code 0)" in seconds
+  while the real job was still running (2026-09-03). Pick one way to detach. Judge a job by its
+  own artifact or the unit's state, and a completion that arrives in seconds for minutes of
+  work is the tell. The reverse also happens: a job that dies at admission writes no success
+  artifact, so a waiter keyed on that artifact cannot tell "working" from "never started". And
+  systemd's `StandardOutput=file:` does not truncate, so a done-marker left by the previous run
+  fires a waiter at once; use `truncate:` or wait on `is-active`.
 - **Systemd scope.** A worker launched under a systemd scope inherits `INVOCATION_ID`; wrap the
   command in `env -u INVOCATION_ID` if a hook keys on it (2026-09-24).
 - **Projects** (claude.ai/code, desktop, mobile; beta): threads are cloud sessions with Anthropic
@@ -80,6 +124,15 @@ host. For where the money goes once you drive these tools, see
 - **It can exit 0 with no answer.** Headless, it returned one line of narration, exit code 0
   and nothing on stderr (2026-09-24). Require an explicit end marker in the output and treat
   its absence as a failure.
+- **To make an API key the credential, remove the stored session.** Setting `XAI_API_KEY`
+  does nothing while a stored sign-in exists (the matrix above). What worked was a separate
+  `GROK_HOME` holding no `auth.json`, and a wrapper that refuses to run if one appears there,
+  because the CLI would prefer it and the key's terms (such as zero data retention) would be
+  lost without a trace (2026-08-20). For a day after, two scripts still called the plain CLI,
+  so the wrapper existed and nothing used it; grep every call site. **Two balances, one
+  watched:** the subscription side returned `402 Payment Required` on every call while the
+  same prompt through the key succeeded, so a working key path says nothing about the
+  subscription (2026-08-21).
 - **Turn budget.** A review brief run with `--max-turns 14` ran out and returned narration;
   40 has been the working budget (2026-08-18).
 - **Fixed overhead.** A one-word prompt cost about 30,000 input tokens, because the CLI's own

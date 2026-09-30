@@ -39,6 +39,13 @@ Two more things measured the same way, on more than one machine:
 - **A version measured at the start of a session may not be the one that ran.** One of these
   tools updated itself from 1.0.34 to 1.0.40 between two measurements a few hours apart, with
   no prompt. Date every version claim, and re-read it before citing it.
+- **A capability granted mid-session is invisible to that session.** MCP tools are listed
+  when the client connects. A new tool was granted, deployed and verified from the server's
+  side, and the running session's tool list still did not have it; only a restart did. Test a
+  grant from the consuming session, and when a new tool is missing and the grant is recent,
+  restart before filing a bug. A document that records a grant should date it and say a restart
+  is needed, or a later session finds no tool and concludes the grant was revoked. Hooks are
+  read at session start the same way ([`docs/building-a-harness.md`](docs/building-a-harness.md)).
 - **On a case-insensitive mount, one instruction file can load twice.** The same file was
   listed under two casings and counted at full token cost each time. A figure measured there
   is double; measure on the native filesystem.
@@ -253,6 +260,21 @@ before rendering anything, and give notes in camera terms: framing, movement, ti
 Report **where** a credential lives, never what it is. Never pass a secret as a command-line
 argument, and never print one into a transcript or a log. A secret's location may survive
 into notes and handoffs; its value never does.
+
+- **Test the redaction line itself.** `echo "${TOKEN:+set (${#TOKEN} chars)}${TOKEN:-unset}"`
+  prints the whole secret when it is set: the two expansions are not a ternary, and `${x:-B}`
+  emits `$x` whenever `x` is set. It prints `unset` perfectly when there is nothing to hide,
+  which is why it passes a casual test. One such line put a live OAuth token into a transcript
+  while both rules above were being followed. Use `[ -n "$x" ] && echo "set (${#x} chars)" ||
+  echo unset`, or report a hash prefix or a byte count, and run any line derived from a secret
+  once with a dummy value to confirm the dummy does not appear. The lesson has a mechanical
+  form, so it belongs in a guard: a hook that refused `${...:-}` on secret-shaped names stopped
+  it where a written rule had not.
+- **An inspection command can cause the exposure.** `rclone config show REMOTE`, asked only
+  what a remote pointed at, printed its live access token, refresh token and client secret.
+  Ask what you need first: `rclone listremotes` names remotes and `rclone about REMOTE:`
+  describes one without touching auth. A secret that reaches your own transcript is exposed,
+  because transcripts get compacted, synced and reviewed; rotate it.
 
 ---
 

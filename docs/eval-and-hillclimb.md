@@ -1,7 +1,7 @@
 # Eval and hillclimb, with two gates a person holds
 
-**Draft, to be finalized after the first run.** Written 2026-09-29 from Anthropic's method post and
-one run being set up. No result is in yet.
+Written 2026-09-29 from Anthropic's method post, before the first run; the first run's lessons
+are in [What the first run showed](#what-the-first-run-showed).
 
 The method comes from
 [Automating eval design and hillclimbing](https://claude.dev/blog/automating-eval-design-and-hillclimbing/)
@@ -53,3 +53,38 @@ noise, the report says so and recommends against merging. Nothing merges until t
   read at commit 8286774 on 2026-09-29, and adds: "Record quality regressions even if the candidate
   is faster or uses fewer tokens."
 - Delete a benchmark that never changes a decision.
+
+## What the first run showed
+
+One run, 2026-09-29: a nightly single-shot call that reads a memory store of about 268k tokens
+and reports contradictions, superseded facts and duplicates, graded on the
+[planted-defect cases](planted-defect-evals.md), two repetitions per case per setting. Goal:
+keep accuracy, cut cost, same model.
+
+- **Most of the cost was a cache the call never read.** The call wrote its whole input to a
+  1-hour prompt cache and, running once a night, never read it back. Switching to the 5-minute
+  cache cut cost per call by about 29% without touching what the model saw or said. Read the
+  usage block's cache-write split before touching the prompt.
+- **Price every variant as production pays, not as the runner reports.** Two repetitions of
+  a case within the cache window read each other's cache, so the runner's figure was lower than
+  anything the nightly job would ever pay. Every row was priced as all input written to cache,
+  no reads, plus output.
+- **Lower effort cut recall and left precision alone.** Caught planted problems fell to 62% at
+  low effort and 81% at medium; every setting left all 12 look-alikes alone. A detector that
+  stays quiet on look-alikes can still be missing a third of what it should find, so score
+  both.
+- **The winner was one effort notch down plus one sentence of search instruction** (go
+  subject by subject and compare what each file claims about the same mechanism), which
+  matched production's recall at about 45% lower cost and about a third of the time. The step
+  without the sentence met the minimum by zero, and its repeat fell below it; the step with
+  it met the minimum by one, inside noise, so it counted only after a repeat run held. Register
+  the minimum before round one, and repeat any winner whose margin is inside noise.
+- **The sentence was written after reading the misses, and there was no held-out set,** so
+  its gain is partly tuned to these cases. The report says so.
+- **The runner refused a production argv that already carried the flags it injects.** So the
+  final flags went into production code after the climb, and the argv production actually
+  builds was captured and diffed against the one that was measured. They matched. Without that
+  refusal, a flag could be applied twice or measured once and shipped differently.
+- **The optimized call had no consumer until someone checked.** The scheduled job that runs it
+  had never been enabled, so a cheaper call saved nothing. Check the consumer before the climb
+  as well as after.

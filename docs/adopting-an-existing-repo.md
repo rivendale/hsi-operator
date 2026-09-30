@@ -90,6 +90,15 @@ check that tests nothing anyone worried about is a tax with a tick next to it.
   the failure you named, and pin it to a reviewed commit rather than tracking a branch: a
   skill is instructions, so tracking a branch lets a future push change how an agent behaves
   with no review on your machine.
+- **Do not report a missing control before checking the plan can carry it.** Across one
+  organization's repositories, every public repo had native secret scanning and push
+  protection on and every private repo had both off: a perfect split by visibility. GitHub
+  gives secret scanning free on public repos and sells it for private ones, and the plan did
+  not include it. That is a purchasing decision, not a setting someone forgot, and an
+  unlicensed control looks identical to a forgotten one. Check the plan
+  (`gh api orgs/ORG --jq .plan.name`), and separate "scanned clean" from "never scanned":
+  `gh api repos/OWNER/REPO/secret-scanning/alerts --jq length` returns a live `0` when scanning
+  is on and 404 when it is not.
 - **Do not add enforcement to win an argument about a rule.** If a rule is not kept, a hook
   becomes the thing people route around.
 - **Do not let the adoption become the work.** If a month of this has produced no cited line

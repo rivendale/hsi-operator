@@ -95,6 +95,15 @@ the table and the reasons are ours.
 - Making a model answer in a shorter format than it was trained to use; less output can mean less thinking.
 - Counting raw tokens instead of cost, requests instead of tasks, or evals instead of real use.
 - Switching models mid-conversation to save money.
+- Subagents returning full payloads. Each subagent holds its own context, but every result it
+  returns lands in the parent's, and the parent is one process on one machine. Five subagents
+  returned inline, the parent transcript grew to about 40 MB, and a 16 GB host wedged and needed
+  a power cut, with no OOM kill logged. Return a path, not the payload; ten agents returning
+  summaries cost less than three returning transcripts. A memory cap is a blast radius, not a
+  fix: set it on the cgroup the work actually runs in (a hand-launched session is not in the
+  service's cgroup), set a swap cap beside it, and set it low enough that the kernel does not
+  run out first. A 12 GB cap on a 15 GB host did not bind, and the global OOM killer took a
+  bystander by score.
 - Advice aimed at the small slices. In both of this repo's samples, output was 9 to 12% of
   cost; the window resent per call was most of the rest.
 

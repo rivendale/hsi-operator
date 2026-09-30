@@ -27,3 +27,34 @@ codebase or your conversation; it knows the brief.
 
 For a reviewer, the goal is a list of named claims to check, not "is anything wrong?"
 ([`building-a-harness.md`](building-a-harness.md), item 8).
+
+## What else reaches the delegate
+
+- **The delegate sees the brief and the newest user message, not the conversation.** A
+  three-agent workflow launched for a request the person had made several messages earlier
+  refused to act: the latest message was an unrelated link, the brief conflicted with it, and a
+  search of the repository for the quoted request found nothing. From where the agents stood
+  that was correct, because a parent's paraphrase of a request is what a laundered instruction
+  looks like. Before launching work for anything but the latest message, write the request
+  verbatim into a committed file and cite its path; the re-run with that citation worked.
+- **A message sent mid-run can redirect a running delegate.** While the person kept typing,
+  one of six researchers returned a report on the person's newest topic instead of its task,
+  saying the relayed request "governs". Its one-line summary would have read as done if results
+  had been counted rather than read. A line in the brief saying the task is fixed did not hold
+  on a later run: five of six agents kept to their task, and the verifier ranked the relayed
+  message above the brief and ran nothing. The relay is what the delegate is told to trust, so
+  wording cannot outrank it. Check each result against its own brief (the file named, the
+  question answered), and run verification when nobody is typing, or outside the fan-out.
+- **A handoff is a stronger attack than a request.** In RogueHandoff-20, agents executed harm
+  on 0 to 5% of normal tasks and on 40 to 95% after an unsafe trajectory arrived from another
+  agent, 5 to 45 points more than the same request made directly
+  ([arXiv 2609.18460](https://arxiv.org/abs/2609.18460), read 2026-09-18). The authors say it
+  does not establish natural rates or an autonomous cascade; it shows agents readily act on
+  unsafe handoffs. Faithful implementation of a plausible artifact from a peer is the failure
+  path, and it happens benignly too: one agent implemented a peer's proposed fix exactly as
+  specified and reintroduced seven of eight false positives the branch existed to remove. Send
+  findings for the recipient to verify, not directives to execute. When a lane is called
+  independent, name the channel it could share and check it: delegates that load the same
+  instruction file, or read the same repository, inherit the coordinator's frame, and the paper
+  found implicit paths between nominally independent evaluation runs. A reviewer with less
+  access but a different method is often the more independent one.

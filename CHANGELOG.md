@@ -12,6 +12,27 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **Twenty lessons that a stranger could use sat in one operator's private notes, where only
+  that operator's agents could learn from them, and the eval page still called itself a draft
+  after its first run.** Each lesson came from a real failure: an auth check that read HTTP 200
+  while the server refused the key in the body, a hook guard that never reached the always-on
+  session it was written for, a filter hardened through 21 review rounds that had never received
+  one line of input, four secret scans that agreed on a wrong count over a clone missing
+  pull-request refs, a redaction line that printed the token it was hiding, a grader that failed
+  answers for naming the trap they avoided. They are now in `building-a-harness.md` (hooks never
+  ask, scope enforced by tools, guards and long-lived sessions, status-code auth checks),
+  `planted-defect-evals.md` (a checker must reach several verdicts, old code against the new
+  test, prose detectors), `read-only-audit.md` (count the input, fetch pull-request refs, diff
+  against the prior version, one clock), `tools.md` (installed is not working, tools asserting
+  what they cannot see, background jobs and wrapper exits, Grok's stored session),
+  `writing-a-brief.md` (the latest message, mid-run redirects, handoffs as attacks),
+  `harness-efficiency.md` (fan-out results land in the parent), `adopting-an-existing-repo.md`
+  (an unlicensed control looks forgotten) and `AGENTS.md` (grants invisible until restart, the
+  redaction idiom, inspection commands that dump secrets). `eval-and-hillclimb.md` loses its
+  draft marker and records what its first run showed: most of the cost was a cache never read,
+  lower effort cost recall but not precision, and the optimized call had no consumer until
+  someone checked.
+
 - **Lessons measured over two weeks lived only in one operator's private notes, and two had
   drifted while they sat there.** A benchmark figure copied from a screenshot (Sonnet 5.5 at
   xhigh, $1.55 per planted bug) came from one run; the raw data, re-read the day this was
