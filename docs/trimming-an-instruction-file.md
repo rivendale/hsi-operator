@@ -40,13 +40,12 @@ What to learn from it:
 
 Deleting steering prose as models improve is right. Anthropic's Fable 5.1 prompting guide tells
 you to remove old anti-formatting rules, and Replit's "scaffold less" argues the same for harnesses.
-Every's [announcement](https://every.to/compound-engineering) reported cutting instructions from
-its Compound Engineering plugin for the same reason (the v3.30 release notes themselves list bug
-fixes, not removals). All three aim at style nudges, formatting rules and process a capable model
-follows anyway.
+Both aim at style nudges, formatting rules and process a capable model follows anyway. A related
+signal from the other side: the v3.30 release notes of Every's Compound Engineering plugin list
+fixes against over-expanding a plan.
 
 That does not mean any given file is full of it. One operator audited a months-old,
-roughly 20 KB instruction file against those three sources on 2026-09-30 and could justify
+roughly 20 KB instruction file against this "scaffold less" advice on 2026-09-30 and could justify
 removing about 2% of it. Nearly every line was a hard rule the person had stated, a quote that
 grounded a rule, an identifier other systems depend on, or a trap written down after a real
 failure. The cuts that survived were a stale version pin, a duplicate inside the same file, and
