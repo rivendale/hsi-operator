@@ -53,6 +53,10 @@ noise, the report says so and recommends against merging. Nothing merges until t
   read at commit 8286774 on 2026-09-29, and adds: "Record quality regressions even if the candidate
   is faster or uses fewer tokens."
 - Delete a benchmark that never changes a decision.
+- **Check a public benchmark before a claim leans on it, and prefer your own eval.** Check it
+  against an independent review, such as Epoch AI's Benchmark Reviews, before relying on it. A
+  score on a flawed benchmark says little about your tasks. Look the benchmark up before quoting
+  a vendor's number, and let your own cases decide.
 
 ## What the first run showed
 

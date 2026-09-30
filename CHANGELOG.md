@@ -12,6 +12,20 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **Eleven more lessons, each from a failure someone published or measured: a compressed tool
+  output that made the task dearer, a prompt trim that turned parallel work serial, LLM routers
+  caught injecting code (9 of 428 tested) or touching planted credentials (17 of 428), malware
+  hiding in agent settings folders, compromised packages behind valid build attestations, and a memory store whose first contradiction check found five
+  conflicts.** `building-a-harness.md` gains items 13 to 15 (checked batching, no third-party
+  router between agent and provider, read a clone's agent settings before opening it) and a
+  self-updating memory under "Where this goes wrong"; `harness-efficiency.md` gains GitHub's three
+  cost results (measure the finished task, evidence is local to the workload, a shorter prompt can
+  delete an untested behavior); `AGENTS.md` gains comments as claims, mechanical checks for rules
+  an agent agrees with and still breaks, and triggers for known limitations; `tools.md` gains that
+  naming a model in an instruction file does not switch it; `planted-defect-evals.md` gains
+  record-and-replay before a rewrite; `eval-and-hillclimb.md` gains checking a public benchmark
+  against an independent review before relying on it.
+
 - **The wiki page claimed a mirror that did not exist, and running the evals left bytecode to
   commit.** `docs/wiki/Home.md` said its pages were mirrored to the GitHub wiki, which on
   2026-09-30 still held only its default page. It now says the repo copy is the only current one

@@ -61,6 +61,11 @@ host. For where the money goes once you drive these tools, see
   failed every scheduled run for three days with exit 127, because its unit set no `PATH`, and
   its failures read as the CLIs being down (2026-09-27). Start a timer job by hand as the unit
   before calling it installed.
+- **Naming a model in an instruction file does not switch the model.** "Use model X for
+  reviews" is text the agent reads; the model that answers is set by the flag, the setting or
+  the API call. Confirm the served model from the response itself (the `model` field of an API
+  response, `modelUsage` in Claude Code's JSON output) or the request log, per role, and treat an
+  instruction-file line as a wish until one of those agrees with it.
 - **A tool can state what it cannot observe.** An agent-listing tool labeled a session with
   "the name other sessions use to message it", a claim about other sessions' address books it
   has no view of. Two machines listed the same agent under different names and different ids

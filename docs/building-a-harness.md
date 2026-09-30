@@ -174,6 +174,42 @@ their own economics: the short jobs are where the cheaper models compete.
     and still the only place a warning can be delivered. Put the warning in the prompt
     **and** deny the capability. When auditing what an agent did, extract the commands it
     executed; a transcript full of `SELECT` strings may hold only the agent describing a plan.
+13. **Let an agent batch actions, but stop the batch on any state it did not predict.** A
+    harness that sends one action per model call pays a full request per keystroke; one that
+    sends a whole plan blind walks into whatever changed on step two. The middle is checked
+    batching. The harness in [An LLM Beat NetHack](https://kenforthewin.github.io/blog/posts/llm-nethack-ascension/)
+    (2026-09-21) read position, health, turn, level and nearby creatures before each step, sent
+    one step, compared the result with what that step should have produced, and halted the rest
+    on low health, a nearby creature, an unknown destination, unexpected displacement, damage, a
+    level change or too many turns passing. Fights got no batching at all. For a coding agent
+    the same shape is a sequence of commands that stops when an exit code, a changed file count
+    or a dirty tree differs from what the plan assumed. Check it by running a batch against a
+    fixture where step two fails, and confirm step three never ran.
+14. **No third-party router or reseller between the agent and its provider.** Every hop sees the
+    prompts, the tool results and the credentials in plaintext, and it writes the response the
+    agent acts on, so it can add tool calls the model never made.
+    [Your Agent Is Mine](https://arxiv.org/abs/2604.08407) (arXiv 2604.08407, 2026) tested 428
+    routers, 28 paid and 400 free: 9 (one paid) injected malicious code into responses, and 17
+    touched canary cloud credentials the researchers had planted. Talk to the provider's own
+    endpoint, or to a gateway you run yourself. To check, list the NAMES of every base-URL override
+    and proxy the agent could inherit, never their values, since a proxy URL can carry a password:
+    `env | grep -ioE '^[^=]*(base_url|api_base|endpoint|proxy)[^=]*'` in the environment the
+    unattended job actually runs in. For the CLIs' config files and any `.env` beside them, list
+    the matching files with `grep -ilE 'base_url|api_base|endpoint|proxy'`, then read only the
+    hostname from each hit. Each hit is either the provider's domain or a decision someone can
+    name.
+15. **Read `.claude/`, `.cursor/` and `.vscode/` in a cloned repo before opening it with an
+    agent.** Project settings in those folders can define hooks, tasks and MCP servers that run
+    commands when the tool opens the workspace, so opening the repo is running it. Google Threat
+    Intelligence Group's [From prompting to autonomy](https://cloud.google.com/blog/topics/threat-intelligence/from-prompting-to-autonomy-the-evolution-of-adversarial-ai)
+    (2026-09-08) describes a credential stealer that drops files into exactly those folders so
+    that it "executes automatically whenever the IDE or AI extension opens the workspace". It
+    also describes two separate supply-chain routes: trojanized forks of MCP servers published
+    from compromised developer accounts, and compromised versions of other packages published
+    with valid signed build attestations, which pass a provenance check. So provenance is not
+    review. Before the first agent session in a fresh
+    clone, `git ls-files .claude .cursor .vscode .mcp.json` and read every file it lists, and
+    re-read after any pull that touches them.
 
 ## Where this goes wrong
 
@@ -208,6 +244,12 @@ their own economics: the short jobs are where the cheaper models compete.
   handshake is open by design, while `tools/call` was gated. Test the gated operation three
   times (real key, wrong key, no key) and assert on the body. The wrong-key arm matters most,
   since no key at all can fail for reasons unrelated to the gate.
+- **A memory that writes its own rules will teach itself contradictions.** An agent that
+  distills lessons into a store it later loads as instructions keeps adding, and nothing it adds
+  is checked against what is already there. On one setup, the first run of a nightly
+  contradiction check over such a store found five contradictions or duplicates. Give a
+  self-updating store a detector that runs on a schedule, and test the detector with planted
+  cases ([`planted-defect-evals.md`](planted-defect-evals.md)) before trusting its silence.
 - **Replacing the phone door first.** Keep the person's current way in until the new one has carried
   real questions and answers for a week.
 
