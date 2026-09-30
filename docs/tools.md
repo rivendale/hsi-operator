@@ -89,15 +89,18 @@ host. For where the money goes once you drive these tools, see
 - **Allow-lists undo deny-lists.** `--disallowedTools` is a deny-list, but adding
   `--allowedTools` re-enables what it blocks, because allow patterns prefix-match. A peer saw a
   worker write a file it was meant to be unable to write (2026-09-05). Use one or the other.
-- **A background task can end with the turn, not the work.** A task started with the Bash
-  tool's `run_in_background` was killed when the assistant's turn ended, twice, at 9 minutes
-  and at 20 seconds, each time to the second of turn end, with a `[killed]` marker written into
-  the task's output file (2026-09-05, one host, observed on Claude Code 2.1.x, September 2026).
-  The tool's own description says a background task keeps running across turns; on that host
-  it did not, so treat this as a conflict to check on your version, not an omission.
-  `setsid` and `nohup` did not escape it, since they stay inside the session's cgroup. A job longer than a turn runs under `systemd-run
-  --user --collect`, which gives it its own cgroup; check `/proc/PID/cgroup`, then poll the
-  unit's state on a later turn, because nothing re-invokes you.
+- **Check whether a background task outlives the turn on your version.** On one host in early
+  September 2026 (Claude Code 2.1.x), a task started with the Bash tool's `run_in_background` was
+  killed when the assistant's turn ended, twice, each time to the second of turn end, with a
+  `[killed]` marker in its output file. On Claude Code 2.1.285 (2026-09-30) it did not
+  reproduce: a four-minute ticker ran straight through turn end, finished, and its completion
+  notice woke the session, as the tool's description says. So this is version-dependent; test
+  yours with a short ticker before relying on either behavior. What did hold on both: a job
+  backgrounded *inside* a `run_in_background` command (`cmd &`, `nohup`, `setsid`) dies when that
+  wrapper exits, because it stays in the session's cgroup. A job that must survive the session
+  itself, or a restart, runs under `systemd-run --user --collect`, which gives it its own cgroup;
+  check `/proc/PID/cgroup`, and poll the unit's `ActiveState` (a oneshot reads `activating`, not
+  `active`, while it runs).
 - **A wrapper's exit 0 is not the work.** Backgrounding a command that itself backgrounds
   (`nohup ... &` inside `run_in_background`) reported "completed (exit code 0)" in seconds
   while the real job was still running (2026-09-03). Pick one way to detach. Judge a job by its
