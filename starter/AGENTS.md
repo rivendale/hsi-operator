@@ -66,6 +66,42 @@ task at hand overrides these defaults.
 
 ---
 
+## Design rules
+
+For code. Each rule names its check; delete any rule you do not gate, and a rule you keep
+without a check says so. The reasons and worked examples are in `docs/design-rules-for-code.md` in
+rivendale/hsi-operator.
+
+- **Reorganize first, then change,** when the change needs a reorganization (unrelated
+  refactoring is still dropped). A behavior-preserving refactor commit with the tests
+  green, then the change commit: one pull request is fine, one commit never is. For a
+  high-stakes calculation, diff an output dump from before and after the refactor.
+  *Check: review, plus the empty output diff.*
+- **One owner per fact.** Each business rule, threshold, price table, model ID, format or
+  schema fact lives in one module; everything else calls it. Extend the owner; a new module
+  needs a stated reason the old one cannot own it. A function-level import that dodges an
+  import cycle means the logic is in the wrong module.
+  *Check: for the fact most often copied, the model-name gate below; otherwise review.*
+- **Grep for the expression, not the function name,** before a second use: the arithmetic,
+  the format string, the threshold, the model-name string. List every copy; move them all to
+  the owner, or name each copy left and why in the commit. A new helper beside old copies is
+  one more duplicate. The move keeps every caller's exact results; a behavior change is its
+  own commit. *Check: review; the list of copies in the commit is the evidence.*
+- **No business logic in display code.** Templates, components, routes and view builders
+  display values; they do not compute prices, totals or classifications. Who may see a value
+  is decided on the server, not by a conditional in a component.
+  *Check, partial: an import-boundary lint refusing display code that imports the rule
+  owners (it misses inline template arithmetic), and a test that an unprivileged role's
+  response payload does not contain the restricted field.*
+- **When two principles conflict, choose the lowest future cost for this repo,** and say
+  which and why in the commit message. *Check: review.*
+- **Gates, not promises.** A rule that matters ships with a lint, test or hook that fails
+  when it is broken, proven on a violation it must refuse, or is labeled review-only. [List your gates here, e.g. model
+  names only in the model-config file; every model in use has a price entry; no code path
+  creates a parent record without its required child.]
+
+---
+
 ## Testing
 
 - **Never write unit tests after writing the code.** A test written by whoever wrote the

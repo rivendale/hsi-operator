@@ -121,6 +121,12 @@ permission, or doing something irreversible or outward-facing. An action your pe
 refused goes to the person, never to another agent or helper to run for you. If you were
 asked to review, report findings and do not edit.
 
+**In a code repo,** the scope guard is not enough to stop logic being copied rather than
+owned. [`docs/design-rules-for-code.md`](docs/design-rules-for-code.md) adds six rules, each
+with its check: refactor before change, one owner per fact, grep for the expression before
+reusing logic, no business logic in display code, the lowest-future-cost tie-break, and gates
+rather than promises.
+
 **If the plan grows,** and you notice future-only layers, unrelated refactoring or extra
 features, drop them and finish the thing that was asked for.
 
@@ -178,7 +184,9 @@ the thing being graded.
   `if not conn.is_closed(): conn.send(...)`, where the state can change between the check and
   the act (a time-of-check-to-time-of-use race). Once a rule has been broken after being
   acknowledged, turn it into a lint rule or a failing test that catches the pattern, and prove it
-  on a sample it must reject.
+  on a sample it must reject. For a rule you are adding rather than one already broken, ship the check
+  with the rule or label the rule review-only; [`docs/design-rules-for-code.md`](docs/design-rules-for-code.md#6-gates-not-promises)
+  has worked examples.
 - **A known limitation needs a trigger, or it is permanent.** Give each one a failing test that
   goes green when it is fixed, an owner and a date, or an explicit won't-fix with the reason.
   A limitation with none of the three is a decision nobody made.

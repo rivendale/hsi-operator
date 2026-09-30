@@ -12,6 +12,22 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **The starter told an agent in a code repo to make the smallest change, and nothing about
+  where logic belongs: a refactor could ride in the same commit as a behavior change, a
+  second copy of a price rule or model name could be written beside the first, and a rule
+  could be added to the instruction file with no check behind it.** New
+  `docs/design-rules-for-code.md` holds six rules for code, each with its check or an honest
+  "review only": reorganize first then change (with an output diff for high-stakes
+  calculations), one owner per fact (a function-level import dodging a cycle means misplaced
+  logic), grep for the expression rather than the function name before reuse, no business
+  logic in display code, the lowest-future-cost tie-break stated in the commit, and gates
+  rather than promises with three worked checks; plus what to leave out (generic principle
+  lists, self-reported before-and-after numbers). `starter/AGENTS.md` gains a compact Design
+  rules section; `AGENTS.md` points to the page from the scope guard and extends Testing's
+  "mechanical check" item to rules being added; `README.md` lists the page. The framing,
+  design principles as hard rules in `AGENTS.md`, is Tomas Vykruta's (@tvykruta on X,
+  2026-09-30).
+
 - **Eight additions from one operator's working notes, where they helped only that operator's
   agents: a cause settled on with no rival named, a merge gate that could have moved to a model
   whose reasoning is harder to monitor, a skill installed at whatever version the registry served,
