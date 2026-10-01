@@ -6,6 +6,24 @@ Agents are good at producing things and bad at knowing whether anyone wanted the
 is the other half: **surface only what genuinely needs a person, and find out what "done"
 means before building.**
 
+## Start here
+
+This is the one repo to point an agent at. Give it the link and say "read AGENTS.md":
+`https://github.com/rivendale/hsi-operator`. It routes to the sibling repo the task needs.
+Each sibling is maintained separately and links back here.
+
+| when the task is | read |
+|---|---|
+| keeping a person at the strategic level of agent work: what needs them, what done means | this repo |
+| data that may never reach a hosted model; local models and runtimes, private search, finding personal information | [local-ai](https://github.com/rivendale/local-ai) |
+| building from open source instead of from scratch; what a license lets you reuse | [opensource](https://github.com/rivendale/opensource) |
+| running services on your own machines: WSL, systemd user services, networking, sync and backup, alerting | [homelab](https://github.com/rivendale/homelab) |
+
+The same facts for a program are in [`repos.json`](repos.json). `evals/siblings/` fails CI when
+this page or `AGENTS.md` stops linking a sibling, or a sibling stops linking back.
+
+## Skills
+
 Three skills. The first has two doors:
 
 **`hsi-operator`**
@@ -74,6 +92,18 @@ npx skills add rivendale/hsi-operator --skill '*' -g -a claude-code
 ```
 
 Either way, one of them: `--skill hsi-operator`, `--skill repo-triage`, `--skill context-steward`.
+
+Or, in Claude Code, as a plugin from the same pinned clone:
+
+```
+claude plugin marketplace add "$PWD"
+claude plugin install hsi-operator@rivendale
+```
+
+Claude Code reads a plugin from a marketplace added as a local directory in place, so here the
+checkout is the pin: moving it changes what loads at the next session start, which the `npx`
+copy above does not do. Adding the marketplace as `rivendale/hsi-operator` instead tracks
+`main`: each `claude plugin update hsi-operator@rivendale` takes whatever `main` holds.
 
 Or read the `SKILL.md` you want and keep the file — each skill is one page of prose, and
 the prose is the skill. `bin/hsi` and `bin/triage` are scripts **inside** the skills, not

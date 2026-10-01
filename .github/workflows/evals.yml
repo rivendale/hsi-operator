@@ -28,3 +28,24 @@ jobs:
             --verbose --no-progress
             --exclude '^https?://(www\.)?(dau|waru)\.edu/'
             './**/*.md' './**/*.html' './**/*.rst'
+
+  # This repo is the hub a person points an agent at, and the siblings are maintained
+  # separately, so the links between them are the whole join. Each sibling is cloned without
+  # blobs and read at the commit the hub pins, or at its default branch when nothing is
+  # pinned. A separate job, so a sibling dropping its link back does not read as an eval
+  # failure here.
+  siblings:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: clone each sibling listed in repos.json
+        run: |
+          python3 -c 'import json; [print(r["name"], r["url"]) for r in json.load(open("repos.json"))["repos"]]' |
+          while read -r name url; do
+            git clone --quiet --filter=blob:none --no-checkout "$url" "$RUNNER_TEMP/siblings/$name"
+          done
+      - run: python3 evals/siblings/run.py --siblings "$RUNNER_TEMP/siblings"
+      - run: python3 evals/siblings/run.py --selftest

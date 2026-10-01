@@ -1,5 +1,18 @@
 # AGENTS.md — how agents work in this repo
 
+**Start here, then read the sibling the task needs.** This repo is the hub. Its siblings are
+maintained separately, and each links back here. Read the one the task needs and link its
+rules rather than restating them; a copy goes stale without a sound. The same facts for a
+program are in [`repos.json`](repos.json), checked by `evals/siblings/run.py`.
+
+| when the task is | read |
+|---|---|
+| data that may never reach a hosted model; local models and runtimes, private search, finding and redacting personal information | [local-ai](https://github.com/rivendale/local-ai) |
+| building from open source instead of from scratch; what a license lets you reuse | [opensource](https://github.com/rivendale/opensource) |
+| running services on your own machines: WSL, systemd user services, networking, sync and backup, alerting | [homelab](https://github.com/rivendale/homelab) |
+
+The rest of this page is about working in this repo.
+
 **One file: `AGENTS.md`. No second name, no symlink, no fork.** Three of the four tools
 below load it; Gemini CLI reads a filename of its own, which is why this is a table and not
 a sentence. One file is still the right answer — a second copy drifts, and the tool that
@@ -332,9 +345,10 @@ into notes and handoffs; its value never does.
 
 ## Honest limitations of this page
 
-- Nothing on this page is enforced. The repo's one CI gate runs the skill-trigger evals,
-  not these rules: no hook reads this file and no check fails when it is ignored. It is a
-  rule someone keeps, and a rule nobody keeps is a comment.
+- Almost nothing on this page is enforced. CI runs the skill-trigger evals, the CLI checks,
+  a link check and the sibling check, and of this page only the sibling table at the top is
+  checked (that it links every repo in `repos.json`). No hook reads the rest and no check
+  fails when it is ignored. It is a rule someone keeps, and a rule nobody keeps is a comment.
 - The cost figures are the right order of magnitude, not a price list; vendors change both
   prices and cache lifetimes.
 - [`starter/AGENTS.md`](starter/AGENTS.md) is the copyable version for a new repo, and
