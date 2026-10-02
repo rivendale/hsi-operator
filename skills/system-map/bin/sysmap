@@ -35,7 +35,8 @@ WAYS A MAP LIES, written before the code; each is a FAIL unless marked WARN.
    21. No file in DIR with the script's name, or none whose hash matches the pinned integrity.
    22. Any <script src>, <link href>, @import or url() left pointing at http(s) after vendoring.
   Leaks
-   13. A citation that points at a secret file, or any string shaped like a live credential.
+   13. A citation that points at a secret file, or any string in one of seven common credential shapes
+       (private keys, AWS, GitHub, sk- keys, Slack, JWTs, passwords inside URLs). Not exhaustive.
        The location is printed, never the value.
   Weak but legal (WARN; --strict makes them fail)
    14. A node called live with no live measurement on it or on any ancestor.
@@ -54,6 +55,7 @@ WAYS A MAP LIES, written before the code; each is a FAIL unless marked WARN.
    23. WARN: no setpoints at all. The map is a measurement with nothing to compare against,
        so it cannot show drift.
 """
+import datetime
 import argparse
 import base64
 import copy
@@ -102,6 +104,7 @@ SECRET_SHAPES = [
     ("an API key with an sk- prefix", re.compile(r"\bsk-(ant-|proj-|live_|test_)?[A-Za-z0-9_-]{24,}")),
     ("a Slack token", re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}")),
     ("a JSON web token", re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.")),
+    ("a password inside a URL", re.compile(r"\b[a-z][a-z0-9+.-]*://[^\s/:@]+:[^\s/@]+@[^\s/]+")),
 ]
 
 
@@ -170,6 +173,11 @@ def check_evidence(r, owner, obj, status=None, cites=None):
                    f"or 'live YYYY-MM-DD: what was run: what it showed'")
             continue
         forms.append(f)
+        if f == "live":
+            try:
+                datetime.date.fromisoformat(e[5:15])
+            except ValueError:
+                r.fail(f"{owner}: evidence {str(e)[:40]!r} has a date that is not a real date")
         if f == "cite":
             m = CITE.match(e)
             if SECRET_FILE.search(m.group("path")):
@@ -870,6 +878,8 @@ def selftest():
         ("data used by a node that does not exist", "is not a node", lambda m: m["data_uses"][0]["used_by"].append("ghost")),
         ("a citation of a secret file", "secret file", lambda m: node(m, "api")["evidence"].append("acme/uploads/.env.production:3")),
         ("a credential pasted into a label", "looks like", lambda m: edge(m, "e13").update(data="ghp_" + "A1b2C3d4E5" * 4)),
+        ("a password inside a connection URL", "looks like", lambda m: edge(m, "e13").update(data="postgres://app:" + "s3cretPass" + "@db.internal:5432/app")),
+        ("an impossible live date", "not a real date", lambda m: node(m, "api")["evidence"].append("live 2026-13-45: probed")),
         ("an undated as_of", "meta.as_of", lambda m: m["meta"].update(as_of="last week")),
         ("a gap with no evidence", "no evidence", lambda m: m["gaps"][0].update(evidence=[])),
         ("a gap kind from the retired contract", "is not one of", lambda m: m["gaps"][0].update(kind="drift_missing")),

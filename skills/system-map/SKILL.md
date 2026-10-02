@@ -31,6 +31,15 @@ drawn dashed as unknown.
 
 ---
 
+## Running `sysmap`
+
+`sysmap` is a single Python 3 script in this skill's `bin/` folder; it is not on your PATH. Call it by path:
+
+- installed as a plugin: `python3 "${CLAUDE_PLUGIN_ROOT}/skills/system-map/bin/sysmap" check system-model.json`
+- from a clone of this repo: `python3 skills/system-map/bin/sysmap check system-model.json`
+
+Or add an alias for the session: `alias sysmap='python3 /path/to/skills/system-map/bin/sysmap'`. `sysmap selftest` proves the install works.
+
 ## When to use it, and when not
 
 **Use it** when someone asks how a system works or what happens when something occurs;
