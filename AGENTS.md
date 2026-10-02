@@ -289,8 +289,8 @@ before rendering anything, and give notes in camera terms: framing, movement, ti
 
 ## Skills
 
-- **Install the skill you need, not a bundle.** `skills/` here is three skills, each one file
-  plus a small script.
+- **Install the skill you need, not a bundle.** `skills/` here is four skills, each one
+  `SKILL.md` plus a small script; `system-map` also carries its schema and its viewer page.
 - **Pin an installed skill to a reviewed commit rather than tracking `main`.** A skill is
   instructions: tracking a branch means a future push edits how an agent behaves with no
   review step on that machine. Check out a reviewed SHA, read the diff, then move the pin.
@@ -346,7 +346,7 @@ into notes and handoffs; its value never does.
 ## Honest limitations of this page
 
 - Almost nothing on this page is enforced. CI runs the skill-trigger evals, the CLI checks,
-  a link check and the sibling check, and of this page only the sibling table at the top is
+  `sysmap selftest`, a link check and the sibling check, and of this page only the sibling table at the top is
   checked (that it links every repo in `repos.json`). No hook reads the rest and no check
   fails when it is ignored. It is a rule someone keeps, and a rule nobody keeps is a comment.
 - The cost figures are the right order of magnitude, not a price list; vendors change both

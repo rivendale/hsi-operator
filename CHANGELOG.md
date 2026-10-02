@@ -12,6 +12,21 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **An operator lost track of what their own live app did: which jobs ran with nobody
+  watching, where an output fed back into its own input, and which promised notices never
+  reached a person. Nothing in this repo could map a system, and a diagram drawn by a model
+  from a vague prompt invents boundaries in exactly the places nobody checks.** New
+  `skills/system-map/`: triggers first, then components, stores, flows, human touchpoints
+  and feedback loops, every claim cited to a file and line or a dated live check, rendered
+  as one zoomable HTML map. The map is the measurement half of the loop Door 2 already
+  sets: drift between setpoint and map becomes DECIDE items for Door 1 via `sysmap items`.
+  `bin/sysmap check` refuses an uncited, dangling or self-contradicting map, a cited secret
+  file and a credential-shaped string, and with `--src` a cited line that does not exist.
+  `sysmap render --vendor-dir` builds a page that makes no CDN request, and refuses a
+  library whose local copy does not match its pinned hash. `sysmap selftest` proves each
+  refusal and now runs in CI. The schema's own example is the selftest's input, so the
+  documented contract cannot drift from the checked one.
+
 - **The repo meant to be the one a person points an agent at named one of its three sibling
   repos, once, inside a docs page, and no sibling linked back: an agent sent here never learned
   that local-ai or homelab existed, and a reader who landed on a sibling never found the hub.**

@@ -1,10 +1,11 @@
 {
   "name": "hsi-operator",
-  "description": "Keep a human at the strategic level of agent work: surface only what needs a person, establish what 'done' means before building, and triage shared repos against measured gaps rather than their own pitch.",
+  "description": "Keep a human at the strategic level of agent work: surface only what needs a person, establish what 'done' means before building, map how a system actually works and where it has drifted from that intent, and triage shared repos against measured gaps rather than their own pitch.",
   "license": "MIT",
   "skills": [
     "./skills/hsi-operator",
     "./skills/repo-triage",
-    "./skills/context-steward"
+    "./skills/context-steward",
+    "./skills/system-map"
   ]
 }

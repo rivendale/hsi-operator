@@ -1,0 +1,2303 @@
+<title>System Map Viewer</title>
+<!-- system-map viewer. Loads at view time: three Google Fonts (Barlow Condensed, JetBrains Mono, Public Sans), cytoscape 3.34.3 from cdnjs and elkjs 0.12.0 from jsdelivr, each pinned with an integrity hash (`sysmap render --vendor-dir` serves them from local files instead). The model is embedded below by `sysmap render`; nothing else is fetched. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: a drafting-table instrument. The map is the board on the right; the index of events, loops, gaps and data sits on the left; on a phone the index becomes a bottom sheet under the board. */
+:root {
+  --paper: #EDF0EC; --board: #F6F8F5; --panel: #FCFDFB; --sunk: #E3E8E3;
+  --ink: #16201C; --ink-2: #44514C; --ink-3: #56625D; --rule: #CBD3CD; --grid: #C4CDC7;
+  --accent: #2A55B8; --accent-ink: #FFFFFF;
+  --hl: #FFD43B; --hl-ink: #2B2300;
+  --bal: #0E7C87; --rein: #B8400F; --on-loop: #FFFFFF;
+  --ok: #256B30; --watch: #8A5A0C; --bad: #A11F15; --unk: #5C6763;
+  --drift: #B3133C;
+  --k-call: #44514C; --k-data: #2F6DB3; --k-event: #7A4CC2; --k-webhook: #B23A8A; --k-schedule: #2F8A47; --k-human: #16201C; --k-mixed: #74807B;
+  --n-human: #A0522D; --n-ui: #2A55B8; --n-service: #44524D; --n-job: #2E7D5B; --n-store: #6B4FA0;
+  --n-external: #7C8783; --n-agent: #B0367C; --n-queue: #8A6D1F; --n-channel: #3B7A99;
+  --shadow: rgba(22, 32, 28, 0.16);
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0F1513; --board: #131A17; --panel: #18211D; --sunk: #212B27;
+    --ink: #E3EAE5; --ink-2: #B2BDB7; --ink-3: #8E9A95; --rule: #2E3A35; --grid: #2A3530;
+    --accent: #84A6F4; --accent-ink: #0B1020;
+    --hl: #F2C230; --hl-ink: #1A1400;
+    --bal: #3CC0C9; --rein: #FF7A45; --on-loop: #0B0F0E;
+    --ok: #5DBB6A; --watch: #E3A63A; --bad: #F06A5B; --unk: #8E9A95;
+    --drift: #FF5C8A;
+    --k-call: #AAB6B0; --k-data: #6EA8EC; --k-event: #B08CF0; --k-webhook: #E77BC0; --k-schedule: #6CC383; --k-human: #E3EAE5; --k-mixed: #8E9A95;
+    --n-human: #E08A55; --n-ui: #84A6F4; --n-service: #A9B6B0; --n-job: #5FBF8E; --n-store: #A98BE0;
+    --n-external: #8E9A95; --n-agent: #E772B4; --n-queue: #D2AE4A; --n-channel: #6FB4D6;
+    --shadow: rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0F1513; --board: #131A17; --panel: #18211D; --sunk: #212B27;
+  --ink: #E3EAE5; --ink-2: #B2BDB7; --ink-3: #8E9A95; --rule: #2E3A35; --grid: #2A3530;
+  --accent: #84A6F4; --accent-ink: #0B1020;
+  --hl: #F2C230; --hl-ink: #1A1400;
+  --bal: #3CC0C9; --rein: #FF7A45; --on-loop: #0B0F0E;
+  --ok: #5DBB6A; --watch: #E3A63A; --bad: #F06A5B; --unk: #8E9A95;
+  --drift: #FF5C8A;
+  --k-call: #AAB6B0; --k-data: #6EA8EC; --k-event: #B08CF0; --k-webhook: #E77BC0; --k-schedule: #6CC383; --k-human: #E3EAE5; --k-mixed: #8E9A95;
+  --n-human: #E08A55; --n-ui: #84A6F4; --n-service: #A9B6B0; --n-job: #5FBF8E; --n-store: #A98BE0;
+  --n-external: #8E9A95; --n-agent: #E772B4; --n-queue: #D2AE4A; --n-channel: #6FB4D6;
+  --shadow: rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 400 14px/1.45 var(--f-body); overflow: hidden; -webkit-font-smoothing: antialiased; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: var(--accent); }
+
+.app { height: 100%; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 10px; padding-inline: 16px; padding-block: 12px; min-width: 0; }
+
+/* Header */
+.top { display: flex; gap: 12px 20px; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; min-width: 0; }
+.ident { min-width: 0; flex: 1 1 420px; }
+.eyebrow { font: 600 11px/1.2 var(--f-body); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink-3); display: flex; gap: 10px; flex-wrap: wrap; }
+.eyebrow time { font-family: var(--f-mono); letter-spacing: 0.02em; text-transform: none; color: var(--ink-2); }
+h1 { font: 700 26px/1.08 var(--f-display); letter-spacing: 0.005em; margin: 4px 0 0; text-wrap: balance; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+/* When the map was last made, and the commit of each repo it was read from: the first thing to check before trusting it */
+.stamp { margin: 6px 0 0; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; min-width: 0; }
+.stamp .lm { display: inline-flex; gap: 6px; align-items: baseline; font: 600 13px/1.3 var(--f-body); color: var(--ink); }
+.stamp .lm time { font: 500 13px/1.3 var(--f-mono); background: var(--sunk); border-radius: 5px; padding: 1px 6px; }
+.stamp .from { font: 400 12px/1.4 var(--f-body); color: var(--ink-2); min-width: 0; overflow-wrap: anywhere; }
+.stamp .from code { font: 500 11.5px/1.4 var(--f-mono); color: var(--ink); }
+.scope { margin: 4px 0 0; color: var(--ink-2); max-width: 90ch; font-size: 13px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.search { position: relative; flex: 0 1 320px; min-width: 0; }
+.search input { width: 100%; height: 38px; border: 1px solid var(--rule); border-radius: 8px; background: var(--panel); padding: 0 12px 0 34px; font-size: 14px; }
+.search svg { position: absolute; left: 11px; top: 11px; width: 16px; height: 16px; color: var(--ink-3); pointer-events: none; }
+.results { position: absolute; z-index: 30; top: 42px; left: 0; right: 0; margin: 0; padding: 4px; list-style: none; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; box-shadow: 0 10px 28px var(--shadow); max-height: 50vh; overflow: auto; }
+.results li { padding: 7px 9px; border-radius: 6px; cursor: pointer; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 8px; align-items: baseline; }
+.results li[aria-selected="true"], .results li:hover { background: var(--sunk); }
+.results .rk { font: 600 10px/1 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.results .rl { font-weight: 600; overflow-wrap: anywhere; }
+.results .rd { grid-column: 2; color: var(--ink-2); font-size: 12px; overflow-wrap: anywhere; }
+
+/* Body grid */
+.body { display: grid; grid-template-columns: minmax(290px, 350px) minmax(0, 1fr); gap: 12px; min-height: 0; min-width: 0; }
+
+/* Side index */
+.side { display: flex; flex-direction: column; min-height: 0; min-width: 0; background: var(--panel); border: 1px solid var(--rule); border-radius: var(--r); overflow: hidden; }
+.tabsrow { display: flex; align-items: flex-end; border-bottom: 1px solid var(--rule); flex: none; min-width: 0; }
+.tabs { display: flex; flex-wrap: wrap; gap: 2px; padding: 6px 6px 0; align-items: flex-end; min-width: 0; flex: 1 1 auto; }
+.tab { border: 0; background: none; padding: 8px 9px 9px; font: 600 15px/1 var(--f-display); letter-spacing: 0.02em; color: var(--ink-3); border-bottom: 2px solid transparent; white-space: nowrap; display: inline-flex; gap: 5px; align-items: baseline; }
+.tab .n { font: 500 11px/1 var(--f-mono); color: var(--ink-3); }
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+.sheet-toggle { display: none; flex: none; align-self: center; border: 1px solid var(--rule); background: var(--panel); border-radius: 7px; margin: 6px 8px 6px 4px; padding: 6px 10px; color: var(--ink-2); font: 600 13px/1 var(--f-display); white-space: nowrap; }
+.panel { overflow: auto; padding: 14px 16px 20px; min-height: 0; flex: 1; display: flex; flex-direction: column; gap: 12px; }
+.panel[hidden] { display: none; }
+.intro { margin: 0; color: var(--ink-2); font-size: 13px; }
+.list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.item { border: 1px solid var(--rule); border-radius: 8px; background: var(--board); padding: 10px 11px; text-align: left; width: 100%; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+button.item:hover { border-color: var(--ink-3); }
+.item.on { border-color: var(--ink); box-shadow: inset 3px 0 0 var(--hl); }
+.item .t { font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.item .s { color: var(--ink-2); font-size: 12.5px; overflow-wrap: anywhere; }
+ul.s { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
+.item h4 { margin: 4px 0 0; font: 600 10.5px/1.2 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; min-width: 0; }
+.chip { display: inline-flex; align-items: center; gap: 5px; font: 600 10.5px/1 var(--f-body); letter-spacing: 0.07em; text-transform: uppercase; padding: 4px 7px; border-radius: 99px; background: var(--sunk); color: var(--ink-2); white-space: nowrap; }
+.chip .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.chip.st-live { color: var(--ok); } .chip.st-partial { color: var(--watch); } .chip.st-dead { color: var(--bad); } .chip.st-unknown { color: var(--unk); }
+.chip.sb-stable { color: var(--ok); } .chip.sb-watch { color: var(--watch); } .chip.sb-unstable { color: var(--bad); }
+/* the checker's two 'weak but legal' warnings, shown where they apply: live or stable with no live measurement */
+.chip.sb-unmeasured, .chip.st-unmeasured { color: var(--unk); }
+.chip.um .dot { background: transparent; box-shadow: inset 0 0 0 1.6px currentColor; }
+.chip.onmap { color: var(--accent); }
+/* Done vs actual: one color means off target everywhere (list, ring, badge); grey means nobody measured it */
+.chip.sp-no { color: var(--drift); } .chip.sp-unknown { color: var(--unk); } .chip.sp-yes { color: var(--ok); }
+.chip.conf { color: var(--accent); }
+.chip.gk { color: var(--drift); } .chip.gk-unknown { color: var(--unk); }
+.item.sp-no:not(.on) { box-shadow: inset 3px 0 0 var(--drift); }
+.item.sp-unknown:not(.on) { box-shadow: inset 3px 0 0 var(--unk); }
+.grouph { margin: 4px 0 -2px; font: 700 16px/1.2 var(--f-display); letter-spacing: 0.02em; display: flex; gap: 6px; align-items: baseline; }
+.grouph .n { font: 500 11px/1 var(--f-mono); color: var(--ink-3); }
+.grouph .dot { width: 9px; height: 9px; border-radius: 50%; background: currentColor; align-self: center; }
+.grouph.sp-no { color: var(--drift); } .grouph.sp-unknown { color: var(--unk); } .grouph.sp-yes { color: var(--ok); }
+.grouph span:not(.dot):not(.n) { color: var(--ink); }
+.srcref { margin: 0; font: 400 11.5px/1.4 var(--f-mono); color: var(--ink-2); overflow-wrap: anywhere; }
+.loopmark { font: 700 12px/1 var(--f-display); letter-spacing: 0.04em; padding: 4px 7px; border-radius: 5px; color: var(--on-loop); background: var(--bal); text-transform: uppercase; }
+.loopmark.r { background: var(--rein); }
+.steps-n { font: 500 11px/1 var(--f-mono); color: var(--ink-3); margin-left: auto; }
+.summary { display: flex; gap: 8px; flex-wrap: wrap; }
+.stat { border: 1px solid var(--rule); border-radius: 8px; padding: 7px 10px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.stat b { font: 700 20px/1 var(--f-display); font-variant-numeric: tabular-nums; }
+.stat span { font-size: 11px; color: var(--ink-3); }
+.more { display: flex; flex-direction: column; gap: 8px; padding-top: 4px; }
+.more h4, .details h4, .tcard h4 { margin: 0; font: 600 10.5px/1.2 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
+.more p, .details p { margin: 0; max-width: 65ch; }
+.ev { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+.ev li { font: 400 11.5px/1.4 var(--f-mono); color: var(--ink-2); overflow-wrap: anywhere; }
+.links { display: flex; gap: 5px; flex-wrap: wrap; }
+.nlink { border: 1px solid var(--rule); background: var(--panel); border-radius: 6px; padding: 3px 7px; font-size: 12px; text-align: left; overflow-wrap: anywhere; }
+.nlink:hover { border-color: var(--ink-3); }
+.empty { color: var(--ink-3); font-size: 13px; }
+.problems li { color: var(--bad); }
+.gloss { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
+.gloss dt { font-weight: 600; }
+.gloss dd { margin: 0 0 4px; color: var(--ink-2); font-size: 13px; }
+.key { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 7px 10px; align-items: center; font-size: 13px; }
+.key svg { width: 44px; height: 22px; overflow: visible; }
+.key h4 { grid-column: 1 / -1; margin: 8px 0 0; }
+.keynote { grid-column: 1 / -1; margin: 0; color: var(--ink-2); font-size: 12.5px; }
+
+/* Stage */
+.stage { position: relative; min-height: 0; min-width: 0; border: 1px solid var(--rule); border-radius: var(--r); overflow: hidden; background-color: var(--board); background-image: radial-gradient(var(--grid) 1px, transparent 1.3px); background-size: 24px 24px; }
+#cy { position: absolute; inset: 0; }
+#cy:focus-visible { outline-offset: -3px; }
+.toolbar { position: absolute; z-index: 5; top: 10px; left: 10px; right: 10px; display: flex; flex-wrap: wrap; gap: 8px; pointer-events: none; }
+.toolbar > * { pointer-events: auto; }
+.grp { display: inline-flex; background: var(--panel); border: 1px solid var(--rule); border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px var(--shadow); }
+.grp button { border: 0; background: none; padding: 7px 10px; font: 600 14px/1 var(--f-display); letter-spacing: 0.02em; color: var(--ink-2); white-space: nowrap; display: inline-flex; gap: 5px; align-items: baseline; }
+.grp button .n { font: 500 11px/1 var(--f-mono); color: var(--ink-3); }
+.grp button + button, .grp .lab + button { border-left: 1px solid var(--rule); }
+.grp button[aria-pressed="true"] { background: var(--ink); color: var(--panel); }
+.grp button[aria-pressed="true"] .n { color: var(--panel); }
+.grp .lab { padding: 7px 4px 7px 10px; font: 600 10px/1.4 var(--f-body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); align-self: center; }
+.grp .lab.custom { color: var(--accent); }
+.zoomgrp { margin-left: auto; }
+#levelSel { display: none; border: 0; background: var(--panel); color: var(--ink); font: 600 13px/1 var(--f-display); padding: 7px 8px; max-width: 46vw; }
+.zoomgrp button { min-width: 34px; font-size: 16px; justify-content: center; }
+.hint { position: absolute; z-index: 4; left: 12px; bottom: 10px; font-size: 12px; color: var(--ink-2); background: color-mix(in srgb, var(--board) 88%, transparent); padding: 3px 6px; border-radius: 5px; max-width: calc(100% - 24px); pointer-events: none; }
+.lens { position: absolute; z-index: 5; left: 10px; right: 10px; top: 56px; margin: 0 auto; width: fit-content; max-width: calc(100% - 20px); background: var(--ink); color: var(--panel); padding: 7px 11px; border-radius: 8px; font-size: 12.5px; line-height: 1.35; box-shadow: 0 6px 18px var(--shadow); pointer-events: none; }
+.lens b { font-weight: 700; }
+.stage-msg { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; text-align: center; color: var(--ink-2); z-index: 3; }
+.tip { position: absolute; z-index: 20; pointer-events: none; max-width: 320px; background: var(--ink); color: var(--panel); padding: 7px 9px; border-radius: 7px; font-size: 12px; line-height: 1.35; box-shadow: 0 6px 18px var(--shadow); }
+.tip b { display: block; font-weight: 600; }
+.tip .sees { display: block; margin-bottom: 2px; }
+.tip ul { margin: 3px 0 0; padding-left: 15px; }
+
+/* Floating cards */
+.card { position: absolute; z-index: 6; background: var(--panel); border: 1px solid var(--rule); border-radius: var(--r); box-shadow: 0 12px 34px var(--shadow); }
+.details { top: 56px; right: 10px; width: min(330px, calc(100% - 20px)); max-height: calc(100% - 66px); overflow: auto; padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 11px; }
+.stage.has-trace .details { max-height: calc(100% - 66px - var(--trace-h, 200px)); }
+.details h2 { margin: 0; font: 700 22px/1.1 var(--f-display); text-wrap: balance; overflow-wrap: anywhere; padding-right: 26px; }
+.close { position: absolute; top: 8px; right: 8px; border: 0; background: none; width: 30px; height: 30px; border-radius: 6px; color: var(--ink-3); font-size: 18px; line-height: 1; }
+.close:hover { background: var(--sunk); color: var(--ink); }
+.crumbs { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-size: 12px; color: var(--ink-3); }
+.crumbs button { border: 0; background: none; padding: 0; color: var(--accent); font-size: 12px; text-align: left; }
+.io { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.io ul { margin: 4px 0 0; padding-left: 16px; font-size: 13px; }
+.conn { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 13px; }
+.conn li { display: grid; grid-template-columns: 14px minmax(0, 1fr); gap: 6px; align-items: start; }
+.conn .ar { color: var(--ink-3); font-family: var(--f-mono); font-size: 12px; }
+.conn .el { color: var(--ink-2); }
+
+.tcard { left: 50%; transform: translateX(-50%); bottom: 10px; width: min(620px, calc(100% - 20px)); padding: 13px 16px 14px; display: flex; flex-direction: column; gap: 9px; }
+.tcard .head { display: flex; gap: 8px; align-items: center; padding-right: 30px; min-width: 0; }
+.tcard .ttl { font: 700 17px/1.15 var(--f-display); overflow-wrap: anywhere; min-width: 0; }
+.ticks { display: flex; gap: 3px; }
+.ticks button { flex: 1; height: 7px; border: 0; padding: 0; border-radius: 2px; background: var(--sunk); min-width: 4px; }
+.ticks button.done { background: color-mix(in srgb, var(--hl) 55%, var(--sunk)); }
+.ticks button.cur { background: var(--hl); box-shadow: 0 0 0 1px var(--ink); }
+.ticks button.end { flex: 0 0 18px; }
+.ticks button.end.cur { background: var(--ink); }
+.narr { font-size: 16px; line-height: 1.45; margin: 0; max-width: 65ch; }
+.narr mark { background: var(--hl); color: var(--hl-ink); padding: 0 3px; border-radius: 2px; }
+.fromto { font-size: 12.5px; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.fromto .arrow { color: var(--ink-3); }
+.fromto button { border: 0; background: none; padding: 0; color: var(--ink); font-weight: 600; font-size: 12.5px; text-decoration: underline; text-decoration-color: var(--rule); text-underline-offset: 2px; text-align: left; }
+.ctrls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.btn { border: 1px solid var(--rule); background: var(--panel); border-radius: 7px; padding: 6px 12px; font: 600 14px/1.1 var(--f-display); letter-spacing: 0.02em; }
+.btn:hover { border-color: var(--ink-3); }
+.btn.primary { background: var(--ink); color: var(--panel); border-color: var(--ink); min-width: 74px; }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.count { font: 500 12px/1 var(--f-mono); color: var(--ink-3); margin-left: auto; font-variant-numeric: tabular-nums; }
+.outcome { display: flex; flex-direction: column; gap: 6px; }
+.outcome p { margin: 0; }
+
+@media (max-width: 760px) {
+  .app { gap: 8px; padding-block: 10px 8px; }
+  h1 { font-size: 20px; -webkit-line-clamp: 1; }
+  .scope { display: none; }
+  .search { flex: 1 1 100%; }
+  .body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; gap: 8px; }
+  .side { order: 2; height: 40vh; }
+  .side.min { height: auto; }
+  .side.min .panel { display: none; }
+  .side.min .tabs { display: none; }
+  .side.min .tabsrow::before { content: "Index: events, loops, gaps, data"; flex: 1; padding: 10px 12px; font: 600 14px/1 var(--f-display); color: var(--ink-2); }
+  .sheet-toggle { display: inline-block; }
+  .tab { padding: 7px 7px 8px; font-size: 14px; }
+  .grp button { padding: 7px 8px; font-size: 13px; }
+  .grp .lab { display: none; }
+  .grp .lvl { display: none; }
+  #levelSel { display: block; max-width: 36vw; }
+  .wide { display: none; }
+  #zIn, #zOut { display: none; }
+  #zFit { border-left: 0; }
+  #counts { display: none; }
+  .app.tracing .side { display: none; }
+  .tcard { position: fixed; left: 16px; right: 16px; width: auto; transform: none; bottom: calc(8px + env(safe-area-inset-bottom, 0px)); max-height: 48vh; overflow: auto; }
+  .tcard .ev { display: none; }
+  .tcard .ttl { font-size: 15px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .details { top: auto; bottom: 8px; left: 8px; right: 8px; width: auto; max-height: 52%; z-index: 8; }
+  .stage.has-trace .details { max-height: 52%; }
+  .tcard { bottom: 8px; width: calc(100% - 16px); padding: 11px 12px 12px; gap: 7px; }
+  .narr { font-size: 14.5px; }
+  .hint { font-size: 11.5px; bottom: 8px; left: 8px; }
+  .lens { top: 52px; font-size: 12px; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="app" id="app">
+  <header class="top">
+    <div class="ident">
+      <div class="eyebrow"><span>System map</span><span>as of <time id="asof"></time></span><span id="counts"></span></div>
+      <h1 id="mname">System map</h1>
+      <p class="stamp" id="stamp"><span class="lm">Last mapped <time id="mapped"></time></span><span class="from" id="commits"></span></p>
+      <p class="scope" id="mscope"></p>
+    </div>
+    <div class="search">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>
+      <input id="q" type="search" placeholder="Find a part, event, loop or gap" aria-label="Find a part, event, loop or gap" autocomplete="off" aria-controls="qres">
+      <ul class="results" id="qres" role="listbox" hidden></ul>
+    </div>
+  </header>
+
+  <div class="body">
+    <aside class="side" id="side" aria-label="Index">
+      <div class="tabsrow">
+        <div class="tabs" role="tablist" id="tabs">
+          <button class="tab" role="tab" id="tab-triggers" data-tab="triggers" aria-selected="true">What happens when <span class="n" id="n-triggers"></span></button>
+          <button class="tab" role="tab" id="tab-drift" data-tab="drift" aria-selected="false" hidden>Done vs actual <span class="n" id="n-drift"></span></button>
+          <button class="tab" role="tab" id="tab-loops" data-tab="loops" aria-selected="false">Loops <span class="n" id="n-loops"></span></button>
+          <button class="tab" role="tab" id="tab-gaps" data-tab="gaps" aria-selected="false">Gaps <span class="n" id="n-gaps"></span></button>
+          <button class="tab" role="tab" id="tab-data" data-tab="data" aria-selected="false">Data <span class="n" id="n-data"></span></button>
+          <button class="tab" role="tab" id="tab-key" data-tab="key" aria-selected="false">Key</button>
+          <button class="tab" role="tab" id="tab-about" data-tab="about" aria-selected="false">About</button>
+        </div>
+        <button class="sheet-toggle" id="sheetToggle" aria-expanded="true" aria-controls="side">Hide</button>
+      </div>
+      <section class="panel" id="p-triggers" role="tabpanel" aria-labelledby="tab-triggers">
+        <p class="intro">Pick something that happens. The map plays it step by step along the real connections.</p>
+        <ul class="list" id="triggerList"></ul>
+      </section>
+      <section class="panel" id="p-drift" role="tabpanel" aria-labelledby="tab-drift" hidden>
+        <p class="intro">Each <b>setpoint</b> says what should happen: what done means. The map is what actually runs. Where the two disagree is <b>drift</b>. Pick a setpoint to see where it happens on the map. <b>Proposed</b> ones were taken from a document and wait for the operator to confirm them.</p>
+        <div class="summary" id="driftSummary"></div>
+        <div id="driftGroups"></div>
+      </section>
+      <section class="panel" id="p-loops" role="tabpanel" aria-labelledby="tab-loops" hidden>
+        <p class="intro"><b>Balancing</b> loops pull the system back toward a target; "not correcting" means the correction is not happening. <b>Reinforcing</b> loops feed themselves: more of something makes more of it, which can run away.</p>
+        <div class="summary" id="loopSummary"></div>
+        <ul class="list" id="loopList"></ul>
+      </section>
+      <section class="panel" id="p-gaps" role="tabpanel" aria-labelledby="tab-gaps" hidden>
+        <p class="intro">Places where the system does something nobody would guess, or where a part is missing. Pick one to see its parts on the map.</p>
+        <ul class="list" id="gapList"></ul>
+      </section>
+      <section class="panel" id="p-data" role="tabpanel" aria-labelledby="tab-data" hidden>
+        <p class="intro">Which information each part makes, who uses it today, and what else it could serve.</p>
+        <ul class="list" id="dataList"></ul>
+      </section>
+      <section class="panel" id="p-key" role="tabpanel" aria-labelledby="tab-key" hidden>
+        <div class="key" id="keyGrid"></div>
+      </section>
+      <section class="panel" id="p-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+        <div id="about"></div>
+      </section>
+    </aside>
+
+    <main class="stage" id="stage" aria-label="System map">
+      <div id="cy" tabindex="0" role="img" aria-label="Zoomable map of the system. Plus and minus zoom, arrow keys pan, 0 fits. Use the index for a text version."></div>
+      <div class="toolbar">
+        <div class="grp" role="group" aria-label="Detail level" id="levelGrp"><span class="lab" id="levelLab">Detail</span></div>
+        <div class="grp" role="group" aria-label="Overlays">
+          <button id="tLoops" aria-pressed="false">Loops</button>
+          <button id="tHuman" aria-pressed="false" aria-label="Human lens">Human<span class="wide">lens</span></button>
+          <button id="tDrift" aria-pressed="false" hidden title="Mark every part involved in drift">Drift</button>
+        </div>
+        <div class="grp zoomgrp" role="group" aria-label="Zoom">
+          <button id="zOut" aria-label="Zoom out" title="Zoom out (minus key)">&minus;</button>
+          <button id="zIn" aria-label="Zoom in" title="Zoom in (plus key)">+</button>
+          <button id="zFit" aria-label="Fit the whole map" title="Fit the whole map (0 key)">Fit</button>
+        </div>
+      </div>
+      <div class="lens" id="lens" hidden></div>
+      <div class="hint" id="hint"></div>
+      <div class="stage-msg" id="stageMsg" hidden></div>
+      <div class="tip" id="tip" hidden></div>
+      <section class="card details" id="details" hidden aria-live="polite"></section>
+      <section class="card tcard" id="tcard" hidden aria-live="polite"></section>
+    </main>
+  </div>
+</div>
+
+<script type="application/json" id="model">{"meta":{"name":"Tiny Uploads (example)","scope":"A hypothetical photo-upload web app: the web page, the API, the thumbnail worker, storage and the payment callback. Architecture only.","as_of":"2026-10-01","sources":["acme/uploads @ 3f2c9e1 (matches the deployed image, measured 2026-10-01)","live read-only checks 2026-10-01: GET /healthz, the queue_depth metric, the bucket size"]},"levels":[{"id":0,"name":"System of systems"},{"id":1,"name":"Systems"},{"id":2,"name":"Components"}],"nodes":[{"id":"product","label":"Tiny Uploads","kind":"service","level":0,"parent":null,"does":"Lets a customer upload photos and get thumbnails back, on a free or paid plan.","human_sees":"the web app","inputs":["photos","payments"],"outputs":["thumbnails"],"status":"live","evidence":["live 2026-10-01: GET https://uploads.example.com/healthz: 200, version 3f2c9e1"]},{"id":"customer","label":"Customer","kind":"human","level":0,"parent":null,"does":"Uploads photos and pays for a plan.","human_sees":"the upload page and the plan badge","inputs":["tile states","plan badge"],"outputs":["photos","payments"],"status":"live","evidence":["acme/uploads/web/src/pages/Upload.tsx:14"]},{"id":"payments","label":"Payment provider","kind":"external","level":0,"parent":null,"does":"Takes card payments on its hosted page and calls back when one succeeds.","human_sees":"the provider's hosted checkout page","inputs":["card details"],"outputs":["signed payment events"],"status":"live","evidence":["acme/uploads/api/src/billing/checkout.ts:8","live 2026-10-01: provider dashboard, webhook endpoints: 1 endpoint, last delivery 200"]},{"id":"web","label":"Web app","kind":"ui","level":1,"parent":"product","does":"The page where a customer uploads photos and watches them finish.","human_sees":"an Upload button, a grid of tiles marked Processing or Ready, a plan badge","inputs":["upload state"],"outputs":["uploads","status polls"],"status":"live","evidence":["acme/uploads/web/src/pages/Upload.tsx:14"]},{"id":"api","label":"API","kind":"service","level":1,"parent":"product","does":"Accepts uploads and payment callbacks and answers status polls.","human_sees":"","inputs":["uploads","payment events","polls"],"outputs":["jobs","upload state"],"status":"live","evidence":["acme/uploads/api/src/server.ts:22","acme/uploads/fly.toml:1"]},{"id":"r_upload","label":"POST /uploads","kind":"service","level":2,"parent":"api","does":"Checks the plan limit, stores the original and queues a thumbnail job.","human_sees":"","inputs":["photo","plan"],"outputs":["original","upload row","job"],"status":"live","evidence":["acme/uploads/api/src/routes/uploads.ts:12"]},{"id":"r_status","label":"GET /uploads/:id","kind":"service","level":2,"parent":"api","does":"Says whether an upload's thumbnail is ready.","human_sees":"","inputs":["upload id"],"outputs":["upload state"],"status":"live","evidence":["acme/uploads/api/src/routes/uploads.ts:48"]},{"id":"r_hook","label":"POST /webhooks/payments","kind":"service","level":2,"parent":"api","does":"Verifies the provider's signature and marks the account paid.","human_sees":"","inputs":["signed payment event"],"outputs":["plan change"],"status":"live","evidence":["acme/uploads/api/src/routes/payments.ts:9"]},{"id":"q_thumbs","label":"Thumbnail queue","kind":"queue","level":1,"parent":"product","does":"Holds thumbnail jobs until the worker takes them.","human_sees":"","inputs":["jobs","retried jobs"],"outputs":["jobs"],"status":"live","evidence":["acme/uploads/api/src/queue.ts:5","live 2026-10-01: queue_depth metric, 7 days: daily max 41, daily min 0"]},{"id":"worker","label":"Thumbnail worker","kind":"job","level":1,"parent":"product","does":"Takes up to four jobs at once, writes thumbnails, and re-queues a job that times out.","human_sees":"","inputs":["jobs","originals"],"outputs":["thumbnails","ready flags","retried jobs"],"status":"live","evidence":["acme/uploads/worker/src/index.ts:30"]},{"id":"files","label":"Object storage","kind":"store","level":1,"parent":"product","does":"Keeps originals and thumbnails.","human_sees":"","inputs":["originals","thumbnails"],"outputs":["thumbnails"],"status":"live","evidence":["acme/uploads/api/src/storage.ts:3","live 2026-10-01: bucket size 182 GB, up 9 GB in 30 days"]},{"id":"db","label":"Database","kind":"store","level":1,"parent":"product","does":"Keeps accounts, plans and upload records.","human_sees":"","inputs":["upload rows","plan changes"],"outputs":["upload state","plan"],"status":"live","evidence":["acme/uploads/api/migrations/001_init.sql:1"]}],"edges":[{"id":"e1","from":"customer","to":"web","kind":"human","label":"picks a photo and presses Upload","data":"photo file","evidence":["acme/uploads/web/src/pages/Upload.tsx:31"]},{"id":"e2","from":"web","to":"r_upload","kind":"call","label":"POST /uploads","data":"multipart photo","evidence":["acme/uploads/web/src/api.ts:12"]},{"id":"e3","from":"r_upload","to":"files","kind":"data","label":"writes the original","data":"original image","evidence":["acme/uploads/api/src/routes/uploads.ts:20"]},{"id":"e4","from":"r_upload","to":"db","kind":"data","label":"inserts an upload row as processing","data":"upload row","evidence":["acme/uploads/api/src/routes/uploads.ts:24"]},{"id":"e5","from":"r_upload","to":"q_thumbs","kind":"event","label":"enqueues a thumbnail job","data":"upload id","evidence":["acme/uploads/api/src/routes/uploads.ts:27"]},{"id":"e6","from":"q_thumbs","to":"worker","kind":"event","label":"delivers the next job","data":"upload id","evidence":["acme/uploads/worker/src/index.ts:30"]},{"id":"e7","from":"worker","to":"files","kind":"data","label":"writes the thumbnail","data":"thumbnail image","evidence":["acme/uploads/worker/src/index.ts:41"]},{"id":"e8","from":"worker","to":"db","kind":"data","label":"marks the upload ready","data":"upload state","evidence":["acme/uploads/worker/src/index.ts:44"]},{"id":"e9","from":"worker","to":"q_thumbs","kind":"event","label":"re-enqueues a job that timed out, with no cap","data":"upload id","evidence":["acme/uploads/worker/src/index.ts:52"]},{"id":"e10","from":"web","to":"r_status","kind":"call","label":"polls every 3 seconds","data":"upload id","evidence":["acme/uploads/web/src/api.ts:20"]},{"id":"e11","from":"db","to":"r_status","kind":"data","label":"reads the upload state","data":"upload state","evidence":["acme/uploads/api/src/routes/uploads.ts:50"]},{"id":"e12","from":"web","to":"customer","kind":"human","label":"shows the tile as Ready","data":"tile state","evidence":["acme/uploads/web/src/pages/Upload.tsx:52"]},{"id":"e13","from":"payments","to":"r_hook","kind":"webhook","label":"payment succeeded","data":"signed payment event","evidence":["acme/uploads/api/src/routes/payments.ts:9"]},{"id":"e14","from":"r_hook","to":"db","kind":"data","label":"sets the plan to paid","data":"plan change","evidence":["acme/uploads/api/src/routes/payments.ts:21"]},{"id":"e15","from":"db","to":"r_upload","kind":"data","label":"reads the plan to enforce the free limit of 20 uploads","data":"plan","evidence":["acme/uploads/api/src/routes/uploads.ts:15"]}],"triggers":[{"id":"t_upload","kind":"user_action","label":"A customer uploads a photo","setpoint":"upload-feedback","steps":[{"edge":"e1","narration":"The customer picks a photo and presses Upload."},{"edge":"e2","narration":"The page posts the file to the API."},{"edge":"e3","narration":"The API writes the original to object storage."},{"edge":"e4","narration":"It records the upload as processing."},{"edge":"e5","narration":"It queues a thumbnail job and returns at once."},{"edge":"e6","narration":"When a slot is free, the worker takes the job."},{"edge":"e7","narration":"The worker writes the thumbnail."},{"edge":"e8","narration":"It marks the upload ready."},{"edge":"e10","narration":"Meanwhile the page has been polling every three seconds."},{"edge":"e11","narration":"The next poll reads ready."},{"edge":"e12","narration":"The tile turns from Processing to Ready."}],"outcome":"The thumbnail is stored and the upload reads ready.","human_feedback":"The tile turns from Processing to Ready within one poll of the thumbnail being written."},{"id":"t_paid","kind":"webhook","label":"The payment provider reports a successful payment","setpoint":"paid-sees-receipt","steps":[{"edge":"e13","narration":"The provider posts a signed payment event to the webhook."},{"edge":"e14","narration":"The webhook verifies the signature and sets the plan to paid."}],"outcome":"The account's plan reads paid and the free limit no longer applies.","human_feedback":"none: no receipt and no confirmation screen; the plan badge changes only on the next page load."}],"loops":[{"id":"L_drain","type":"balancing","nodes":["q_thumbs","worker"],"links":[{"from":"q_thumbs","to":"worker","sign":"+","label":"more jobs waiting, more jobs taken, up to four at once"},{"from":"worker","to":"q_thumbs","sign":"-","label":"more jobs taken, fewer waiting"}],"story":"The worker drains the queue: the more jobs wait, the more it takes, up to four at once, so the queue shrinks back toward empty.","stability":"stable","why":"Measured over seven days: the depth peaks near 40 in the evening and is back to 0 by 02:00 every day, so arrivals stay below capacity.","evidence":["acme/uploads/worker/src/index.ts:12","live 2026-10-01: queue_depth metric, 7 days: daily max 41, daily min 0"]},{"id":"L_retry","type":"reinforcing","nodes":["q_thumbs","worker"],"links":[{"from":"q_thumbs","to":"worker","sign":"+","delay":true,"label":"more jobs waiting, more jobs that time out before they finish"},{"from":"worker","to":"q_thumbs","sign":"+","label":"more timeouts, more jobs put back in the queue"}],"story":"A retry storm in waiting: a slow day makes jobs time out, every timeout goes back in the queue, and a longer queue makes more jobs time out.","stability":"watch","why":"Unmeasured under load. The worker re-queues on timeout with no cap and no backoff; it has not run away only because the daily peak stays under capacity.","evidence":["acme/uploads/worker/src/index.ts:52"]}],"data_uses":[{"data":"upload state (processing or ready)","produced_by":["r_upload","worker"],"used_by":["r_status"],"could_serve":["an email when a large batch finishes","a support view of uploads stuck in processing"]},{"data":"plan (free or paid)","produced_by":["r_hook"],"used_by":["r_upload"],"could_serve":["a receipt screen right after payment"]}],"gaps":[{"kind":"missing","setpoint":"paid-sees-receipt","title":"A paying customer sees no confirmation","detail":"The intent says a customer sees a receipt within a minute of paying. The webhook changes the plan and nothing tells the customer; the badge changes on their next page load.","nodes":["r_hook","db","customer"],"evidence":["acme/uploads/api/src/routes/payments.ts:21","live 2026-10-01: grep -rn receipt across acme/uploads: 0 hits outside tests"]},{"kind":"unintended","title":"Originals are kept forever","detail":"Nothing deletes an original after its thumbnail exists, and no stated intent asks to keep them, so storage grows with every upload.","nodes":["r_upload","files"],"evidence":["acme/uploads/api/src/storage.ts:3","live 2026-10-01: bucket size 182 GB, up 9 GB in 30 days"]},{"kind":"unknown","title":"A rejected webhook signature is silent","detail":"A bad signature returns 400 and logs nothing, so a rotated signing secret would stop every plan upgrade with no alert. A control action with no feedback path; nobody has said whether an alert was meant.","nodes":["payments","r_hook"],"evidence":["acme/uploads/api/src/routes/payments.ts:12"]}],"setpoints":[{"id":"upload-feedback","about":"t_upload","intent":"A customer who uploads a photo sees it marked Ready within ten seconds, without reloading the page.","measure":"Trigger t_upload ends at e12, where the tile turns Ready. Live: the p95 time from upload to ready in the request log.","source":"operator","source_ref":"operator, 2026-09-28: \"people should see their photo is done before they wonder\"","status":"confirmed","holds":"yes","why":"The path is complete on the map, and the request log on 2026-10-01 put the p95 from upload to ready at 6 seconds with the 3-second poll."},{"id":"paid-sees-receipt","about":"t_paid","intent":"When a customer pays, they see a receipt within a minute.","measure":"Trigger t_paid ends at something the customer sees, so its human_feedback is not none.","source":"operator","source_ref":"operator, 2026-09-28: \"when a customer pays, they see a receipt within a minute\"","status":"confirmed","holds":"no","why":"t_paid ends at the database: the plan changes and nothing tells the customer (gap: A paying customer sees no confirmation)."},{"id":"retry-capped","about":"worker","intent":"A thumbnail job that keeps timing out stops after three tries and is marked failed.","measure":"The worker's re-enqueue (e9) carries a try count and a limit, so loop L_retry has a brake.","source":"doc","source_ref":"acme/uploads/docs/operations.md:14","status":"proposed","holds":"no","why":"e9 puts a timed-out job back in the queue with no cap and no backoff (worker/src/index.ts:52), which is why L_retry is on watch."},{"id":"mobile-upload","about":"web","intent":"A customer can upload a photo from a phone browser.","measure":"A person check: upload one photo from a phone. Or the share of uploads from mobile browsers in the request log.","source":"operator","source_ref":"operator, 2026-09-28: \"most people will do this from their phone\"","status":"confirmed","holds":"unknown","why":"Nothing on the map shows a phone layout or a mobile upload, and nobody has tried one."}]}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.34.3/cytoscape.min.js" integrity="sha384-qPKQxl9uMXOw7vSTUDAnpUilhLuulovw6P5Z4db4bqxW5VhumS7przEmHX0iM0Oc" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/elkjs@0.12.0/lib/elk.bundled.js" integrity="sha384-ww57TDqx4cGknIavPm0QKO+aygLUR1BLSn2Vhbnt1XdYKWcwLyWTFKX7aZMaKIi2" crossorigin="anonymous"></script>
+<script>
+(function () {
+  'use strict';
+  var doc = document, root = doc.documentElement;
+  var $ = function (s, r) { return (r || doc).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || doc).querySelectorAll(s)); };
+  function h(tag, attrs) {
+    var e = doc.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      var v = attrs[k];
+      if (v == null || v === false) continue;
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), v);
+      else e.setAttribute(k, v === true ? '' : v);
+    }
+    for (var i = 2; i < arguments.length; i++) add(e, arguments[i]);
+    return e;
+  }
+  function add(e, c) {
+    if (c == null || c === false) return;
+    if (Array.isArray(c)) { c.forEach(function (x) { add(e, x); }); return; }
+    e.append(c.nodeType ? c : doc.createTextNode(String(c)));
+  }
+  function fill(el, items) { el.replaceChildren.apply(el, items.filter(function (x) { return x != null && x !== false; })); }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function arr(v) { return Array.isArray(v) ? v : []; }
+  function str(v) { return v == null ? '' : String(v); }
+  function safe(s) { return str(s).toLowerCase().replace(/[^a-z0-9_-]/g, '-'); }
+  var RM = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  function dur(ms) { return RM.matches ? 0 : ms; }
+  function isPhone() { return window.matchMedia ? matchMedia('(max-width: 760px)').matches : false; }
+  function clip(s, n) { s = str(s); return s.length > n ? s.slice(0, n - 1).replace(/[\s,;:.]+\S*$/, '') + '…' : s; }
+
+  // ---------------------------------------------------------------- model
+  var problems = [];
+  var M = null;
+  try { M = JSON.parse($('#model').textContent || '{}'); }
+  catch (err) { problems.push('The embedded model is not valid JSON (' + err.message + ').'); }
+  if (!M || typeof M !== 'object') M = {};
+  var META = M.meta && typeof M.meta === 'object' ? M.meta : {};
+  var LEVELS = arr(M.levels);
+
+  var N = new Map();
+  arr(M.nodes).forEach(function (n) {
+    if (!n || n.id == null) return;
+    var id = str(n.id);
+    if (N.has(id)) { problems.push('Node "' + id + '" appears twice; the second copy was ignored.'); return; }
+    N.set(id, {
+      id: id, label: str(n.label || n.id), kind: str(n.kind || 'service'), level: n.level,
+      parent: n.parent == null || n.parent === '' ? null : str(n.parent),
+      does: str(n.does), human_sees: str(n.human_sees),
+      inputs: arr(n.inputs).map(str), outputs: arr(n.outputs).map(str),
+      status: str(n.status || 'unknown'), evidence: arr(n.evidence).map(str)
+    });
+  });
+  N.forEach(function (n) {
+    if (n.parent && !N.has(n.parent)) { problems.push('Node "' + n.id + '" names a parent "' + n.parent + '" that does not exist; it is drawn at the top level.'); n.parent = null; }
+  });
+  N.forEach(function (n) {
+    var seen = new Set([n.id]), p = n.parent;
+    while (p) {
+      if (seen.has(p)) { problems.push('Parent loop through "' + n.id + '"; it is drawn at the top level.'); n.parent = null; break; }
+      seen.add(p); p = N.get(p).parent;
+    }
+  });
+  var KIDS = new Map(), ROOTS = [];
+  N.forEach(function (n) {
+    if (n.parent) { if (!KIDS.has(n.parent)) KIDS.set(n.parent, []); KIDS.get(n.parent).push(n.id); }
+    else ROOTS.push(n.id);
+  });
+  var chainCache = new Map();
+  function chain(id) {
+    var c = chainCache.get(id);
+    if (c) return c;
+    c = []; var x = id;
+    while (x) { c.unshift(x); x = N.get(x).parent; }
+    chainCache.set(id, c); return c;
+  }
+  function depth(id) { return chain(id).length - 1; }
+  function isC(id) { return KIDS.has(id); }
+  function isAnc(a, b) { return a !== b && chain(b).indexOf(a) >= 0; }
+  var DESC = new Map();
+  function desc(id) {
+    if (DESC.has(id)) return DESC.get(id);
+    var out = [];
+    (KIDS.get(id) || []).forEach(function (k) { out.push(k); desc(k).forEach(function (d) { out.push(d); }); });
+    DESC.set(id, out); return out;
+  }
+  var MAXD = 0; N.forEach(function (n) { MAXD = Math.max(MAXD, depth(n.id)); });
+  // bin/sysmap check, rule 14: a part called live needs a live measurement on it or on a box around it.
+  // In code is not live, so a part marked live without one is drawn as 'live, unmeasured'.
+  var LIVE_EV = /^live \d{4}-\d{2}-\d{2}: \S/;
+  function liveEv(list) { return list.some(function (e) { return LIVE_EV.test(e); }); }
+  N.forEach(function (n) {
+    n.measured = chain(n.id).some(function (a) { return liveEv(N.get(a).evidence); });
+    n.unmeasured = n.status === 'live' && n.kind !== 'human' && !n.measured;
+  });
+
+  var EDGES = [], E = new Map();
+  arr(M.edges).forEach(function (e, i) {
+    if (!e) return;
+    var id = str(e.id || ('edge-' + i)), from = str(e.from), to = str(e.to);
+    if (!N.has(from) || !N.has(to)) { problems.push('Connection "' + id + '" points at a part that does not exist; it was skipped.'); return; }
+    if (E.has(id)) { problems.push('Connection "' + id + '" appears twice; the second copy was ignored.'); return; }
+    var x = { id: id, from: from, to: to, kind: str(e.kind || 'call'), label: str(e.label), data: str(e.data), status: str(e.status), evidence: arr(e.evidence).map(str) };
+    EDGES.push(x); E.set(id, x);
+  });
+  var TRIGGERS = arr(M.triggers).filter(Boolean).map(function (t, i) {
+    var id = str(t.id || ('trigger-' + i));
+    return {
+      id: id, kind: str(t.kind || 'event'), label: str(t.label || id), outcome: str(t.outcome), human_feedback: str(t.human_feedback), setpoint: str(t.setpoint),
+      steps: arr(t.steps).filter(function (s) {
+        var ok = s && E.has(str(s.edge));
+        if (!ok) problems.push('A step in "' + id + '" names a connection that does not exist; it was skipped.');
+        return ok;
+      }).map(function (s) { return { edge: str(s.edge), narration: str(s.narration), evidence: arr(s.evidence).map(str) }; })
+    };
+  });
+  function firstSentence(s) { var m = /^(.+?[.!?])(\s|$)/.exec(str(s)); return m ? m[1] : str(s); }
+  var LOOPS = arr(M.loops).filter(Boolean).map(function (l, i) {
+    var id = str(l.id || ('L' + (i + 1)));
+    var nodes = arr(l.nodes).map(str).filter(function (x) {
+      if (!N.has(x)) { problems.push('Loop "' + id + '" names a part "' + x + '" that does not exist.'); return false; }
+      return true;
+    });
+    var story = str(l.story);
+    // a loop's short name: the model's optional label, else the story's opening words
+    var label = str(l.label) || clip(firstSentence(story).replace(/[.!?]$/, ''), 46) || id;
+    var lp = { id: id, label: label, type: l.type === 'reinforcing' ? 'reinforcing' : 'balancing', nodes: nodes, story: story, stability: str(l.stability || 'watch'), why: str(l.why), evidence: arr(l.evidence).map(str) };
+    // bin/sysmap check, rule 15: stable or unstable needs a live measurement, so without one the badge says unmeasured
+    lp.unmeasured = (lp.stability === 'stable' || lp.stability === 'unstable') && !liveEv(lp.evidence);
+    return lp;
+  });
+  var DATA = arr(M.data_uses).filter(Boolean).map(function (d) {
+    return { data: str(d.data), produced_by: arr(d.produced_by).map(str).filter(function (x) { return N.has(x); }), used_by: arr(d.used_by).map(str).filter(function (x) { return N.has(x); }), could_serve: arr(d.could_serve).map(str) };
+  });
+  var GAPS = arr(M.gaps).filter(Boolean).map(function (g, i) {
+    // kind names from before 2026-10-01 (drift_missing and so on) still draw as what they meant
+    var kind = str(g.kind).replace(/^drift_/, ''); if (!kind || kind === 'gap') kind = 'unknown';
+    return { i: i, title: str(g.title), detail: str(g.detail), evidence: arr(g.evidence).map(str), nodes: arr(g.nodes).map(str).filter(function (x) { return N.has(x); }), kind: kind, setpoint: str(g.setpoint) };
+  });
+  // the controller half: what done means (setpoints), and where the map disagrees with it (drift)
+  var DRIFT_KINDS = { unintended: 'Unintended', missing: 'Missing', runaway: 'Running away' };
+  var GAP_KIND_WORD = { unintended: 'Unintended', missing: 'Missing', runaway: 'Running away', unknown: 'Intent unknown' };
+  var HOLDS = { no: 'Does not hold', unknown: 'Not known', yes: 'Holds' };
+  var SOURCE = { operator: 'Operator\u2019s words', doc: 'From a document', decision: 'From a decision' };
+  function trigById(id) { for (var i = 0; i < TRIGGERS.length; i++) if (TRIGGERS[i].id === id) return TRIGGERS[i]; return null; }
+  var SETPOINTS = [], SPI = new Map();
+  arr(M.setpoints).forEach(function (s) {
+    if (!s || s.id == null) return;
+    var id = str(s.id);
+    if (SPI.has(id)) { problems.push('Setpoint "' + id + '" appears twice; the second copy was ignored.'); return; }
+    var about = str(s.about), trig = trigById(about), node = !trig && N.has(about) ? about : null;
+    if (!trig && !node) problems.push('Setpoint "' + id + '" is about "' + about + '", which is neither an event nor a part; it cannot be shown on the map.');
+    var sp = {
+      id: id, about: about, trigger: trig, node: node, intent: str(s.intent), measure: str(s.measure),
+      source: str(s.source), source_ref: str(s.source_ref), status: s.status === 'confirmed' ? 'confirmed' : 'proposed',
+      holds: HOLDS[s.holds] ? str(s.holds) : 'unknown', why: str(s.why), nodes: new Set(), edges: new Set()
+    };
+    if (trig) trig.steps.forEach(function (st) { var e = E.get(st.edge); sp.edges.add(e.id); sp.nodes.add(e.from); sp.nodes.add(e.to); });
+    else if (node) sp.nodes.add(node);
+    SETPOINTS.push(sp); SPI.set(id, sp);
+  });
+  function spById(id) { return SPI.get(id) || null; }
+  function aboutLabel(sp) { return sp.trigger ? sp.trigger.label : sp.node ? N.get(sp.node).label : sp.about; }
+  function gapsOf(sp) { return GAPS.filter(function (g) { return g.setpoint === sp.id; }); }
+  // a setpoint, when picked, shows where it is measured (its event's path or its part) and the parts its gaps name
+  function spFocus(sp) {
+    var f = new Set(sp.nodes);
+    gapsOf(sp).forEach(function (g) { g.nodes.forEach(function (x) { f.add(x); }); });
+    return f;
+  }
+  function gapEdges(g) {
+    var ns = new Set(g.nodes), out = new Set();
+    EDGES.forEach(function (e) { if (ns.has(e.from) && ns.has(e.to)) out.add(e.id); });
+    return out;
+  }
+  // drift: every setpoint that does not hold or that nobody measured, and every gap that is unintended, missing or running away
+  var DRIFT = [];
+  SETPOINTS.forEach(function (sp) {
+    if (sp.holds === 'no' || sp.holds === 'unknown') DRIFT.push({ key: 'sp:' + sp.id, sp: sp, sev: sp.holds === 'no' ? 'bad' : 'unk', nodes: sp.nodes, edges: sp.edges, label: sp.intent });
+  });
+  GAPS.forEach(function (g) {
+    if (DRIFT_KINDS[g.kind]) DRIFT.push({ key: 'gap:' + g.i, gap: g, sev: 'bad', nodes: new Set(g.nodes), edges: gapEdges(g), label: g.title });
+  });
+  var DRIFT_E = { bad: new Set(), unk: new Set() };
+  DRIFT.forEach(function (d) { d.edges.forEach(function (x) { DRIFT_E[d.sev].add(x); }); });
+  function driftTouching(id) {
+    return DRIFT.filter(function (d) { if (d.nodes.has(id)) return true; return isC(id) && desc(id).some(function (x) { return d.nodes.has(x); }); });
+  }
+  var GLOSSARY = arr(META.glossary).filter(function (g) { return g && g.term && g.means; }).map(function (g) { return { term: str(g.term), means: str(g.means) }; });
+
+  var NODE_KINDS = {
+    human: { label: 'Person', shape: 'ellipse' },
+    ui: { label: 'Screen or app', shape: 'round-rectangle' },
+    service: { label: 'Service', shape: 'rectangle' },
+    job: { label: 'Scheduled job', shape: 'cut-rectangle' },
+    store: { label: 'Data store', shape: 'barrel' },
+    external: { label: 'Outside service', shape: 'rectangle' },
+    agent: { label: 'AI agent', shape: 'hexagon' },
+    queue: { label: 'Queue', shape: 'rhomboid' },
+    channel: { label: 'Message or alert channel', shape: 'round-tag' }
+  };
+  var EDGE_KINDS = {
+    call: { label: 'Calls', dash: null },
+    data: { label: 'Reads or writes data', dash: null },
+    event: { label: 'Event', dash: [6, 5] },
+    webhook: { label: 'Webhook', dash: [10, 4] },
+    schedule: { label: 'On a schedule', dash: 'dot' },
+    human: { label: 'A person acts', dash: null }
+  };
+  var TRIG_KINDS = { user_action: 'User action', event: 'Event', webhook: 'Webhook', schedule: 'Schedule', external_update: 'External update' };
+  var STATUS = { live: 'Live', partial: 'Partly working', dead: 'Not running', unknown: 'Not verified' };
+  function kindLabel(k) { return (NODE_KINDS[k] && NODE_KINDS[k].label) || k; }
+  function levelName(d) {
+    for (var i = 0; i < LEVELS.length; i++) if (Number(LEVELS[i].id) === d) return str(LEVELS[i].name);
+    return 'Level ' + d;
+  }
+  var HUMAN_KINDS = { human: 1, ui: 1, channel: 1 };
+  function hasSees(n) { var s = n.human_sees.trim(); return !!s && !/^(none|n\/a|-|no)\.?$/i.test(s) && !/^(nothing|none|no one)\b/i.test(s); }
+  function humanFacing(id) { var n = N.get(id); return !!n && (!!HUMAN_KINDS[n.kind] || hasSees(n)); }
+  function typeWord(l) { return l.type === 'reinforcing' ? 'Reinforcing' : 'Balancing'; }
+  // "unstable" on a balancing loop reads as a contradiction; say what it means
+  function stabWord(l) {
+    var w = l.stability === 'unstable' ? (l.type === 'reinforcing' ? 'running away' : 'not correcting') : l.stability;
+    return l.unmeasured ? w + ', unmeasured' : w;
+  }
+  // a stable loop nobody measured is grey, not green; an unstable one stays red, with a hollow dot
+  function stabClass(l) { return 'chip ' + (l.unmeasured && l.stability === 'stable' ? 'sb-unmeasured' : 'sb-' + safe(l.stability)) + (l.unmeasured ? ' um' : ''); }
+  function stabRank(l) { return l.stability === 'unstable' ? 0 : l.stability === 'watch' ? 1 : l.unmeasured ? 1.5 : l.stability === 'stable' ? 2 : 3; }
+  function nodeStatusChip(n) {
+    if (n.unmeasured) return h('span', { class: 'chip st-unmeasured um', title: 'Marked live, but nothing on it or around it was measured running; in code is not live' }, h('span', { class: 'dot' }), 'Live, unmeasured');
+    return h('span', { class: 'chip st-' + safe(n.status) }, h('span', { class: 'dot' }), STATUS[n.status] || n.status);
+  }
+
+  // ---------------------------------------------------------------- state
+  var S = {
+    floor: 0,                 // boxes shallower than this are open unless the person closed them
+    open: new Set(),          // boxes the person opened (tap, zoom, search)
+    shut: new Set(),          // boxes the person closed although the level would open them
+    order: [],                // open order, newest last, for Escape
+    loopsOn: false, human: false, driftOn: false,
+    loopSel: null, gapSel: null, spSel: null, trace: null, selected: null, selectedEdge: null,
+    exp: new Set(), expKey: null, k: 1,
+    busy: 0, lastUser: 0, cursor: null, lastZoom: 0, pending: null
+  };
+  var cy = null, POS = new Map(), CYMEM = new Map();
+  var stage = $('#stage');
+  function nid(id) { return 'n:' + id; }
+
+  // ---------------------------------------------------------------- sizes and type
+  // One type scale: every label is a fixed size in map units, so all labels grow and shrink
+  // together with zoom. Closed boxes all have the same size, so area means nothing it should not.
+  var LEAF_W = 184, LEAF_H = 64;
+  // closed boxes: one size per level (the top level a little larger), never sized by what is inside
+  function closedSize(id) { return depth(id) === 0 ? { w: 256, h: 116 } : { w: 220, h: 100 }; }
+  var LEAF_F = 15, BOX_F = 19;
+  var HEAD = [{ f: 22, pad: 66 }, { f: 18, pad: 54 }, { f: 16, pad: 46 }];
+  function head(d) { return HEAD[Math.min(d, HEAD.length - 1)]; }
+  // largest font (map units) at which `text` wraps inside w x h; Barlow Condensed is about 0.47 em wide
+  function fitCap(text, w, h, lo, hi) {
+    // the renderer breaks lines only at spaces, so a long word overflows its line instead of wrapping;
+    // it must still fit inside the box (w plus the side margin)
+    var longest = Math.max.apply(null, text.split(/\s+/).map(function (x) { return x.length; }));
+    for (var f = hi; f > lo; f -= 0.5) {
+      if (longest * f * 0.47 > w + 14) continue;
+      var per = Math.max(1, Math.floor(w / (f * 0.47)));
+      var lines = 0;
+      text.split('\n').forEach(function (part) {
+        var line = 0;
+        part.split(/\s+/).forEach(function (word) {
+          var L = word.length;
+          if (!line) { line = L; lines++; }
+          else if (line + 1 + L <= per) line += 1 + L;
+          else { line = L; lines++; }
+        });
+      });
+      if (lines * f * 1.18 <= h) return f;
+    }
+    return lo;
+  }
+  var CAP = new Map();   // id -> { leaf, box, hbox } font caps
+  var COUNT = new Map(), HLABEL = new Map();
+  function countLine(id) {
+    var k = KIDS.get(id).length;
+    return k + (k === 1 ? ' part inside' : ' parts inside');
+  }
+  function humanLine(id) {
+    var n = N.get(id);
+    if (hasSees(n)) return 'People see: ' + clip(firstSentence(n.human_sees).replace(/[.]$/, ''), 54);
+    var hf = desc(id).filter(humanFacing).map(function (x) { return N.get(x).label; });
+    if (!hf.length) return 'Nothing here that people see';
+    return 'People see: ' + clip(hf.slice(0, 2).join(', ') + (hf.length > 2 ? ' and ' + (hf.length - 2) + ' more' : ''), 54);
+  }
+  N.forEach(function (n) {
+    if (isC(n.id)) {
+      COUNT.set(n.id, n.label + '\n' + countLine(n.id));
+      HLABEL.set(n.id, n.label + '\n' + humanLine(n.id));
+      var cs = closedSize(n.id);
+      CAP.set(n.id, { box: fitCap(COUNT.get(n.id), cs.w - 26, cs.h - 16, 12, BOX_F * 1.3), hbox: fitCap(HLABEL.get(n.id), cs.w - 24, cs.h - 12, 11, BOX_F * 1.15) });
+    } else {
+      CAP.set(n.id, { leaf: fitCap(n.label, LEAF_W - 22, LEAF_H - 12, 11, LEAF_F * 1.5) });
+    }
+  });
+
+  // ---------------------------------------------------------------- which boxes are open
+  function forcedAnc() {
+    var f = new Set(), src = [];
+    if (S.trace) S.trace.nodes.forEach(function (x) { src.push(x); });
+    if (S.loopSel) { var l = loopById(S.loopSel); if (l) l.nodes.forEach(function (x) { src.push(x); }); }
+    if (S.gapSel != null && GAPS[S.gapSel]) GAPS[S.gapSel].nodes.forEach(function (x) { src.push(x); });
+    if (S.spSel && spById(S.spSel)) spFocus(spById(S.spSel)).forEach(function (x) { src.push(x); });
+    src.forEach(function (x) { chain(x).slice(0, -1).forEach(function (a) { f.add(a); }); });
+    return f;
+  }
+  function computeExpanded() {
+    var force = forcedAnc(), exp = new Set();
+    function visit(id) {
+      if (!isC(id)) return;
+      var open = force.has(id) || ((depth(id) < S.floor || S.open.has(id)) && !S.shut.has(id));
+      if (open) { exp.add(id); KIDS.get(id).forEach(visit); }
+    }
+    ROOTS.forEach(visit);
+    return exp;
+  }
+  function expKey(exp) { return Array.from(exp).sort().join('|'); }
+  function rep(id, exp) {
+    var c = chain(id);
+    for (var i = 0; i < c.length - 1; i++) if (!exp.has(c[i])) return c[i];
+    return id;
+  }
+  function visibleNode(id, exp) {
+    var c = chain(id);
+    for (var i = 0; i < c.length - 1; i++) if (!exp.has(c[i])) return false;
+    return true;
+  }
+  function isCustom() { return S.open.size > 0 || S.shut.size > 0; }
+
+  // ---------------------------------------------------------------- layout, recomputed for what is open
+  // Each open box lays out its visible children as a flat graph (both flow directions tried, the
+  // shape closest to the screen kept). Closed boxes are fixed-size tiles, so opening a box makes
+  // room for what is inside it instead of packing it into the old outline.
+  var ELK_INST = null, SUB = new Map(), LCACHE = new Map(), TARGET = 1.4;
+  function boxSize(id, exp, size) { return size.get(id) || (isC(id) ? closedSize(id) : { w: LEAF_W, h: LEAF_H }); }
+  function pairsByParent(exp) {
+    var cont = new Map();
+    EDGES.forEach(function (e) {
+      var ra = rep(e.from, exp), rb = rep(e.to, exp);
+      if (ra === rb || isAnc(ra, rb) || isAnc(rb, ra)) return;
+      var ca = chain(ra), cb = chain(rb), i = 0;
+      while (i < ca.length && i < cb.length && ca[i] === cb[i]) i++;
+      if (i >= ca.length || i >= cb.length) return;
+      var L = i === 0 ? '' : ca[i - 1];
+      if (!cont.has(L)) cont.set(L, new Map());
+      cont.get(L).set(ca[i] + '␟' + cb[i], [ca[i], cb[i]]);
+    });
+    return cont;
+  }
+  function elkPlace(L, ch, cont, size, exp) {
+    var m = cont.get(L), es = [], j = 0, isRoot = L === '';
+    if (m) m.forEach(function (p) { es.push({ id: 'e' + (j++), sources: [p[0]], targets: [p[1]] }); });
+    var d = isRoot ? 0 : depth(L);
+    // the overview has room to spare, so it gets wide gaps for connection labels; deeper views pack tight
+    var sparse = isRoot && exp.size === 0;
+    var base = {
+      'elk.padding': isRoot ? '[top=0,left=0,bottom=0,right=0]' : '[top=' + head(d).pad + ',left=18,bottom=18,right=18]',
+      'elk.spacing.nodeNode': sparse ? '56' : isRoot ? '44' : '24',
+      'elk.layered.spacing.nodeNodeBetweenLayers': sparse ? '92' : isRoot ? '64' : '44',
+      'elk.spacing.componentComponent': sparse ? '60' : isRoot ? '48' : '28',
+      'elk.rectpacking.spacing.nodeNode': sparse ? '56' : isRoot ? '44' : '24',
+      'elk.aspectRatio': String(TARGET)
+    };
+    var opts = [];
+    if (es.length) ['RIGHT', 'DOWN'].forEach(function (dir) { opts.push(Object.assign({}, base, { 'elk.algorithm': 'layered', 'elk.direction': dir })); });
+    // a packing ignores the flow, so lines cross under boxes; the overview uses one only on a tall screen
+    if (!sparse || !es.length || TARGET < 1) opts.push(Object.assign({}, base, { 'elk.algorithm': 'rectpacking' }));
+    // keep the arrangement that will look largest when it fills a screen of this shape
+    function score(g, o) { var fit = Math.min(TARGET / Math.max(1, g.width), 1 / Math.max(1, g.height)); return -(sparse && o['elk.algorithm'] === 'rectpacking' ? fit * 0.6 : fit); }
+    return Promise.all(opts.map(function (o) {
+      return ELK_INST.layout({
+        id: 'g', layoutOptions: o,
+        children: ch.map(function (c) { var z = boxSize(c, exp, size); return { id: c, width: z.w, height: z.h }; }),
+        edges: es.map(function (e) { return { id: e.id, sources: e.sources.slice(), targets: e.targets.slice() }; })
+      });
+    })).then(function (gs) {
+      var best = 0;
+      gs.forEach(function (g, i) { if (score(g, opts[i]) < score(gs[best], opts[best])) best = i; });
+      var g = gs[best], rel = new Map();
+      g.children.forEach(function (c) { rel.set(c.id, { x: c.x || 0, y: c.y || 0 }); });
+      return { w: g.width, h: g.height, rel: rel };
+    });
+  }
+  function gridPlace(L, ch, cont, size, exp) {
+    var isRoot = L === '', d = isRoot ? 0 : depth(L), pad = isRoot ? 0 : 20, top = isRoot ? 0 : head(d).pad, gap = isRoot ? 56 : 26;
+    var cols = Math.max(1, Math.ceil(Math.sqrt(ch.length * TARGET))), rel = new Map(), W = 0, H = top;
+    for (var i = 0; i < ch.length; i += cols) {
+      var x = pad, rh = 0;
+      ch.slice(i, i + cols).forEach(function (c) { var s = boxSize(c, exp, size); rel.set(c, { x: x, y: H }); x += s.w + gap; rh = Math.max(rh, s.h); });
+      W = Math.max(W, x - gap + pad); H += rh + gap;
+    }
+    return Promise.resolve({ w: W, h: H - gap + pad, rel: rel });
+  }
+  function layoutFor(exp) {
+    var key = expKey(exp);
+    if (LCACHE.has(key)) return Promise.resolve(LCACHE.get(key));
+    var cont = pairsByParent(exp), size = new Map(), rel = new Map();
+    var place = ELK_INST ? elkPlace : gridPlace;
+    function lay(id) {
+      var ch = KIDS.get(id);
+      return Promise.all(ch.filter(function (c) { return exp.has(c); }).map(lay)).then(function () {
+        var sk = id + '#' + desc(id).filter(function (x) { return exp.has(x); }).sort().join(',');
+        if (SUB.has(sk)) return SUB.get(sk);
+        return place(id, ch, cont, size, exp).then(function (r) { SUB.set(sk, r); return r; });
+      }).then(function (r) {
+        size.set(id, { w: r.w, h: r.h });
+        r.rel.forEach(function (v, k) { rel.set(k, v); });
+      });
+    }
+    return Promise.all(ROOTS.filter(function (r) { return exp.has(r); }).map(lay)).then(function () {
+      return place('', ROOTS, cont, size, exp);
+    }).then(function (r) {
+      r.rel.forEach(function (v, k) { rel.set(k, v); });
+      var pos = new Map();
+      (function put(list, ox, oy) {
+        list.forEach(function (id) {
+          var p = rel.get(id) || { x: 0, y: 0 }, z = boxSize(id, exp, size), x = ox + p.x, y = oy + p.y;
+          pos.set(id, { x: x + z.w / 2, y: y + z.h / 2, w: z.w, h: z.h });
+          if (exp.has(id)) put(KIDS.get(id), x, y);
+        });
+      })(ROOTS, 0, 0);
+      LCACHE.set(key, pos);
+      return pos;
+    });
+  }
+
+  // ---------------------------------------------------------------- styles
+  function tok(name) { return getComputedStyle(root).getPropertyValue('--' + name).trim() || '#888888'; }
+  function hex(c) { var m = /^#?([0-9a-f]{6})$/i.exec(c.trim()); if (!m) return null; var n = parseInt(m[1], 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function blend(a, b, t) {
+    var x = hex(a), y = hex(b); if (!x || !y) return b;
+    return '#' + x.map(function (v, i) { return ('0' + Math.round(v * t + y[i] * (1 - t)).toString(16)).slice(-2); }).join('');
+  }
+  function pip(color) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"><circle cx="6" cy="6" r="5" fill="' + color + '"/></svg>';
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  }
+  // hollow: marked live, never measured (bin/sysmap check rule 14)
+  function ring(color) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"><circle cx="6" cy="6" r="4.2" fill="none" stroke="' + color + '" stroke-width="1.8"/></svg>';
+    return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
+  }
+  // the string changes once the web font has loaded, which makes the canvas measure every label again
+  var FONT = '"Barlow Condensed", "Arial Narrow", sans-serif';
+  function buildStyle() {
+    var k = S.k;
+    var c = {
+      ink: tok('ink'), ink2: tok('ink-2'), ink3: tok('ink-3'), panel: tok('panel'), board: tok('board'), rule: tok('rule'),
+      accent: tok('accent'), hl: tok('hl'), bal: tok('bal'), rein: tok('rein'), onLoop: tok('on-loop'),
+      ok: tok('ok'), watch: tok('watch'), bad: tok('bad'), unk: tok('unk'), drift: tok('drift')
+    };
+    var st = [
+      { selector: 'node', style: {
+        'font-family': FONT, 'font-size': 14, 'font-weight': 600, 'color': c.ink,
+        'text-wrap': 'wrap', 'text-valign': 'center', 'text-halign': 'center',
+        'background-color': c.panel, 'border-width': 1.6, 'border-color': c.ink3,
+        'min-zoomed-font-size': 7, 'z-index-compare': 'manual', 'z-index': 10, 'overlay-opacity': 0
+      } },
+      { selector: 'node.mn', style: { 'label': 'data(label)', 'text-max-width': 'data(tmw)', 'width': 'data(w)', 'height': 'data(h)', 'line-height': 1.12 } },
+      { selector: 'node.leaf', style: {
+        'background-image': pip(c.ok), 'background-width': 9, 'background-height': 9,
+        'background-position-x': 7, 'background-position-y': 6, 'background-fit': 'none', 'background-clip': 'none',
+        'background-image-opacity': 1, 'text-margin-y': 1
+      } },
+      { selector: 'node.leaf.st-partial', style: { 'background-image': pip(c.watch) } },
+      { selector: 'node.leaf.st-dead', style: { 'background-image': pip(c.bad), 'opacity': 0.72 } },
+      { selector: 'node.leaf.st-unknown', style: { 'background-image': pip(c.unk), 'border-style': 'dashed' } },
+      { selector: 'node.leaf.st-live.um', style: { 'background-image': ring(c.unk) } },
+      { selector: 'node.c', style: {
+        'shape': 'round-rectangle', 'background-opacity': 0.06, 'border-width': 1.2 * Math.min(k, 3),
+        'text-valign': 'top', 'font-weight': 700, 'text-wrap': 'ellipsis', 'z-index': 'data(d)', 'color': c.ink2
+      } },
+      { selector: 'node.c.collapsed', style: {
+        'label': 'data(clabel)', 'text-valign': 'center', 'text-margin-y': 0, 'text-wrap': 'wrap',
+        'background-opacity': 0.13, 'border-width': 2.2 * Math.min(k, 3), 'z-index': 8, 'color': c.ink
+      } },
+      { selector: 'node.hid', style: { 'display': 'none' } }
+    ];
+    HEAD.forEach(function (hd, d) {
+      var f = Math.min(hd.f * k, (hd.pad - 12) / 1.2);
+      st.push({ selector: 'node.c.d' + d, style: { 'font-size': f, 'text-margin-y': Math.round(f * 1.1 + 10) } });
+    });
+    st.push({ selector: 'node.c.collapsed', style: { 'text-margin-y': 0 } });
+    // label sizes as classes in half-unit steps: a mapped font size can leave the canvas with a stale label measurement
+    for (var q = 16; q <= 90; q++) st.push({ selector: 'node.fz-' + q, style: { 'font-size': q / 2 } });
+    Object.keys(NODE_KINDS).forEach(function (kd) {
+      var col = tok('n-' + kd);
+      st.push({ selector: 'node.k-' + kd, style: { 'border-color': col } });
+      st.push({ selector: 'node.c.k-' + kd, style: { 'background-color': col } });
+      st.push({ selector: 'node.c.collapsed.k-' + kd, style: { 'background-color': blend(col, c.panel, 0.16), 'background-opacity': 1 } });
+      st.push({ selector: 'node.leaf.k-' + kd, style: { 'shape': NODE_KINDS[kd].shape } });
+    });
+    st.push({ selector: 'node.leaf.k-external', style: { 'border-style': 'double', 'border-width': 4 } });
+    st.push({ selector: 'node.leaf.k-human', style: { 'border-width': 2.2 } });
+
+    var ew = 1.7 * k, ef = 12 * Math.min(k, 1.9);
+    st.push({ selector: 'edge', style: {
+      'curve-style': 'straight', 'width': ew, 'line-color': c.ink2, 'target-arrow-color': c.ink2, 'source-arrow-color': c.ink2, 'target-arrow-shape': 'triangle',
+      'arrow-scale': 0.95, 'z-index-compare': 'manual', 'z-index': 5,
+      'label': '', 'font-family': FONT, 'font-size': ef, 'font-weight': 600, 'color': c.ink2, 'text-wrap': 'wrap', 'text-max-width': 150 * Math.min(k, 1.9),
+      'text-background-color': c.board, 'text-background-opacity': 0.92, 'text-background-padding': 2, 'text-background-shape': 'round-rectangle',
+      'min-zoomed-font-size': 8, 'overlay-opacity': 0
+    } });
+    st.push({ selector: 'edge.lbl', style: { 'label': 'data(label)' } });
+    Object.keys(EDGE_KINDS).forEach(function (kd) {
+      var col = tok('k-' + kd), d = EDGE_KINDS[kd].dash, s = { 'line-color': col, 'target-arrow-color': col, 'source-arrow-color': col };
+      if (d === 'dot') { s['line-style'] = 'dotted'; }
+      else if (d) { s['line-style'] = 'dashed'; s['line-dash-pattern'] = d.map(function (x) { return x * Math.min(k, 3); }); }
+      if (kd === 'data') s['target-arrow-shape'] = 'triangle-backcurve';
+      if (kd === 'event') s['target-arrow-shape'] = 'vee';
+      if (kd === 'webhook') s['target-arrow-shape'] = 'triangle-tee';
+      if (kd === 'schedule') s['target-arrow-shape'] = 'chevron';
+      if (kd === 'human') s['width'] = ew * 1.6;
+      st.push({ selector: 'edge.ek-' + kd, style: s });
+    });
+    st.push({ selector: 'edge.ek-mixed', style: { 'line-color': tok('k-mixed'), 'target-arrow-color': tok('k-mixed'), 'source-arrow-color': tok('k-mixed'), 'width': 'mapData(n, 2, 12, ' + (ew * 1.3) + ', ' + (ew * 3.2) + ')' } });
+    st.push({ selector: 'edge.bidir', style: { 'source-arrow-shape': 'triangle', 'target-arrow-shape': 'triangle' } });
+    st.push({ selector: 'edge.unverified', style: { 'line-style': 'dashed', 'line-dash-pattern': [3 * k, 4 * k] } });
+
+    // loops
+    st.push({ selector: 'edge.loop', style: {
+      'curve-style': 'unbundled-bezier', 'control-point-distances': [28 * Math.min(k, 3)], 'control-point-weights': [0.5],
+      'width': 3.2 * k, 'line-style': 'dashed', 'line-dash-pattern': [8 * k, 5 * k], 'opacity': 0.95, 'z-index': 40,
+      'target-arrow-shape': 'triangle', 'arrow-scale': 1.2, 'label': ''
+    } });
+    st.push({ selector: 'edge.loop.lp-b', style: { 'line-color': c.bal, 'target-arrow-color': c.bal, 'source-arrow-color': c.bal } });
+    st.push({ selector: 'edge.loop.lp-r', style: { 'line-color': c.rein, 'target-arrow-color': c.rein, 'source-arrow-color': c.rein } });
+    var bf = clamp(13 * k, 13, 64);
+    st.push({ selector: 'node.lbadge', style: {
+      'shape': 'round-rectangle', 'label': 'data(label)', 'font-size': bf, 'font-weight': 700, 'color': c.onLoop,
+      'width': 'data(bw)', 'height': bf * 1.9, 'text-max-width': 'data(bw)', 'text-wrap': 'none',
+      'border-width': Math.max(2, bf * 0.2), 'border-color': c.panel, 'z-index': 60, 'background-image': 'none', 'min-zoomed-font-size': 0
+    } });
+    var sf = clamp(11 * k, 11, 20);
+    st.push({ selector: 'node.lbadge.small', style: { 'font-size': sf, 'height': sf * 1.7, 'border-width': Math.max(1.5, sf * 0.16) } });
+    st.push({ selector: 'node.lbadge.lp-b', style: { 'background-color': c.bal } });
+    st.push({ selector: 'node.lbadge.lp-r', style: { 'background-color': c.rein } });
+    st.push({ selector: 'node.inloop-b', style: { 'underlay-color': c.bal, 'underlay-opacity': 0.38, 'underlay-padding': 6 * Math.min(k, 3), 'underlay-shape': 'round-rectangle' } });
+    st.push({ selector: 'node.inloop-r', style: { 'underlay-color': c.rein, 'underlay-opacity': 0.38, 'underlay-padding': 6 * Math.min(k, 3), 'underlay-shape': 'round-rectangle' } });
+
+    // drift: a crisp dashed ring outside the part (loops use a soft glow), and a cut-corner badge at the top left
+    // (loop badges are rounded, at the top right), so both overlays can be on at once and still be told apart
+    var kk = Math.min(k, 3);
+    st.push({ selector: 'node.mn.drift', style: { 'outline-width': 3.2 * kk, 'outline-color': c.drift, 'outline-style': 'dashed', 'outline-offset': 5 * kk, 'outline-opacity': 1 } });
+    st.push({ selector: 'node.mn.drift-unk', style: { 'outline-width': 2.6 * kk, 'outline-color': c.unk, 'outline-style': 'dotted', 'outline-offset': 5 * kk, 'outline-opacity': 1 } });
+    st.push({ selector: 'node.dbadge', style: {
+      'shape': 'cut-rectangle', 'label': 'data(label)', 'font-size': sf, 'font-weight': 700, 'color': c.onLoop,
+      'width': 'data(bw)', 'height': sf * 1.7, 'text-max-width': 'data(bw)', 'text-wrap': 'none', 'background-color': c.drift,
+      'border-width': Math.max(1.5, sf * 0.16), 'border-color': c.panel, 'z-index': 61, 'background-image': 'none', 'min-zoomed-font-size': 0
+    } });
+    st.push({ selector: 'node.dbadge.unk', style: { 'background-color': c.unk } });
+    st.push({ selector: 'edge.drifte', style: { 'line-outline-width': 1.4 * kk, 'line-outline-color': c.drift } });
+    st.push({ selector: 'edge.drifte-unk', style: { 'line-outline-width': 1.2 * kk, 'line-outline-color': c.unk } });
+
+    // emphasis
+    st.push({ selector: '.dim', style: { 'opacity': 0.14 } });
+    st.push({ selector: 'edge.dim', style: { 'opacity': 0.07 } });
+    st.push({ selector: '.faint', style: { 'opacity': 0.42 } });
+    st.push({ selector: 'node.focus', style: { 'border-width': 3, 'border-color': c.ink } });
+    st.push({ selector: 'node.c.focus', style: { 'border-width': 3 * Math.min(k, 3) } });
+    st.push({ selector: 'node.has-hl', style: { 'border-color': c.ink, 'border-width': 3.5 * Math.min(k, 3) } });
+    st.push({ selector: 'node.cur', style: { 'underlay-color': c.hl, 'underlay-opacity': 0.9, 'underlay-padding': 9 * Math.min(k, 3), 'underlay-shape': 'round-rectangle' } });
+    st.push({ selector: 'node.sel', style: { 'border-color': c.accent, 'border-width': 3.5 * Math.min(k, 3), 'underlay-color': c.accent, 'underlay-opacity': 0.2, 'underlay-padding': 8 * Math.min(k, 3) } });
+    st.push({ selector: 'node.c.cur', style: { 'underlay-opacity': 0.3, 'underlay-padding': 6 * Math.min(k, 3) } });
+    st.push({ selector: 'node.c.sel', style: { 'underlay-opacity': 0, 'border-width': 4 * Math.min(k, 3), 'border-color': c.accent } });
+    st.push({ selector: 'edge.tr-next', style: { 'opacity': 0.9 } });
+    st.push({ selector: 'edge.sppath', style: { 'underlay-color': c.hl, 'underlay-opacity': 0.7, 'underlay-padding': 5 * k, 'width': ew * 1.5, 'z-index': 46 } });
+    st.push({ selector: 'edge.tr-done', style: { 'underlay-color': c.hl, 'underlay-opacity': 0.45, 'underlay-padding': 4 * k, 'width': ew * 1.3 } });
+    st.push({ selector: 'edge.tr-active', style: {
+      'underlay-color': c.hl, 'underlay-opacity': 0.95, 'underlay-padding': 6 * k, 'width': ew * 1.9, 'z-index': 50,
+      'line-color': c.ink, 'target-arrow-color': c.ink, 'source-arrow-color': c.ink, 'line-style': 'solid', 'label': ''
+    } });
+    st.push({ selector: 'edge.esel', style: { 'line-color': c.accent, 'target-arrow-color': c.accent, 'source-arrow-color': c.accent, 'width': ew * 2, 'z-index': 45, 'label': 'data(label)' } });
+    st.push({ selector: 'node.pulse', style: {
+      'width': 16 * Math.min(k, 4), 'height': 16 * Math.min(k, 4), 'shape': 'ellipse', 'background-color': c.hl,
+      'border-width': 2.5 * Math.min(k, 4), 'border-color': c.ink, 'label': '', 'z-index': 100, 'events': 'no',
+      'background-image': 'none'
+    } });
+    return st;
+  }
+  // per-node font sizes: the same zoom factor for every label, capped by what fits its box
+  function applyFonts() {
+    if (!cy) return;
+    var k = S.k;
+    // a box's label text and its size change together, in one update, or the canvas keeps a stale measurement
+    cy.batch(function () {
+      cy.nodes('.mn').forEach(function (el) {
+        var id = el.data('mid'), cap = CAP.get(id), fs, upd = {}, open = isC(id) && !el.hasClass('collapsed');
+        if (isC(id)) {
+          fs = Math.min(BOX_F * k, S.human ? cap.hbox : cap.box);
+          var lab = S.human ? HLABEL.get(id) : COUNT.get(id);
+          if (el.data('clabel') !== lab) upd.clabel = lab;
+        } else fs = Math.min(LEAF_F * k, cap.leaf);
+        fs = Math.round(fs * 2) / 2;
+        if (el.data('fs') !== fs) upd.fs = fs;
+        var cls = open ? '' : 'fz-' + clamp(Math.round(fs * 2), 16, 90), was = el.data('fzc') || '';
+        if (cls !== was) { if (was) el.removeClass(was); if (cls) el.addClass(cls); upd.fzc = cls; }
+        for (var key in upd) { el.data(upd); break; }
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------- drawing the current state
+  function buildEdgeEls(exp) {
+    var groups = new Map();
+    EDGES.forEach(function (e) {
+      var ra = rep(e.from, exp), rb = rep(e.to, exp);
+      if (ra === rb || isAnc(ra, rb) || isAnc(rb, ra)) return;
+      var key = ra < rb ? ra + '␟' + rb : rb + '␟' + ra, g = groups.get(key);
+      if (!g) groups.set(key, g = { ra: ra, rb: rb, m: [], back: false });
+      if (ra !== g.ra) g.back = true;
+      g.m.push(e);
+    });
+    var out = [];
+    CYMEM = new Map();
+    groups.forEach(function (g) {
+      var e0 = g.m[0], single = g.m.length === 1;
+      var kinds = new Set(g.m.map(function (e) { return e.kind; }));
+      var kind = kinds.size === 1 ? e0.kind : 'mixed';
+      var id = single && g.ra === e0.from && g.rb === e0.to ? 'e:' + e0.id : 'g:' + g.ra + '␟' + g.rb;
+      var cls = ['me', 'ek-' + safe(kind)];
+      if (g.back) cls.push('bidir');
+      if (single && e0.status === 'unknown') cls.push('unverified');
+      // a bundle says what flows too: its first connection, and how many more
+      var label = single ? e0.label : clip(e0.label, 34) + '  (+' + (g.m.length - 1) + ')';
+      out.push({ group: 'edges', data: { id: id, source: nid(g.ra), target: nid(g.rb), label: label, members: g.m.map(function (e) { return e.id; }), n: g.m.length }, classes: cls.join(' ') });
+      g.m.forEach(function (e) { CYMEM.set(e.id, id); });
+    });
+    // label every connection while the picture is sparse enough to read them
+    if (out.length <= (isPhone() ? 0 : 34)) out.forEach(function (o) { o.classes += ' lblok'; });
+    return out;
+  }
+  function loopById(id) { for (var i = 0; i < LOOPS.length; i++) if (LOOPS[i].id === id) return LOOPS[i]; return null; }
+  function badgeW(text, bf) { return text.length * bf * 0.5 + bf * 1.4; }
+  function buildLoopEls(exp) {
+    if (!S.loopsOn) return [];
+    var out = [], bf = clamp(13 * S.k, 13, 64), sf = clamp(11 * S.k, 11, 20);
+    if (S.loopSel) {
+      var l = loopById(S.loopSel); if (!l || !l.nodes.length) return [];
+      var reps = l.nodes.map(function (x) { return rep(x, exp); }), pairs = [];
+      for (var i = 0; i < reps.length; i++) {
+        var a = reps[i], b = reps[(i + 1) % reps.length];
+        if (a === b || isAnc(a, b) || isAnc(b, a)) continue;
+        if (!pairs.some(function (p) { return p[0] === a && p[1] === b; })) pairs.push([a, b]);
+      }
+      var lc = l.type === 'reinforcing' ? 'lp-r' : 'lp-b';
+      pairs.forEach(function (p, j) { out.push({ group: 'edges', data: { id: 'lp:' + l.id + ':' + j, source: nid(p[0]), target: nid(p[1]), loop: l.id }, classes: 'loop ' + lc }); });
+      // one badge, above the loop's parts so it never sits on a label
+      var x1 = Infinity, x2 = -Infinity, y1 = Infinity;
+      Array.from(new Set(reps)).forEach(function (r) { var p = POS.get(r); if (!p) return; x1 = Math.min(x1, p.x - p.w / 2); x2 = Math.max(x2, p.x + p.w / 2); y1 = Math.min(y1, p.y - p.h / 2); });
+      if (isFinite(x1)) {
+        var text = typeWord(l) + ': ' + l.label + '  ·  ' + stabWord(l);
+        out.push({ group: 'nodes', data: { id: 'lb:' + l.id, label: text, loop: l.id, bw: badgeW(text, bf) }, position: { x: (x1 + x2) / 2, y: y1 - bf * 1.9 }, classes: 'lbadge ' + lc });
+      }
+      return out;
+    }
+    // overview: ring every visible part a loop passes through, with a count
+    var at = new Map();
+    LOOPS.forEach(function (l) {
+      Array.from(new Set(l.nodes.map(function (x) { return rep(x, exp); }))).forEach(function (r) {
+        if (!at.has(r)) at.set(r, []); at.get(r).push(l);
+      });
+    });
+    at.forEach(function (ls, r) {
+      var p = POS.get(r); if (!p) return;
+      var anyR = ls.some(function (l) { return l.type === 'reinforcing'; });
+      var text = ls.length === 1 ? '1 loop' : ls.length + ' loops';
+      var bw = badgeW(text, sf);
+      // sits just above the part's top edge, so it never covers the part's own label
+      out.push({ group: 'nodes', data: { id: 'lc:' + r, label: text, at: r, bw: bw }, position: { x: p.x + p.w / 2 - bw / 2 - 4, y: p.y - p.h / 2 - sf * 0.85 - 3 }, classes: 'lbadge small ' + (anyR ? 'lp-r' : 'lp-b') });
+    });
+    return out;
+  }
+  // drift overlay: every visible part that a drift item passes through, with a count; items inside a closed box count on the box
+  function driftAtReps(exp) {
+    var at = new Map();
+    DRIFT.forEach(function (d) {
+      var reps = new Set();
+      d.nodes.forEach(function (x) { if (N.has(x)) reps.add(rep(x, exp)); });
+      reps.forEach(function (r) { if (!at.has(r)) at.set(r, []); at.get(r).push(d); });
+    });
+    return at;
+  }
+  function driftWord(n) { return n + ' drift'; }
+  // which visible parts get a ring: 'bad' when any drift item through them is known to be off target, else 'unk'
+  function driftMarks(exp) {
+    var marks = new Map();
+    if (!S.driftOn) return marks;
+    driftAtReps(exp).forEach(function (ds, r) { marks.set(r, ds.some(function (d) { return d.sev === 'bad'; }) ? 'bad' : 'unk'); });
+    return marks;
+  }
+  function hitR(a, b) { return Math.min(a.x2, b.x2) - Math.max(a.x1, b.x1) > 1 && Math.min(a.y2, b.y2) - Math.max(a.y1, b.y1) > 1; }
+  // the ring always marks the part; the count badge gives way when it would cover another part or badge
+  function buildDriftEls(exp, others) {
+    if (!S.driftOn || !DRIFT.length) return [];
+    var out = [], sf = clamp(11 * S.k, 11, 20), bh = sf * 1.7, obst = [], list = [];
+    POS.forEach(function (p, id) {
+      if (!visibleNode(id, exp) || (isC(id) && exp.has(id))) return;
+      obst.push({ id: id, x1: p.x - p.w / 2, x2: p.x + p.w / 2, y1: p.y - p.h / 2, y2: p.y + p.h / 2 });
+    });
+    (others || []).forEach(function (o) {
+      if (o.group !== 'nodes' || !o.position) return;
+      var w = o.data.bw, hh = /small/.test(o.classes) ? sf * 1.7 : clamp(13 * S.k, 13, 64) * 1.9;
+      obst.push({ id: '', x1: o.position.x - w / 2, x2: o.position.x + w / 2, y1: o.position.y - hh / 2, y2: o.position.y + hh / 2 });
+    });
+    driftAtReps(exp).forEach(function (ds, r) { list.push([r, ds]); });
+    // the largest counts get the room first
+    list.sort(function (a, b) { return b[1].length - a[1].length; });
+    list.forEach(function (it) {
+      var r = it[0], ds = it[1], p = POS.get(r); if (!p) return;
+      var bad = ds.some(function (d) { return d.sev === 'bad'; }), text = driftWord(ds.length), bw = badgeW(text, sf);
+      var x = p.x - p.w / 2 + bw / 2 + 4, y = p.y - p.h / 2 - sf * 0.85 - 3;
+      var rc = { id: '', x1: x - bw / 2, x2: x + bw / 2, y1: y - bh / 2, y2: y + bh / 2 };
+      if (obst.some(function (o) { return o.id !== r && hitR(o, rc); })) return;
+      obst.push(rc);
+      out.push({ group: 'nodes', data: { id: 'dc:' + r, label: text, at: r, bw: bw }, position: { x: x, y: y }, classes: 'dbadge' + (bad ? '' : ' unk') });
+    });
+    return out;
+  }
+  var dcRaf = 0;
+  function declutter() {
+    if (dcRaf || !cy) return;
+    dcRaf = requestAnimationFrame(function () {
+      dcRaf = 0;
+      var ok = cy.edges('.lblok');
+      if (!ok.length) return;
+      cy.batch(function () { ok.addClass('lbl'); });
+      var boxes = [];
+      cy.nodes('.mn').forEach(function (n) {
+        if (n.hasClass('hid') || (n.hasClass('c') && !n.hasClass('collapsed'))) return;
+        boxes.push({ id: n.id(), b: n.boundingBox({ includeLabels: false, includeUnderlays: false, includeOverlays: false }) });
+      });
+      function hit(a, b) { return Math.min(a.x2, b.x2) - Math.max(a.x1, b.x1) > 2 && Math.min(a.y2, b.y2) - Math.max(a.y1, b.y1) > 2; }
+      var kept = [], drop = [];
+      ok.sort(function (a, b) { return (a.data('n') - b.data('n')) || (str(a.data('label')).length - str(b.data('label')).length); }).forEach(function (e) {
+        var lb = e.boundingBox({ includeNodes: false, includeEdges: false, includeLabels: true, includeMainLabels: true, includeOverlays: false, includeUnderlays: false });
+        if (!lb || !isFinite(lb.x1) || lb.w <= 0) return;
+        var s = e.data('source'), t = e.data('target');
+        if (boxes.some(function (x) { return x.id !== s && x.id !== t && hit(x.b, lb); }) || boxes.some(function (x) { return (x.id === s || x.id === t) && hit(x.b, lb); }) || kept.some(function (k) { return hit(k, lb); })) drop.push(e);
+        else kept.push(lb);
+      });
+      cy.batch(function () { drop.forEach(function (e) { e.removeClass('lbl'); }); });
+    });
+  }
+  function drawOverlays() {
+    if (!cy) return;
+    cy.batch(function () {
+      cy.remove(cy.edges());
+      cy.remove(cy.nodes('.lbadge, .dbadge'));
+      cy.add(buildEdgeEls(S.exp));
+      var loopEls = buildLoopEls(S.exp);
+      cy.add(loopEls);
+      cy.add(buildDriftEls(S.exp, loopEls));
+      declutter();
+      cy.nodes('.mn').removeClass('inloop-b inloop-r drift drift-unk');
+      if (S.loopsOn && !S.loopSel) cy.nodes('.lbadge').forEach(function (b) {
+        var el = cy.getElementById(nid(b.data('at')));
+        el.addClass(b.hasClass('lp-r') ? 'inloop-r' : 'inloop-b');
+      });
+      driftMarks(S.exp).forEach(function (sev, r) { cy.getElementById(nid(r)).addClass(sev === 'unk' ? 'drift-unk' : 'drift'); });
+      if (S.driftOn) cy.edges('.me').forEach(function (el) {
+        var m = el.data('members') || [];
+        if (m.some(function (x) { return DRIFT_E.bad.has(x); })) el.addClass('drifte');
+        else if (m.some(function (x) { return DRIFT_E.unk.has(x); })) el.addClass('drifte-unk');
+      });
+    });
+    refreshEmphasis();
+  }
+  function applyLayout(pos, exp) {
+    POS = pos; S.exp = exp; S.expKey = expKey(exp);
+    cy.batch(function () {
+      cy.nodes('.mn').forEach(function (el) {
+        var id = el.data('mid'), vis = visibleNode(id, exp), c = isC(id), open = c && exp.has(id);
+        el.toggleClass('hid', !vis);
+        if (c) el.toggleClass('collapsed', !open);
+        var p = pos.get(id) || pos.get(rep(id, exp));
+        if (!p) return;
+        if (vis) el.data({ w: p.w, h: p.h, tmw: open ? Math.max(60, p.w - 30) : (c ? closedSize(id).w - 26 : LEAF_W - 22) });
+        el.position({ x: p.x, y: p.y });
+      });
+    });
+    drawOverlays();
+    updateLevelGrp();
+  }
+  // labels that just changed are drawn once before any camera move (see setHuman)
+  function frames() { return new Promise(function (res) { requestAnimationFrame(function () { requestAnimationFrame(res); }); }); }
+  var layoutSeq = 0;
+  function relayout(place) {
+    if (!cy) return Promise.resolve(false);
+    var exp = computeExpanded(), key = expKey(exp);
+    if (key === S.expKey) { drawOverlays(); updateLevelGrp(); return Promise.resolve(false); }
+    var seq = ++layoutSeq;
+    S.busy++;
+    return layoutFor(exp).then(function (pos) {
+      if (seq !== layoutSeq) { S.busy--; return false; }
+      applyLayout(pos, exp);
+      if (place) place();   // set the camera in the same frame as the new layout, so nothing jumps
+      return frames().then(function () { S.busy--; setTimeout(runPending, 30); return true; });
+    }, function (err) { S.busy--; throw err; });
+  }
+
+  // ---------------------------------------------------------------- opening and closing boxes
+  function placeAt(id, screen, z) {
+    var p = POS.get(id); if (!p) return;
+    cy.viewport({ zoom: z, pan: { x: screen.x - z * p.x, y: screen.y - z * p.y } });
+  }
+  function renderedBox(id) {
+    var el = cy.getElementById(nid(id));
+    if (el.empty() || el.hasClass('hid')) return null;
+    var rb = el.renderedBoundingBox({ includeLabels: false, includeUnderlays: false, includeOverlays: false });
+    return { x: (rb.x1 + rb.x2) / 2, y: (rb.y1 + rb.y2) / 2, w: rb.w, h: rb.h };
+  }
+  function openBox(id, how) {
+    if (!cy || !isC(id)) return Promise.resolve();
+    var before = renderedBox(rep(id, S.exp));
+    chain(id).forEach(function (a) { if (isC(a)) { S.shut.delete(a); if (depth(a) >= S.floor) S.open.add(a); } });
+    S.order = S.order.filter(function (x) { return x !== id; }).concat([id]);
+    // the box keeps its place and size on screen, then grows to fill the view
+    return relayout(function () {
+      var p = POS.get(id); if (p && before) placeAt(id, { x: before.x, y: before.y }, clamp(before.w / p.w, cy.minZoom(), cy.maxZoom()));
+    }).then(function () {
+      return flyTo(cy.getElementById(nid(id)), { pad: 26, maxZoom: 1.5, duration: 480 });
+    });
+  }
+  function closeBox(id, how) {
+    if (!cy || !isC(id) || !S.exp.has(id)) return Promise.resolve();
+    if (forcedAnc().has(id)) return Promise.resolve();
+    var before = renderedBox(id), z = cy.zoom();
+    S.open.delete(id); desc(id).forEach(function (d) { S.open.delete(d); S.shut.delete(d); });
+    if (depth(id) < S.floor) S.shut.add(id);
+    S.order = S.order.filter(function (x) { return x !== id && !isAnc(id, x); });
+    if (S.selected && isAnc(id, S.selected)) closeDetails(true);
+    return relayout(function () { if (before) placeAt(id, { x: before.x, y: before.y }, z); }).then(function () {
+      if (how === 'tap') {
+        var par = N.get(id).parent;
+        return par ? flyTo(cy.getElementById(nid(par)), { pad: 26, maxZoom: 1.5 }) : fitAll();
+      }
+    });
+  }
+  // semantic zoom: wheel or pinch into a closed box until it is large, and it opens; zoom well
+  // out of a box you opened, and it closes again
+  // driven by the gesture itself, not by viewport changes: at the zoom limit a wheel moves nothing,
+  // and a check skipped while the camera was busy runs when it is free again
+  function autoCheck(zoomingIn) {
+    S.lastUser = Date.now();
+    if (S.busy) { S.pending = zoomingIn; return; }
+    requestAnimationFrame(function () { autoZoom(zoomingIn); });
+  }
+  function runPending() {
+    if (S.pending == null || S.busy) return;
+    var dir = S.pending; S.pending = null;
+    if (Date.now() - S.lastUser < 1500) autoZoom(dir);
+  }
+  function autoZoom(zoomingIn) {
+    if (!cy || S.busy || S.trace) return;
+    var vw = cy.width(), vh = cy.height(), z = cy.zoom(), pan = cy.pan();
+    if (zoomingIn) {
+      var c = S.cursor || { x: vw / 2, y: vh / 2 }, mx = (c.x - pan.x) / z, my = (c.y - pan.y) / z, hit = null;
+      cy.nodes('.mn.collapsed').forEach(function (el) {
+        if (el.hasClass('hid')) return;
+        var bb = el.boundingBox({ includeLabels: false });
+        if (mx >= bb.x1 && mx <= bb.x2 && my >= bb.y1 && my <= bb.y2) hit = el;
+      });
+      // opens a little before it fills the view; it closes only when its open outline is smaller than that again
+      if (hit && (hit.renderedWidth() >= Math.max(200, vw * 0.22) || hit.renderedHeight() >= vh * 0.22)) openBox(hit.data('mid'), 'zoom');
+    } else {
+      var force = forcedAnc();
+      for (var i = S.order.length - 1; i >= 0; i--) {
+        var id = S.order[i];
+        if (!S.exp.has(id) || force.has(id)) continue;
+        var el = cy.getElementById(nid(id));
+        // closes at about the size it had when it opened
+        if (el.renderedWidth() < vw * 0.3 && el.renderedHeight() < vh * 0.36) { closeBox(id, 'zoom'); break; }
+      }
+    }
+  }
+
+  // ---------------------------------------------------------------- viewport
+  var raf = 0;
+  function onViewport() {
+    if (raf) return;
+    raf = requestAnimationFrame(function () {
+      raf = 0;
+      if (!cy) return;
+      var z = cy.zoom(), pan = cy.pan();
+      var step = 24 * z; while (step < 14) step *= 2; while (step > 56) step /= 2;
+      stage.style.backgroundSize = step + 'px ' + step + 'px';
+      stage.style.backgroundPosition = pan.x + 'px ' + pan.y + 'px';
+      var zq = Math.pow(2, Math.round(Math.log(z) / Math.log(2) * 3) / 3);
+      var k = clamp(0.95 / zq, 1, 7);
+      if (Math.abs(k - S.k) > 1e-6) {
+        S.k = k; cy.style(buildStyle()); applyFonts();
+        if (S.loopsOn || S.driftOn) drawOverlays(); else declutter();
+      }
+      S.lastZoom = z;
+      renderHint();
+      hideTip();
+    });
+  }
+
+  // ---------------------------------------------------------------- emphasis
+  function refreshEmphasis() {
+    if (!cy) return;
+    cy.batch(function () {
+      cy.elements().removeClass('dim faint focus has-hl cur sel esel tr-done tr-active tr-next lens sppath');
+      var focusN = new Set(), focusE = null, mode = null, cur = null, done = new Set(), all = new Set(), curEnds = [], spE = null;
+      if (S.trace) {
+        mode = 'trace';
+        var T = S.trace;
+        T.t.steps.forEach(function (s, j) { all.add(s.edge); if (j < T.i) done.add(s.edge); });
+        if (T.i < T.t.steps.length && T.i >= 0) { cur = T.t.steps[T.i].edge; var ce = E.get(cur); curEnds = [ce.from, ce.to]; }
+        T.nodes.forEach(function (x) { focusN.add(x); });
+      } else if (S.loopSel) {
+        mode = 'loop';
+        var l = loopById(S.loopSel); if (l) l.nodes.forEach(function (x) { focusN.add(x); });
+      } else if (S.gapSel != null && GAPS[S.gapSel]) {
+        mode = 'gap';
+        GAPS[S.gapSel].nodes.forEach(function (x) { focusN.add(x); });
+      } else if (S.spSel && spById(S.spSel)) {
+        mode = 'sp';
+        var spx = spById(S.spSel); spE = spx.edges;
+        spFocus(spx).forEach(function (x) { focusN.add(x); });
+      } else if (S.human) {
+        mode = 'human'; focusE = new Set();
+        N.forEach(function (n) { if (humanFacing(n.id)) focusN.add(n.id); });
+        EDGES.forEach(function (e) { if (e.kind === 'human' || focusN.has(e.from) || focusN.has(e.to)) focusE.add(e.id); });
+      }
+      if (S.human) cy.nodes('.mn.c').addClass('lens');
+      if (mode) {
+        var near = new Set();
+        if (mode === 'human') EDGES.forEach(function (e) { if (focusE.has(e.id)) { near.add(rep(e.from, S.exp)); near.add(rep(e.to, S.exp)); } });
+        cy.nodes('.mn').forEach(function (el) {
+          if (el.hasClass('hid')) return;
+          var id = el.data('mid');
+          if (focusN.has(id)) { el.addClass('focus'); return; }
+          if (isC(id) && desc(id).some(function (d) { return focusN.has(d); })) {
+            if (el.hasClass('collapsed') && mode !== 'human') el.addClass('has-hl');
+            return;
+          }
+          el.addClass(mode === 'human' && near.has(id) && !isC(id) ? 'faint' : 'dim');
+        });
+        cy.edges('.me').forEach(function (el) {
+          var m = el.data('members') || [];
+          if (mode === 'trace') {
+            if (cur && m.indexOf(cur) >= 0) el.addClass('tr-active');
+            else if (m.some(function (x) { return done.has(x); })) el.addClass('tr-done');
+            else if (m.some(function (x) { return all.has(x); })) el.addClass('tr-next');
+            else el.addClass('dim');
+          } else if (mode === 'human') {
+            if (!m.some(function (x) { return focusE.has(x); })) el.addClass('dim');
+          } else if (mode === 'gap') {
+            if (!m.some(function (x) { var e = E.get(x); return focusN.has(e.from) && focusN.has(e.to); })) el.addClass('dim');
+          } else if (mode === 'sp') {
+            if (m.some(function (x) { return spE.has(x); })) el.addClass('sppath');
+            else if (!m.some(function (x) { var e = E.get(x); return focusN.has(e.from) && focusN.has(e.to); })) el.addClass('dim');
+          } else el.addClass('dim');
+        });
+      }
+      // while one thing is picked, only the badges on its own parts stay bright (an open box around them counts other items too)
+      cy.nodes('.dbadge').forEach(function (b) {
+        var at = b.data('at');
+        if (mode && mode !== 'human' ? !focusN.has(at) : cy.getElementById(nid(at)).hasClass('dim')) b.addClass('dim');
+      });
+      curEnds.forEach(function (x) { var el = cy.getElementById(nid(rep(x, S.exp))); if (el.nonempty()) el.addClass('cur'); });
+      if (S.selected && N.has(S.selected)) {
+        var sid = rep(S.selected, S.exp);
+        cy.getElementById(nid(sid)).addClass('sel');
+        // the selected part's own connections are always labeled
+        cy.edges('.me').forEach(function (el) { if (el.data('source') === nid(sid) || el.data('target') === nid(sid)) el.addClass('esel'); });
+      }
+      if (S.selectedEdge && CYMEM.has(S.selectedEdge)) cy.getElementById(CYMEM.get(S.selectedEdge)).addClass('esel');
+    });
+    applyFonts();
+    renderLens();
+    renderHint();
+  }
+  function renderLens() {
+    var lens = $('#lens'), parts = [];
+    if (S.human && !S.trace) {
+      var cnt = 0; N.forEach(function (n) { if (humanFacing(n.id)) cnt++; });
+      parts.push(h('div', null, h('b', { text: 'Human lens. ' }), isPhone()
+        ? 'Bright: what a person sees or touches (' + cnt + ' of ' + N.size + '). Boxes say what people see inside.'
+        : 'Bright parts are what a person sees, touches or hears from (' + cnt + ' of ' + N.size + ' parts). Each closed box says what people see inside it; dim ones hold nothing a person sees.'));
+    }
+    if (S.driftOn && !S.trace && DRIFT.length) {
+      var bad = DRIFT.filter(function (d) { return d.sev === 'bad'; }).length, unk = DRIFT.length - bad;
+      parts.push(h('div', null, h('b', { text: 'Drift. ' }), isPhone()
+        ? 'Dashed rings: what runs is not what was meant (' + bad + '). Dotted: never measured (' + unk + ').'
+        : 'A dashed ring marks a part where what runs is not what was meant (' + bad + ' items); a dotted ring, a part whose setpoint nobody has measured (' + unk + '). The badge counts the items. Pick a setpoint in Done vs actual to see its path.'));
+    }
+    if (parts.length) {
+      fill(lens, parts);
+      lens.hidden = false;
+      var tb = $('.toolbar').getBoundingClientRect(), sr = stage.getBoundingClientRect();
+      lens.style.top = Math.round(tb.bottom - sr.top + 6) + 'px';
+    } else lens.hidden = true;
+  }
+  function tinyLabels() {
+    if (!cy) return false;
+    var z = cy.zoom(), n = 0, tiny = 0;
+    cy.nodes('.mn').forEach(function (el) {
+      if (el.hasClass('hid') || (el.hasClass('c') && !el.hasClass('collapsed'))) return;
+      n++; if ((el.data('fs') || 14) * z < 7) tiny++;
+    });
+    return n > 0 && tiny / n > 0.25;
+  }
+  function renderHint() {
+    var hint = $('#hint');
+    if (S.trace) { hint.hidden = true; return; }
+    var t;
+    if (S.loopSel) t = 'Showing one loop. Esc or pick it again to go back.';
+    else if (S.gapSel != null) t = 'Showing the parts one gap is about. Esc to go back.';
+    else if (S.spSel) t = 'Showing where one setpoint is measured, and the parts its gaps name. Esc or pick it again to go back.';
+    else if (tinyLabels()) t = isPhone() ? 'Pinch to zoom in and read the small labels. Tap a box to open it.' : 'Some labels are too small to draw at this zoom. Scroll in, or press +, to read them.';
+    else if (isPhone()) t = 'Tap a box to open it. Pinch to zoom.';
+    else t = 'Scroll into a box, or click it, to open it. Click an open box\'s title, or press Esc, to close it.';
+    if (hint.textContent !== t) hint.textContent = t;
+    hint.hidden = false;
+  }
+
+  // ---------------------------------------------------------------- camera
+  function insets() {
+    var r = stage.getBoundingClientRect(), ins = { t: 52, r: 16, b: 16, l: 16 };
+    var tb = $('.toolbar').getBoundingClientRect(); ins.t = Math.max(ins.t, tb.bottom - r.top + 8);
+    var lens = $('#lens'); if (!lens.hidden) { var lr = lens.getBoundingClientRect(); ins.t = Math.max(ins.t, lr.bottom - r.top + 8); }
+    var hint = $('#hint'); if (!hint.hidden && hint.offsetHeight) { var hr = hint.getBoundingClientRect(); ins.b = Math.max(ins.b, r.bottom - hr.top + 6); }
+    var tc = $('#tcard');
+    if (!tc.hidden) { var a = tc.getBoundingClientRect(); ins.b = Math.max(ins.b, r.bottom - a.top + 12); }
+    var dt = $('#details');
+    if (!dt.hidden) {
+      var d = dt.getBoundingClientRect();
+      if (d.width < r.width * 0.7) ins.r = Math.max(ins.r, r.right - d.left + 10);
+      else ins.b = Math.max(ins.b, r.bottom - d.top + 10);
+    }
+    return ins;
+  }
+  var endPrev = null;
+  function flyTo(eles, opt) {
+    opt = opt || {};
+    if (!cy || !eles || eles.empty()) return Promise.resolve();
+    var bb = eles.boundingBox({ includeLabels: false, includeUnderlays: false }), ins = insets(), pad = opt.pad == null ? 30 : opt.pad;
+    var W = cy.width() - ins.l - ins.r - 2 * pad, H = cy.height() - ins.t - ins.b - 2 * pad;
+    if (W < 80 || H < 80) { W = Math.max(80, cy.width() - 2 * pad); H = Math.max(80, cy.height() - 2 * pad); ins = { t: 0, r: 0, b: 0, l: 0 }; }
+    var z = Math.min(W / Math.max(bb.w, 1), H / Math.max(bb.h, 1), opt.maxZoom || 1.6);
+    z = clamp(z, cy.minZoom(), cy.maxZoom());
+    var cx = ins.l + pad + W / 2, cyy = ins.t + pad + H / 2;
+    var pan = { x: cx - z * (bb.x1 + bb.w / 2), y: cyy - z * (bb.y1 + bb.h / 2) };
+    cy.stop();
+    if (endPrev) endPrev();
+    if (opt.instant || RM.matches) { cy.viewport({ zoom: z, pan: pan }); S.lastZoom = cy.zoom(); return Promise.resolve(); }
+    var d = opt.duration || 520;
+    S.busy++;
+    return new Promise(function (res) {
+      var finished = false, timer = 0;
+      function end() {
+        if (finished) return; finished = true; clearTimeout(timer);
+        if (endPrev === end) endPrev = null;
+        S.busy = Math.max(0, S.busy - 1); S.lastZoom = cy.zoom(); res();
+        setTimeout(runPending, 30);
+      }
+      endPrev = end;
+      cy.animate({ zoom: z, pan: pan }, { duration: d, easing: 'ease-in-out-cubic', complete: end });
+      timer = setTimeout(end, d + 120);
+    });
+  }
+  function inView(eles, minPx) {
+    var ext = cy.extent(), bb = eles.boundingBox({ includeLabels: false }), ins = insets(), z = cy.zoom();
+    var x1 = ext.x1 + ins.l / z, x2 = ext.x2 - ins.r / z, y1 = ext.y1 + ins.t / z, y2 = ext.y2 - ins.b / z;
+    var inside = bb.x1 >= x1 && bb.x2 <= x2 && bb.y1 >= y1 && bb.y2 <= y2;
+    var big = true;
+    eles.forEach(function (el) { if (el.isNode() && el.width() * z < minPx) big = false; });
+    return inside && big;
+  }
+  function fitAll(instant) {
+    if (!cy) return Promise.resolve();
+    var els = cy.nodes('.mn').filter(function (el) { return !N.get(el.data('mid')).parent; });
+    return flyTo(els, { pad: 14, maxZoom: 1.2, instant: instant });
+  }
+  function nodesEles(ids) {
+    var c = cy.collection();
+    ids.forEach(function (x) { var el = cy.getElementById(nid(rep(x, S.exp))); if (el.nonempty()) c = c.union(el); });
+    return c;
+  }
+
+  // ---------------------------------------------------------------- trace
+  function startTrace(t, opts) {
+    endTrace(true);
+    closeDetails(true);
+    S.loopSel = null; S.gapSel = null; S.spSel = null;
+    var nodes = new Set();
+    t.steps.forEach(function (s) { var e = E.get(s.edge); nodes.add(e.from); nodes.add(e.to); });
+    S.trace = { t: t, i: -1, playing: !(opts && opts.paused), timer: 0, nodes: nodes };
+    renderLists();
+    renderTrace();
+    cy && cy.resize();
+    return relayout().then(function () {
+      return flyTo(nodesEles(Array.from(nodes)), { pad: 24, maxZoom: 1.1 });
+    }).then(function () { if (S.trace && S.trace.t === t && S.trace.i === -1) go(0); });
+  }
+  function stepDelay(s) { return clamp(1700 + s.narration.length * 40, 2600, 7000); }
+  function go(i) {
+    var T = S.trace; if (!T) return;
+    clearTimeout(T.timer);
+    T.i = clamp(i, 0, T.t.steps.length);
+    refreshEmphasis();
+    renderTrace();
+    if (T.i >= T.t.steps.length) {
+      T.playing = false; renderTrace(); removePulse();
+      // the end view: the whole path if it can be read, else the last part of the story
+      var ins = insets();
+      function zFor(c) { var bb = c.boundingBox(); return Math.min((cy.width() - ins.l - ins.r - 48) / Math.max(1, bb.w), (cy.height() - ins.t - ins.b - 48) / Math.max(1, bb.h)); }
+      function tail(n) { var set = new Set(); T.t.steps.slice(-n).forEach(function (s) { var e = E.get(s.edge); set.add(e.from); set.add(e.to); }); return nodesEles(Array.from(set)); }
+      var view = nodesEles(Array.from(T.nodes));
+      [4, 2, 1].forEach(function (n) { if (zFor(view) < 0.45) view = tail(n); });
+      flyTo(view, { pad: 28, maxZoom: 1.1 });
+      return;
+    }
+    stepVisual();
+    if (T.playing) T.timer = setTimeout(function () { go(T.i + 1); }, stepDelay(T.t.steps[T.i]));
+  }
+  function togglePlay() {
+    var T = S.trace; if (!T) return;
+    if (T.i >= T.t.steps.length) { T.playing = true; go(0); return; }
+    T.playing = !T.playing; clearTimeout(T.timer);
+    if (T.playing) T.timer = setTimeout(function () { go(T.i + 1); }, 900);
+    renderTrace();
+  }
+  function pause() { if (S.trace) { S.trace.playing = false; clearTimeout(S.trace.timer); } }
+  function endTrace(silent) {
+    if (!S.trace) return;
+    clearTimeout(S.trace.timer);
+    S.trace = null;
+    removePulse();
+    $('#tcard').hidden = true; stage.classList.remove('has-trace'); $('#app').classList.remove('tracing');
+    if (cy) cy.resize();
+    if (!silent) { renderLists(); relayout().then(function () { fitAll(); }); }
+  }
+  function removePulse() { if (cy) cy.remove(cy.getElementById('pulse')); }
+  function stepVisual() {
+    var T = S.trace; if (!T || T.i >= T.t.steps.length || T.i < 0) return;
+    var e = E.get(T.t.steps[T.i].edge), ra = rep(e.from, S.exp), rb = rep(e.to, S.exp);
+    var a = cy.getElementById(nid(ra)), b = cy.getElementById(nid(rb));
+    if (a.empty() || b.empty()) return;
+    var ends = a.union(b);
+    var move = function () {
+      if (!S.trace || S.trace !== T || RM.matches) return;
+      // travel along the drawn line from border to border, so the dot never sits on a label
+      var ce = cy.getElementById(CYMEM.get(e.id) || ''), sp, tp;
+      if (ce.nonempty()) {
+        sp = ce.sourceEndpoint(); tp = ce.targetEndpoint();
+        if (ce.data('source') !== nid(ra)) { var tmp = sp; sp = tp; tp = tmp; }
+      } else { sp = a.position(); tp = b.position(); }
+      var p = cy.getElementById('pulse');
+      if (p.empty()) p = cy.add({ group: 'nodes', data: { id: 'pulse' }, classes: 'pulse', position: { x: sp.x, y: sp.y } });
+      p.stop(); p.position({ x: sp.x, y: sp.y });
+      p.animate({ position: { x: tp.x, y: tp.y } }, { duration: 900, easing: 'ease-in-out-sine' });
+    };
+    if (!inView(ends, 110)) flyTo(ends, { pad: 46, maxZoom: 1.25, duration: 600 }).then(move);
+    else move();
+  }
+  function renderTrace() {
+    var card = $('#tcard'), T = S.trace;
+    if (!T) { card.hidden = true; stage.classList.remove('has-trace'); $('#app').classList.remove('tracing'); return; }
+    var t = T.t, n = t.steps.length, i = Math.max(0, T.i);
+    var ticks = h('div', { class: 'ticks' });
+    t.steps.forEach(function (s, j) {
+      ticks.append(h('button', { class: j < i ? 'done' : j === i ? 'cur' : '', 'aria-label': 'Go to step ' + (j + 1), title: 'Step ' + (j + 1), onclick: function () { pause(); go(j); } }));
+    });
+    ticks.append(h('button', { class: 'end' + (i >= n ? ' cur' : ''), 'aria-label': 'Go to the outcome', title: 'Outcome', onclick: function () { pause(); go(n); } }));
+    var body;
+    if (i >= n) {
+      body = h('div', { class: 'outcome' },
+        h('h4', { text: 'Outcome' }), h('p', { class: 'narr', text: t.outcome || 'The model does not say.' }),
+        h('h4', { text: 'What the person sees afterward' }), h('p', { text: t.human_feedback || 'Not stated.' }));
+    } else {
+      var s = t.steps[i], e = E.get(s.edge);
+      body = h('div', { class: 'outcome' },
+        h('p', { class: 'narr', text: s.narration || e.label }),
+        h('div', { class: 'fromto' },
+          h('button', { text: N.get(e.from).label, onclick: function () { showNode(e.from); } }),
+          h('span', { class: 'arrow', text: '→' }),
+          h('button', { text: N.get(e.to).label, onclick: function () { showNode(e.to); } }),
+          h('span', { class: 'chip', text: (EDGE_KINDS[e.kind] && EDGE_KINDS[e.kind].label) || e.kind }),
+          e.label ? h('span', { text: e.label }) : null,
+          e.data ? h('span', { class: 'el', text: '(' + e.data + ')' }) : null),
+        (s.evidence.length || e.evidence.length) ? h('ul', { class: 'ev' }, (s.evidence.length ? s.evidence : e.evidence).slice(0, 2).map(evItem)) : null);
+    }
+    var playing = T.playing && i < n;
+    card.replaceChildren(
+      h('button', { class: 'close', 'aria-label': 'Stop this trace', title: 'Stop (Esc)', onclick: function () { endTrace(); } }, '×'),
+      h('div', { class: 'head' }, h('span', { class: 'chip', text: TRIG_KINDS[t.kind] || t.kind }), h('span', { class: 'ttl', text: t.label })),
+      ticks, body,
+      h('div', { class: 'ctrls' },
+        h('button', { class: 'btn', id: 'trBack', disabled: i <= 0, onclick: function () { pause(); go(i - 1); } }, 'Back'),
+        h('button', { class: 'btn primary', id: 'trPlay', onclick: togglePlay }, i >= n ? 'Replay' : playing ? 'Pause' : 'Play'),
+        h('button', { class: 'btn', id: 'trNext', disabled: i >= n, onclick: function () { pause(); go(i + 1); } }, i === n - 1 ? 'Outcome' : 'Next'),
+        h('span', { class: 'count', text: i >= n ? 'Done, ' + n + ' steps' : 'Step ' + (i + 1) + ' of ' + n })));
+    card.hidden = false;
+    stage.classList.add('has-trace');
+    $('#app').classList.add('tracing');
+    stage.style.setProperty('--trace-h', (card.offsetHeight + 20) + 'px');
+  }
+
+  // ---------------------------------------------------------------- loops and gaps
+  function selectLoop(id) {
+    endTrace(true);
+    S.gapSel = null; S.spSel = null;
+    S.loopsOn = true; S.loopSel = (S.loopSel === id ? null : id);
+    $('#tLoops').setAttribute('aria-pressed', 'true');
+    renderLists();
+    scrollToItem('#loopList', '[data-loop="' + id + '"]');
+    return relayout().then(function () {
+      if (S.loopSel) { var l = loopById(id); var els = nodesEles(l.nodes).union(cy.nodes('.lbadge')); return flyTo(els, { pad: 36, maxZoom: 1.1 }); }
+      return fitAll();
+    });
+  }
+  function setLoops(on) {
+    S.loopsOn = on; if (!on) S.loopSel = null;
+    $('#tLoops').setAttribute('aria-pressed', String(on));
+    if (on) { endTrace(true); showTab('loops'); }
+    renderLists();
+    return relayout().then(function () { if (on) return fitAll(); });
+  }
+  function selectGap(i) {
+    endTrace(true);
+    S.loopSel = null; S.spSel = null;
+    S.gapSel = (S.gapSel === i || !GAPS[i] || !GAPS[i].nodes.length) ? null : i;
+    renderLists();
+    scrollToItem('#gapList', '[data-gap="' + i + '"]');
+    return relayout().then(function () {
+      if (S.gapSel != null) return flyTo(nodesEles(GAPS[i].nodes), { pad: 36, maxZoom: 1.1 });
+      return fitAll();
+    });
+  }
+  function selectSetpoint(id) {
+    var sp = spById(id); if (!sp) return Promise.resolve();
+    endTrace(true);
+    S.loopSel = null; S.gapSel = null;
+    S.spSel = (S.spSel === id ? null : id);
+    // picking a setpoint turns the drift overlay on, the way picking a loop turns loops on
+    if (S.spSel) { S.driftOn = true; $('#tDrift').setAttribute('aria-pressed', 'true'); }
+    renderLists();
+    scrollToItem('#driftGroups', '[data-sp="' + id + '"]');
+    return relayout().then(frames).then(function () {
+      if (S.spSel) { var f = Array.from(spFocus(sp)); if (f.length) return flyTo(nodesEles(f), { pad: 36, maxZoom: 1.1 }); }
+      return fitAll();
+    });
+  }
+  function setDrift(on) {
+    // no setpoints, no lens: there is nothing to compare the map with
+    S.driftOn = !!on && SETPOINTS.length > 0; if (!S.driftOn) S.spSel = null;
+    $('#tDrift').setAttribute('aria-pressed', String(S.driftOn));
+    if (S.driftOn) { endTrace(true); showTab('drift'); }
+    renderLists();
+    // the banner changes the room the map has, so re-fit either way, once the new badges are drawn
+    return relayout().then(frames).then(function () { if (!S.loopSel && S.gapSel == null && !S.selected) return fitAll(); });
+  }
+  function scrollToItem(listSel, itemSel) {
+    var list = $(listSel), item = list && $(itemSel, list), panel = list && list.closest('.panel');
+    if (!item || !panel) return;
+    panel.scrollTop = Math.max(0, item.getBoundingClientRect().top - panel.getBoundingClientRect().top + panel.scrollTop - 10);
+  }
+  function setHuman(on) {
+    S.human = on;
+    $('#tHuman').setAttribute('aria-pressed', String(on));
+    refreshEmphasis();
+    // let the canvas draw the new labels once before the camera moves: changing a label's text and
+    // starting an animation in the same frame leaves cytoscape with a mis-scaled label texture
+    requestAnimationFrame(function () { requestAnimationFrame(function () {
+      if (!S.trace && !S.loopSel && S.gapSel == null && !S.selected) fitAll();
+    }); });
+  }
+
+  // ---------------------------------------------------------------- details
+  function evItem(s) {
+    var li = h('li');
+    if (/^https?:\/\//i.test(s)) li.append(h('a', { href: s, target: '_blank', rel: 'noopener noreferrer', text: s }));
+    else li.textContent = s;
+    return li;
+  }
+  function nodeLink(id) { var n = N.get(id); return h('button', { class: 'nlink', text: n ? n.label : id, onclick: function () { showNode(id, true); } }); }
+  function showNode(id, fly) {
+    var n = N.get(id); if (!n || !cy) return Promise.resolve();
+    S.selected = id; S.selectedEdge = null;
+    var p;
+    if (fly && isC(id)) p = openBox(id, 'link');
+    else {
+      if (!visibleNode(id, S.exp)) chain(id).slice(0, -1).forEach(function (a) { S.shut.delete(a); if (depth(a) >= S.floor) S.open.add(a); });
+      p = relayout();
+    }
+    showDetailsCard();
+    return p.then(function () {
+      if (S.selected === id) renderDetails();
+      refreshEmphasis();
+      if (fly && !isC(id)) {
+        var el = cy.getElementById(nid(id));
+        if (el.nonempty() && !inView(el, 90)) return flyTo(el, { pad: 60, maxZoom: 1.2 });
+      }
+    });
+  }
+  function showDetailsCard() {
+    if (isPhone() && !$('#side').classList.contains('min')) setSheet(false, true);
+    renderDetails();
+  }
+  function closeDetails(silent) {
+    S.selected = null; S.selectedEdge = null;
+    $('#details').hidden = true;
+    if (!silent) refreshEmphasis();
+  }
+  function renderDetails() {
+    var box = $('#details'), id = S.selected, n = N.get(id);
+    if (!n) { box.hidden = true; return; }
+    var d = depth(id);
+    var crumbs = h('div', { class: 'crumbs' });
+    chain(id).slice(0, -1).forEach(function (a, i) {
+      if (i) crumbs.append(h('span', { text: '/' }));
+      crumbs.append(h('button', { text: N.get(a).label, onclick: function () { showNode(a, true); } }));
+    });
+    var outs = EDGES.filter(function (e) { return e.from === id; }), ins = EDGES.filter(function (e) { return e.to === id; });
+    function connList(list, dir) {
+      return h('ul', { class: 'conn' }, list.slice(0, 14).map(function (e) {
+        var other = dir === 'out' ? e.to : e.from;
+        return h('li', null, h('span', { class: 'ar', text: dir === 'out' ? '→' : '←' }),
+          h('span', null, nodeLink(other), ' ', h('span', { class: 'el', text: e.label })));
+      }), list.length > 14 ? h('li', { class: 'empty', text: '+' + (list.length - 14) + ' more' }) : null);
+    }
+    var trig = TRIGGERS.filter(function (t) { return t.steps.some(function (s) { var e = E.get(s.edge); return e.from === id || e.to === id; }); });
+    var loops = LOOPS.filter(function (l) { return l.nodes.indexOf(id) >= 0 || (isC(id) && l.nodes.some(function (x) { return isAnc(id, x); })); });
+    var kids = KIDS.get(id) || [];
+    var isOpen = isC(id) && S.exp.has(id);
+    fill(box, [
+      h('button', { class: 'close', 'aria-label': 'Close details', onclick: function () { closeDetails(); } }, '×'),
+      h('div', { class: 'eyebrow' }, h('span', { text: kindLabel(n.kind) }), h('span', { text: levelName(d) })),
+      h('h2', { text: n.label }),
+      h('div', { class: 'row' }, nodeStatusChip(n),
+        humanFacing(id) ? h('span', { class: 'chip', text: 'People see this' }) : null,
+        isC(id) ? h('button', { class: 'btn', onclick: function () { (isOpen ? closeBox(id, 'tap') : openBox(id, 'tap')).then(renderDetails); } }, isOpen ? 'Close this box' : 'Open this box') : null),
+      d ? crumbs : null,
+      n.human_sees ? h('div', null, h('h4', { text: 'What a person sees or touches' }), h('p', { text: n.human_sees })) : null,
+      n.does ? h('div', null, h('h4', { text: 'What it does' }), h('p', { text: n.does })) : null,
+      (n.inputs.length || n.outputs.length) ? h('div', { class: 'io' },
+        h('div', null, h('h4', { text: 'Takes in' }), n.inputs.length ? h('ul', null, n.inputs.map(function (x) { return h('li', { text: x }); })) : h('p', { class: 'empty', text: 'Nothing listed' })),
+        h('div', null, h('h4', { text: 'Puts out' }), n.outputs.length ? h('ul', null, n.outputs.map(function (x) { return h('li', { text: x }); })) : h('p', { class: 'empty', text: 'Nothing listed' }))) : null,
+      kids.length ? h('div', null, h('h4', { text: 'Inside (' + kids.length + ')' }), h('div', { class: 'links' }, kids.map(nodeLink))) : null,
+      outs.length ? h('div', null, h('h4', { text: 'Sends to (' + outs.length + ')' }), connList(outs, 'out')) : null,
+      ins.length ? h('div', null, h('h4', { text: 'Hears from (' + ins.length + ')' }), connList(ins, 'in')) : null,
+      trig.length ? h('div', null, h('h4', { text: 'Part of what happens when' }), h('div', { class: 'links' }, trig.map(function (t) { return h('button', { class: 'nlink', text: '▶ ' + t.label, onclick: function () { startTrace(t); } }); }))) : null,
+      (function () {
+        var sps = SETPOINTS.filter(function (sp) { return sp.nodes.has(id) || (isC(id) && desc(id).some(function (x) { return sp.nodes.has(x); })); });
+        var dg = driftTouching(id).filter(function (d) { return d.gap; }).map(function (d) { return d.gap; });
+        if (!sps.length && !dg.length) return null;
+        return h('div', null, h('h4', { text: 'Done vs actual here' }), h('div', { class: 'links' }, sps.slice(0, 8).map(spLink), dg.slice(0, 6).map(gapLink)));
+      })(),
+      loops.length ? h('div', null, h('h4', { text: 'In these loops' }), h('div', { class: 'links' }, loops.map(function (l) { return h('button', { class: 'nlink', text: (l.type === 'reinforcing' ? 'R: ' : 'B: ') + l.label + ' (' + stabWord(l) + ')', onclick: function () { showTab('loops'); selectLoop(l.id); } }); }))) : null,
+      h('div', null, h('h4', { text: 'Evidence' }), n.evidence.length ? h('ul', { class: 'ev' }, n.evidence.map(evItem)) : h('p', { class: 'empty', text: 'None given, so treat this part as unverified.' }))
+    ]);
+    box.hidden = false;
+    box.scrollTop = 0;
+  }
+  function showEdge(cyEdge) {
+    var members = cyEdge.data('members') || [];
+    if (!members.length) return;
+    var box = $('#details');
+    S.selected = null; S.selectedEdge = members.length === 1 ? members[0] : null;
+    var list = members.map(function (m) { return E.get(m); });
+    var a = N.get(cyEdge.source().data('mid')), b = N.get(cyEdge.target().data('mid'));
+    fill(box, [
+      h('button', { class: 'close', 'aria-label': 'Close details', onclick: function () { closeDetails(); } }, '×'),
+      h('div', { class: 'eyebrow' }, h('span', { text: list.length === 1 ? 'Connection' : list.length + ' connections' })),
+      h('h2', null, a.label, ' ↔ ', b.label),
+      h('ul', { class: 'conn' }, list.map(function (e) {
+        return h('li', null, h('span', { class: 'ar', text: '→' }), h('div', null,
+          h('div', null, h('b', { text: e.label || '(no label)' }), ' ', h('span', { class: 'chip', text: (EDGE_KINDS[e.kind] && EDGE_KINDS[e.kind].label) || e.kind })),
+          h('div', { class: 'el' }, N.get(e.from).label + ' → ' + N.get(e.to).label + (e.data ? '. Carries: ' + e.data : '')),
+          e.evidence.length ? h('ul', { class: 'ev' }, e.evidence.map(evItem)) : h('p', { class: 'empty', text: 'No evidence given.' })));
+      }))]);
+    box.hidden = false; box.scrollTop = 0;
+    refreshEmphasis();
+  }
+
+  // ---------------------------------------------------------------- side lists
+  function holdsChip(sp) { return h('span', { class: 'chip sp-' + safe(sp.holds) }, h('span', { class: 'dot' }), HOLDS[sp.holds]); }
+  function statusChip(sp) { return sp.status === 'confirmed' ? h('span', { class: 'chip conf', text: 'Confirmed' }) : h('span', { class: 'chip', title: 'Taken from a document or decision; the operator has not confirmed it yet', text: 'Proposed' }); }
+  function spLink(sp) { return h('button', { class: 'nlink', text: sp.id + ': ' + clip(sp.intent, 70) + ' (' + HOLDS[sp.holds].toLowerCase() + ')', onclick: function () { showTab('drift'); selectSetpoint(sp.id); } }); }
+  function gapLink(g) { return h('button', { class: 'nlink', text: GAP_KIND_WORD[g.kind] + ': ' + g.title, onclick: function () { if (g.nodes.length) selectGap(g.i); else showTab('gaps'); } }); }
+  function renderDrift() {
+    if (!SETPOINTS.length) return;
+    $('#n-drift').textContent = SETPOINTS.length;
+    var cnt = { no: 0, unknown: 0, yes: 0 }, proposed = 0;
+    SETPOINTS.forEach(function (sp) { cnt[sp.holds]++; if (sp.status !== 'confirmed') proposed++; });
+    $('#driftSummary').replaceChildren(
+      h('div', { class: 'stat' }, h('b', { style: 'color: var(--drift)', text: cnt.no }), h('span', { text: 'do not hold' })),
+      h('div', { class: 'stat' }, h('b', { style: 'color: var(--unk)', text: cnt.unknown }), h('span', { text: 'not known' })),
+      h('div', { class: 'stat' }, h('b', { style: 'color: var(--ok)', text: cnt.yes }), h('span', { text: 'hold' })),
+      h('div', { class: 'stat', title: 'Setpoints that do not hold or are not known, plus gaps that are unintended, missing or running away' }, h('b', { text: DRIFT.length }), h('span', { text: 'drift items' })),
+      h('div', { class: 'stat' }, h('b', { text: proposed }), h('span', { text: 'proposed, to confirm' })));
+    function spItem(sp) {
+      var on = S.spSel === sp.id, gs = gapsOf(sp), drifts = gs.filter(function (g) { return DRIFT_KINDS[g.kind]; });
+      var plays = TRIGGERS.filter(function (x) { return x === sp.trigger || x.setpoint === sp.id; });
+      var btn = h('button', { class: 'item sp-' + safe(sp.holds) + (on ? ' on' : ''), 'data-sp': sp.id, 'aria-expanded': String(on), onclick: function () { selectSetpoint(sp.id); } },
+        h('div', { class: 'row' }, holdsChip(sp), statusChip(sp),
+          drifts.length ? h('span', { class: 'chip gk', text: drifts.length === 1 ? GAP_KIND_WORD[drifts[0].kind] : drifts.length + ' drift gaps' }) : null,
+          h('span', { class: 'steps-n', text: sp.id })),
+        h('span', { class: 't', text: sp.intent || '(no intent written)' }),
+        h('span', { class: 's', text: (sp.trigger ? 'When: ' : 'Part: ') + aboutLabel(sp) + '. ' + (SOURCE[sp.source] || sp.source) + '.' }));
+      var li = h('li', null, btn);
+      if (on) {
+        li.append(h('div', { class: 'more' },
+          sp.measure ? h('div', null, h('h4', { text: 'How it is measured' }), h('p', { text: sp.measure })) : null,
+          sp.why ? h('div', null, h('h4', { text: 'Why this verdict' }), h('p', { text: sp.why })) : null,
+          h('div', null, h('h4', { text: 'Where it came from' }), h('p', { class: 'srcref', text: (SOURCE[sp.source] || sp.source) + ': ' + (sp.source_ref || 'not stated') })),
+          gs.length ? h('div', null, h('h4', { text: 'Gaps against it' }), h('div', { class: 'links' }, gs.map(gapLink))) : null,
+          plays.length ? h('div', null, h('h4', { text: 'Play it' }), h('div', { class: 'links' }, plays.map(function (x) { return h('button', { class: 'nlink', text: '\u25B6 ' + x.label, onclick: function () { startTrace(x); } }); }))) : null,
+          sp.node ? h('div', null, h('h4', { text: 'The part' }), h('div', { class: 'links' }, nodeLink(sp.node))) : null));
+      }
+      return li;
+    }
+    var order = function (a, b) { return ((a.status === 'confirmed' ? 0 : 1) - (b.status === 'confirmed' ? 0 : 1)); };
+    var groups = [];
+    ['no', 'unknown', 'yes'].forEach(function (k) {
+      var list = SETPOINTS.filter(function (sp) { return sp.holds === k; }).sort(order);
+      if (!list.length) return;
+      groups.push(h('h3', { class: 'grouph sp-' + k }, h('span', { class: 'dot' }), h('span', { text: HOLDS[k] }), h('span', { class: 'n', text: String(list.length) })));
+      groups.push(h('ul', { class: 'list' }, list.map(spItem)));
+    });
+    var loose = GAPS.filter(function (g) { return DRIFT_KINDS[g.kind] && !spById(g.setpoint); });
+    if (loose.length) {
+      groups.push(h('h3', { class: 'grouph sp-no' }, h('span', { class: 'dot' }), h('span', { text: 'Drift with no setpoint' }), h('span', { class: 'n', text: String(loose.length) })));
+      groups.push(h('ul', { class: 'list' }, loose.map(function (g) {
+        var on = S.gapSel === g.i, inner = [h('div', { class: 'row' }, h('span', { class: 'chip gk', text: GAP_KIND_WORD[g.kind] })), h('span', { class: 't', text: g.title }), h('span', { class: 's', text: g.detail })];
+        return h('li', null, g.nodes.length ? h('button', { class: 'item sp-no' + (on ? ' on' : ''), 'data-dgap': String(g.i), onclick: function () { selectGap(g.i); } }, inner) : h('div', { class: 'item sp-no' }, inner));
+      })));
+    }
+    $('#driftGroups').replaceChildren.apply($('#driftGroups'), groups);
+  }
+  function renderLists() {
+    renderDrift();
+    $('#n-triggers').textContent = TRIGGERS.length;
+    $('#n-loops').textContent = LOOPS.length;
+    $('#n-gaps').textContent = GAPS.length;
+    $('#n-data').textContent = DATA.length;
+    var tl = $('#triggerList');
+    tl.replaceChildren.apply(tl, TRIGGERS.length ? TRIGGERS.map(function (t) {
+      var on = S.trace && S.trace.t === t;
+      return h('li', null, h('button', { class: 'item' + (on ? ' on' : ''), 'data-trigger': t.id, onclick: function () { startTrace(t); } },
+        h('div', { class: 'row' }, h('span', { class: 'chip', text: TRIG_KINDS[t.kind] || t.kind }), h('span', { class: 'steps-n', text: t.steps.length + ' steps' })),
+        h('span', { class: 't', text: t.label }),
+        t.outcome ? h('span', { class: 's', text: t.outcome }) : null));
+    }) : [h('li', { class: 'empty', text: 'This model lists no triggers yet.' })]);
+
+    var counts = { reinforcing: 0, balancing: 0, unstable: 0, watch: 0, unmeasured: 0 };
+    LOOPS.forEach(function (l) { counts[l.type]++; if (counts[l.stability] != null) counts[l.stability]++; if (l.unmeasured && l.stability === 'stable') counts.unmeasured++; });
+    var ls = $('#loopSummary');
+    fill(ls, [
+      h('div', { class: 'stat' }, h('b', { text: counts.reinforcing }), h('span', { text: 'reinforcing' })),
+      h('div', { class: 'stat' }, h('b', { text: counts.balancing }), h('span', { text: 'balancing' })),
+      h('div', { class: 'stat' }, h('b', { style: 'color: var(--bad)', text: counts.unstable }), h('span', { text: 'running away or not correcting' })),
+      h('div', { class: 'stat' }, h('b', { style: 'color: var(--watch)', text: counts.watch }), h('span', { text: 'to watch' })),
+      counts.unmeasured ? h('div', { class: 'stat' }, h('b', { style: 'color: var(--unk)', text: counts.unmeasured }), h('span', { text: 'called stable, never measured' })) : null]);
+    var sorted = LOOPS.slice().sort(function (a, b) { return (stabRank(a) - stabRank(b)) || ((b.type === 'reinforcing') - (a.type === 'reinforcing')); });
+    var ll = $('#loopList');
+    ll.replaceChildren.apply(ll, sorted.length ? sorted.map(function (l) {
+      var on = S.loopSel === l.id;
+      var btn = h('button', { class: 'item' + (on ? ' on' : ''), 'data-loop': l.id, 'aria-expanded': String(on), onclick: function () { selectLoop(l.id); } },
+        h('div', { class: 'row' }, h('span', { class: 'loopmark' + (l.type === 'reinforcing' ? ' r' : ''), text: typeWord(l) }),
+          h('span', { class: stabClass(l) }, h('span', { class: 'dot' }), stabWord(l)),
+          h('span', { class: 'steps-n', text: l.id + ' · ' + l.nodes.length + ' parts' })),
+        h('span', { class: 't', text: l.label }),
+        h('span', { class: 's', text: on ? l.story : firstSentence(l.story) }));
+      var li = h('li', null, btn);
+      if (on) {
+        li.append(h('div', { class: 'more' },
+          l.why ? h('div', null, h('h4', { text: 'Why this rating' }), h('p', { text: l.why })) : null,
+          h('div', null, h('h4', { text: 'Parts in the loop, in order' }), h('div', { class: 'links' }, l.nodes.map(nodeLink))),
+          l.evidence.length ? h('div', null, h('h4', { text: 'Evidence' }), h('ul', { class: 'ev' }, l.evidence.map(evItem))) : null));
+      }
+      return li;
+    }) : [h('li', { class: 'empty', text: 'This model lists no feedback loops yet.' })]);
+
+    var gl = $('#gapList');
+    gl.replaceChildren.apply(gl, GAPS.length ? GAPS.map(function (g) {
+      var on = S.gapSel === g.i;
+      var gsp = spById(g.setpoint);
+      var inner = [h('div', { class: 'row' }, h('span', { class: 'chip gk' + (DRIFT_KINDS[g.kind] ? '' : ' gk-unknown'), text: GAP_KIND_WORD[g.kind] || g.kind }), gsp ? h('span', { class: 'steps-n', text: 'against ' + gsp.id }) : null),
+        h('span', { class: 't', text: g.title }), h('span', { class: 's', text: g.detail }),
+        g.nodes.length ? h('div', { class: 'row' }, h('span', { class: 'chip onmap', text: on ? 'Shown on the map' : 'Show on the map' }), h('span', { class: 'steps-n', text: g.nodes.length + ' parts' })) : null];
+      var head = g.nodes.length
+        ? h('button', { class: 'item' + (on ? ' on' : ''), 'data-gap': String(g.i), 'aria-pressed': String(on), onclick: function () { selectGap(g.i); } }, inner)
+        : h('div', { class: 'item' }, inner);
+      return h('li', null, head, (on || !g.nodes.length) && (g.evidence.length || gsp) ? h('div', { class: 'more' },
+        g.nodes.length ? h('div', { class: 'links' }, g.nodes.map(nodeLink)) : null,
+        gsp ? h('div', null, h('h4', { text: 'Compared against' }), h('div', { class: 'links' }, spLink(gsp))) : null,
+        g.evidence.length ? h('ul', { class: 'ev' }, g.evidence.map(evItem)) : null) : null);
+    }) : [h('li', { class: 'empty', text: 'No gaps recorded.' })]);
+
+    var dl = $('#dataList');
+    dl.replaceChildren.apply(dl, DATA.length ? DATA.map(function (d) {
+      return h('li', { class: 'item' }, h('span', { class: 't', text: d.data }),
+        h('h4', { class: 'sub', text: 'Made by' }), h('div', { class: 'links' }, d.produced_by.map(nodeLink)),
+        h('h4', { class: 'sub', text: 'Used by' }), d.used_by.length ? h('div', { class: 'links' }, d.used_by.map(nodeLink)) : h('p', { class: 'empty', text: 'Nobody reads it.' }),
+        d.could_serve.length ? h('h4', { class: 'sub', text: 'Could also serve' }) : null,
+        d.could_serve.length ? h('ul', { class: 's' }, d.could_serve.map(function (x) { return h('li', { text: x }); })) : null);
+    }) : [h('li', { class: 'empty', text: 'No data uses recorded.' })]);
+  }
+
+  function renderKey() {
+    var g = $('#keyGrid');
+    var SV = 'http://www.w3.org/2000/svg';
+    function svg(inner) { var s = doc.createElementNS(SV, 'svg'); s.setAttribute('viewBox', '0 0 44 22'); s.setAttribute('aria-hidden', 'true'); s.innerHTML = inner; return s; }
+    var shapes = {
+      ellipse: '<ellipse cx="22" cy="11" rx="19" ry="9"/>',
+      'round-rectangle': '<rect x="3" y="2" width="38" height="18" rx="5"/>',
+      rectangle: '<rect x="3" y="2" width="38" height="18"/>',
+      'cut-rectangle': '<polygon points="8,2 36,2 41,7 41,15 36,20 8,20 3,15 3,7"/>',
+      barrel: '<path d="M3 6 Q3 2 22 2 Q41 2 41 6 L41 16 Q41 20 22 20 Q3 20 3 16 Z"/>',
+      hexagon: '<polygon points="10,2 34,2 41,11 34,20 10,20 3,11"/>',
+      rhomboid: '<polygon points="10,2 41,2 34,20 3,20"/>',
+      'round-tag': '<polygon points="3,2 33,2 41,11 33,20 3,20"/>'
+    };
+    var items = [h('h4', { text: 'Parts' })];
+    var bx = svg('<rect x="2" y="2" width="40" height="18" rx="4"/>'); bx.setAttribute('style', 'fill: color-mix(in srgb, var(--ink-3) 18%, var(--panel)); stroke: var(--ink-2); stroke-width: 2.2');
+    items.push(bx, h('span', { text: 'A closed box: a system with parts inside. Every closed box is the same size; the count says how much is inside.' }));
+    Object.keys(NODE_KINDS).forEach(function (k) {
+      var inner = shapes[NODE_KINDS[k].shape];
+      if (k === 'external') inner = '<rect x="3" y="2" width="38" height="18"/><rect x="6" y="5" width="32" height="12"/>';
+      var s = svg(inner); s.setAttribute('style', 'fill: var(--panel); stroke: var(--n-' + k + '); stroke-width: 1.8');
+      items.push(s, h('span', { text: NODE_KINDS[k].label }));
+    });
+    items.push(h('h4', { text: 'Connections' }));
+    Object.keys(EDGE_KINDS).forEach(function (k) {
+      var d = EDGE_KINDS[k].dash, da = d === 'dot' ? '1.5 3' : d ? d.join(' ') : '';
+      var s = svg('<line x1="2" y1="11" x2="34" y2="11" stroke-dasharray="' + da + '" stroke-width="' + (k === 'human' ? 3 : 1.8) + '"/><polygon points="34,6 42,11 34,16" stroke="none"/>');
+      s.setAttribute('style', 'stroke: var(--k-' + k + '); fill: var(--k-' + k + ')');
+      items.push(s, h('span', { text: EDGE_KINDS[k].label }));
+    });
+    var mx = svg('<line x1="2" y1="11" x2="34" y2="11" stroke-width="4"/><polygon points="34,5 43,11 34,17" stroke="none"/>');
+    mx.setAttribute('style', 'stroke: var(--k-mixed); fill: var(--k-mixed)');
+    items.push(mx, h('span', { text: 'Several connections bundled while a box is closed (thicker means more); the label names the first and counts the rest' }));
+    items.push(h('h4', { text: 'Status' }));
+    [['ok', 'Live: measured running'], ['watch', 'Partly working'], ['bad', 'Not running'], ['unk', 'Not verified (dashed outline)']].forEach(function (p) {
+      var s = svg('<circle cx="22" cy="11" r="5"/>'); s.setAttribute('style', 'fill: var(--' + p[0] + ')');
+      items.push(s, h('span', { text: p[1] }));
+    });
+    var um = svg('<circle cx="22" cy="11" r="4.2" stroke-width="1.8"/>'); um.setAttribute('style', 'fill: none; stroke: var(--unk)');
+    items.push(um, h('span', { text: 'Marked live, but nothing on it or around it was measured running (hollow dot). In code is not live.' }));
+    items.push(h('h4', { text: 'Overlays' }));
+    var rb = svg('<rect x="5" y="5" width="34" height="13" rx="3" style="fill: var(--panel); stroke: var(--ink-3)"/><rect x="2" y="2" width="40" height="19" rx="5" style="fill: none; stroke: var(--bal); stroke-width: 3"/>');
+    var rr = svg('<rect x="5" y="5" width="34" height="13" rx="3" style="fill: var(--panel); stroke: var(--ink-3)"/><rect x="2" y="2" width="40" height="19" rx="5" style="fill: none; stroke: var(--rein); stroke-width: 3"/>');
+    var hl = svg('<line x1="2" y1="11" x2="42" y2="11" stroke-width="10" stroke-linecap="round" style="stroke: var(--hl)"/><line x1="2" y1="11" x2="42" y2="11" stroke-width="2" style="stroke: var(--ink)"/>');
+    items.push(rb, h('span', { text: 'Loops on: a part that a balancing loop passes through (corrects toward a target)' }), rr, h('span', { text: 'A part a reinforcing loop passes through (feeds itself and can run away)' }), hl, h('span', { text: 'Highlighter: the step playing now in a trace' }));
+    items.push(h('p', { class: 'keynote', text: 'Pick a loop in the Loops list to draw its path; the badge above it names the loop and says whether it is stable, to watch, running away or not correcting. \u201cUnmeasured\u201d means no live measurement backs that rating, so it is a claim, not a reading.' }));
+    if (SETPOINTS.length) {
+      items.push(h('h4', { text: 'Drift (Done vs actual)' }));
+      var dr = svg('<rect x="9" y="6" width="26" height="11" rx="2" style="fill: var(--panel); stroke: var(--ink-3)"/><rect x="3" y="2" width="38" height="19" rx="4" style="fill: none; stroke: var(--drift); stroke-width: 2.4; stroke-dasharray: 5 3"/>');
+      var du = svg('<rect x="9" y="6" width="26" height="11" rx="2" style="fill: var(--panel); stroke: var(--ink-3)"/><rect x="3" y="2" width="38" height="19" rx="4" style="fill: none; stroke: var(--unk); stroke-width: 2.2; stroke-dasharray: 1.5 3; stroke-linecap: round"/>');
+      var db = svg('<polygon points="7,3 37,3 42,8 42,15 37,20 7,20 2,15 2,8" style="fill: var(--drift)"/><text x="22" y="15" text-anchor="middle" style="fill: var(--on-loop); font: 700 10px var(--f-display)">2 drift</text>');
+      var de = svg('<line x1="2" y1="11" x2="34" y2="11" stroke-width="7" style="stroke: var(--drift)"/><line x1="2" y1="11" x2="34" y2="11" stroke-width="2" style="stroke: var(--ink-2)"/><polygon points="34,6 42,11 34,16" style="fill: var(--ink-2)"/>');
+      var dp = svg('<line x1="2" y1="11" x2="42" y2="11" stroke-width="9" stroke-linecap="round" style="stroke: var(--hl); opacity: 0.75"/><line x1="2" y1="11" x2="42" y2="11" stroke-width="2" style="stroke: var(--ink-2)"/>');
+      items.push(dr, h('span', { text: 'Drift on: a part where what runs is not what was meant. A setpoint there does not hold, or a gap there is unintended, missing or running away.' }),
+        du, h('span', { text: 'A part involved only in setpoints nobody has measured yet' }),
+        db, h('span', { text: 'How many drift items pass through the part, or through a closed box\u2019s parts. Loop badges are rounded and sit at the other corner.' }),
+        de, h('span', { text: 'A connection on the path of a setpoint that does not hold, or between the parts of a drift gap' }),
+        dp, h('span', { text: 'A picked setpoint: the path of the event it is about' }));
+      items.push(h('p', { class: 'keynote', text: 'Setpoints come from the operator\u2019s own words (confirmed) or from a document or decision (proposed until the operator confirms them).' }));
+    }
+    g.replaceChildren.apply(g, items);
+  }
+
+  function renderAbout() {
+    var box = $('#about');
+    var byDepth = {};
+    N.forEach(function (n) { var d = depth(n.id); byDepth[d] = (byDepth[d] || 0) + 1; });
+    var st = { live: 0, partial: 0, dead: 0, unknown: 0 };
+    N.forEach(function (n) { if (st[n.status] != null) st[n.status]++; });
+    var stats = h('div', { class: 'summary' });
+    Object.keys(byDepth).sort().forEach(function (d) { stats.append(h('div', { class: 'stat' }, h('b', { text: byDepth[d] }), h('span', { text: levelName(Number(d)) }))); });
+    stats.append(h('div', { class: 'stat' }, h('b', { text: EDGES.length }), h('span', { text: 'connections' })));
+    var st2 = h('div', { class: 'summary' });
+    Object.keys(st).forEach(function (k) { st2.append(h('div', { class: 'stat' }, h('b', { text: st[k] }), h('span', { text: (STATUS[k] || k).toLowerCase() }))); });
+    // the checker's measurement warnings (bin/sysmap check rules 14 and 15), so they reach the reader and not only the terminal
+    var umParts = [], liveParts = 0, umLoops = LOOPS.filter(function (l) { return l.unmeasured; });
+    N.forEach(function (n) { if (n.status === 'live' && n.kind !== 'human') { liveParts++; if (n.unmeasured) umParts.push(n); } });
+    if (umParts.length) st2.append(h('div', { class: 'stat' }, h('b', { style: 'color: var(--unk)', text: umParts.length }), h('span', { text: 'live, unmeasured' })));
+    var unmeasured = (umParts.length || umLoops.length) ? h('div', null,
+      h('h4', { text: 'Called live or stable, never measured' }),
+      h('p', { text: (umParts.length ? umParts.length + ' of ' + liveParts + ' parts marked live have no live measurement on them or on any box around them; they show a hollow dot and \u201cLive, unmeasured\u201d. ' : '') +
+        (umLoops.length ? umLoops.length + (umLoops.length === 1 ? ' loop is' : ' loops are') + ' rated stable or unstable with no live measurement (' + umLoops.map(function (l) { return l.id; }).join(', ') + '); their badges say \u201cunmeasured\u201d. ' : '') +
+        'In code is not live: these are what to measure next.' }),
+      umParts.length ? h('div', { class: 'links' }, umParts.slice(0, 40).map(function (n) { return nodeLink(n.id); })) : null) : null;
+    fill(box, [
+      h('div', { class: 'more' },
+        GLOSSARY.length ? h('h4', { text: 'Names that mean the same thing' }) : null,
+        GLOSSARY.length ? h('dl', { class: 'gloss' }, GLOSSARY.map(function (g) { return [h('dt', { text: g.term }), h('dd', { text: g.means })]; })) : null,
+        h('h4', { text: 'Scope' }), h('p', { text: str(META.scope) || 'Not stated.' }),
+        h('h4', { text: 'How to read it' }),
+        h('ul', { class: 's' },
+          h('li', { text: 'Zoomed out you see the big systems as same-size boxes. Click or tap a box, or scroll into it, and it opens to show what is inside; the map makes room for it.' }),
+          h('li', { text: 'Click an open box\'s title, press Esc, or zoom well out to close it again. The Detail buttons open every box down to one level: ' + LEVEL_HELP + '.' }),
+          h('li', { text: 'Click any part for what a person sees there, what it does, and the file that proves it.' }),
+          h('li', { text: 'What happens when plays an event through the map one step at a time.' }),
+          h('li', { text: 'Loops rings every part a feedback loop passes through. Human lens dims everything a person never sees and says what people see inside each box.' }),
+          SETPOINTS.length ? h('li', { text: 'Done vs actual lists what done means (the setpoints) and whether each one holds on this map. Drift marks every part where what runs is not what was meant.' }) : null,
+          h('li', { text: 'Keys: plus and minus zoom, arrow keys pan, 0 fits, / searches, Esc steps back.' })),
+        h('h4', { text: 'Parts by level' }), stats,
+        h('h4', { text: 'Parts by status' }), st2,
+        unmeasured,
+        h('h4', { text: 'Sources' }), h('ul', { class: 'ev' }, arr(META.sources).map(function (s) { return evItem(str(s)); })),
+        problems.length ? h('h4', { text: 'Problems the viewer found in this model' }) : null,
+        problems.length ? h('ul', { class: 'ev problems' }, problems.slice(0, 40).map(function (p) { return h('li', { text: p }); })) : null)]);
+  }
+
+  // ---------------------------------------------------------------- tabs, search, toolbar
+  function showTab(name) {
+    $$('.tab').forEach(function (t) { t.setAttribute('aria-selected', String(t.dataset.tab === name)); });
+    $$('.panel').forEach(function (p) { p.hidden = p.id !== 'p-' + name; });
+    if ($('#side').classList.contains('min')) setSheet(true);
+  }
+  function setSheet(open, keepView) {
+    var side = $('#side');
+    if (side.classList.contains('min') === !open) return;
+    side.classList.toggle('min', !open);
+    var b = $('#sheetToggle'); b.textContent = open ? 'Hide' : 'Show index'; b.setAttribute('aria-expanded', String(open));
+    // the stage changed size: re-fit once the new size has settled
+    if (cy) cy.resize();
+    if (!keepView) requestAnimationFrame(function () { requestAnimationFrame(function () { if (cy) { cy.resize(); fitAll(); } }); });
+  }
+  $$('.tab').forEach(function (t) { t.addEventListener('click', function () { showTab(t.dataset.tab); }); });
+  $('#sheetToggle').addEventListener('click', function () { setSheet($('#side').classList.contains('min')); });
+
+  // how many parts each detail level shows, so the names mean something
+  var LEVEL_N = [], LEVEL_HELP = '';
+  (function () {
+    var n = Math.max(1, Math.min(MAXD + 1, 4));
+    for (var d = 0; d < n; d++) {
+      var c = 0;
+      N.forEach(function (x) { var ch = chain(x.id); if (ch.slice(0, -1).every(function (a) { return depth(a) < d; }) && (depth(x.id) === d || (!isC(x.id) && depth(x.id) < d))) c++; });
+      LEVEL_N.push(c);
+    }
+    LEVEL_HELP = LEVEL_N.map(function (c, d) { return levelName(d) + ' shows ' + c + ' parts'; }).join(', ');
+  })();
+  function updateLevelGrp() {
+    var custom = isCustom();
+    $$('#levelGrp button').forEach(function (b) { b.setAttribute('aria-pressed', String(!custom && Number(b.dataset.floor) === S.floor)); });
+    var lab = $('#levelLab');
+    lab.textContent = custom ? 'Detail: your view' : 'Detail';
+    lab.classList.toggle('custom', custom);
+    lab.title = custom ? 'You opened or closed boxes yourself. Pick a level to reset.' : '';
+    var sel = $('#levelSel');
+    if (sel) { var co = $('option[value="custom"]', sel); co.hidden = !custom; sel.value = custom ? 'custom' : String(S.floor); }
+  }
+  function setFloor(d) {
+    S.floor = d; S.open.clear(); S.shut.clear(); S.order = [];
+    closeDetails(true);
+    return relayout().then(function () { return fitAll(); });
+  }
+  function buildLevelGrp() {
+    var g = $('#levelGrp'), n = LEVEL_N.length;
+    var sel = h('select', { id: 'levelSel', 'aria-label': 'Detail level', onchange: function () { if (sel.value !== 'custom') setFloor(Number(sel.value)); } });
+    for (var d = 0; d < n; d++) {
+      (function (d) {
+        g.append(h('button', { class: 'lvl', 'data-floor': d, 'aria-pressed': String(d === 0), title: 'Open every box down to ' + levelName(d) + ': ' + LEVEL_N[d] + ' parts', onclick: function () { setFloor(d); } }, levelName(d), h('span', { class: 'n', text: String(LEVEL_N[d]) })));
+        sel.append(h('option', { value: String(d), text: levelName(d) }));
+      })(d);
+    }
+    var co = h('option', { value: 'custom', text: 'Your view' }); co.hidden = true; sel.append(co);
+    g.append(sel);
+  }
+  buildLevelGrp();
+
+  // search: plain questions work too. Small words are dropped and results rank by how many words match.
+  var STOP = { a: 1, an: 1, the: 1, is: 1, are: 1, of: 1, to: 1, in: 1, on: 1, for: 1, and: 1, or: 1, it: 1, its: 1, what: 1, does: 1, do: 1, how: 1, where: 1, when: 1, which: 1, who: 1, why: 1, can: 1, could: 1, my: 1, i: 1, me: 1, we: 1, with: 1, about: 1, this: 1, that: 1, there: 1, happens: 1, happen: 1, show: 1, find: 1 };
+  var q = $('#q'), qres = $('#qres'), qsel = -1, qitems = [];
+  function words(s) { return s.toLowerCase().split(/[^a-z0-9@_./-]+/).filter(function (w) { return w && !STOP[w]; }).map(function (w) { return w.length > 4 ? w.replace(/(ing|es|s)$/, '') : w; }); }
+  function searchIndex() {
+    var out = [];
+    N.forEach(function (n) { out.push({ type: kindLabel(n.kind), label: n.label, desc: n.human_sees || n.does, hay: (n.label + ' ' + n.id + ' ' + n.does + ' ' + n.human_sees + ' ' + n.kind).toLowerCase(), go: function () { showNode(n.id, true); } }); });
+    TRIGGERS.forEach(function (t) { out.push({ type: 'What happens when', label: t.label, desc: t.outcome, hay: (t.label + ' ' + t.outcome + ' happens when trigger event').toLowerCase(), go: function () { showTab('triggers'); startTrace(t); } }); });
+    LOOPS.forEach(function (l) {
+      var extra = l.type === 'reinforcing' ? ' runaway run away grow growth spiral snowball positive feedback reinforcing' : ' balancing correct stabilize brake negative feedback';
+      if (l.stability === 'unstable') extra += ' unstable risk broken runaway';
+      out.push({ type: typeWord(l) + ' loop', label: l.label, desc: stabWord(l) + '. ' + firstSentence(l.story), hay: (l.id + ' ' + l.label + ' ' + l.story + ' ' + l.why + ' loop feedback ' + l.stability + (l.unmeasured ? ' unmeasured not measured' : '') + extra).toLowerCase(), go: function () { showTab('loops'); selectLoop(l.id); } });
+    });
+    GAPS.forEach(function (g) { out.push({ type: 'Gap', label: g.title, desc: g.detail, hay: (g.title + ' ' + g.detail + ' gap problem missing ' + g.kind + (DRIFT_KINDS[g.kind] ? ' drift' : '')).toLowerCase(), go: function () { showTab('gaps'); if (g.nodes.length) selectGap(g.i); } }); });
+    SETPOINTS.forEach(function (sp) {
+      var extra = sp.holds === 'no' ? ' drift broken fails failing not hold off target' : sp.holds === 'unknown' ? ' drift unmeasured unknown not measured' : ' holds working met';
+      out.push({ type: 'Setpoint, ' + HOLDS[sp.holds].toLowerCase(), label: sp.intent, desc: (sp.trigger ? 'When: ' : 'Part: ') + aboutLabel(sp), hay: (sp.id + ' ' + sp.intent + ' ' + sp.measure + ' ' + sp.why + ' ' + aboutLabel(sp) + ' setpoint intent done goal meant should ' + sp.status + extra).toLowerCase(), go: function () { showTab('drift'); selectSetpoint(sp.id); } });
+    });
+    GLOSSARY.forEach(function (g) { out.push({ type: 'Name', label: g.term, desc: g.means, hay: (g.term + ' ' + g.means + ' name means same').toLowerCase(), go: function () { showTab('about'); } }); });
+    return out;
+  }
+  var SIDX = searchIndex();
+  function runSearch() {
+    var v = q.value.trim().toLowerCase();
+    if (!v) { qres.hidden = true; qitems = []; return; }
+    var ws = words(v);
+    if (!ws.length) ws = [v];
+    qitems = SIDX.map(function (x) {
+      var hits = ws.filter(function (w) { return x.hay.indexOf(w) >= 0; }).length;
+      var lab = x.label.toLowerCase(), inLabel = ws.filter(function (w) { return lab.indexOf(w) >= 0; }).length;
+      return { x: x, s: hits * 3 + inLabel * 2 + (lab.indexOf(v) >= 0 ? 4 : 0), hits: hits };
+    }).filter(function (r) { return r.hits > 0 && (ws.length < 3 || r.hits >= Math.ceil(ws.length / 2)); })
+      .sort(function (a, b) { return b.s - a.s; }).slice(0, 12).map(function (r) { return r.x; });
+    qsel = qitems.length ? 0 : -1;
+    paintResults();
+  }
+  function paintResults() {
+    qres.replaceChildren.apply(qres, qitems.length ? qitems.map(function (x, i) {
+      return h('li', { role: 'option', 'aria-selected': String(i === qsel), onmousedown: function (ev) { ev.preventDefault(); pick(i); } },
+        h('span', { class: 'rk', text: x.type }), h('span', { class: 'rl', text: x.label }), x.desc ? h('span', { class: 'rd', text: clip(firstSentence(x.desc), 140) }) : null);
+    }) : [h('li', { class: 'empty', text: 'Nothing matches. Try one word, like a part\'s name.' })]);
+    qres.hidden = false;
+  }
+  function pick(i) { var x = qitems[i]; if (!x) return; qres.hidden = true; q.blur(); x.go(); }
+  q.addEventListener('input', runSearch);
+  q.addEventListener('focus', function () { if (q.value.trim()) runSearch(); });
+  q.addEventListener('blur', function () { setTimeout(function () { qres.hidden = true; }, 120); });
+  q.addEventListener('keydown', function (ev) {
+    if (ev.key === 'ArrowDown') { qsel = Math.min(qitems.length - 1, qsel + 1); paintResults(); ev.preventDefault(); }
+    else if (ev.key === 'ArrowUp') { qsel = Math.max(0, qsel - 1); paintResults(); ev.preventDefault(); }
+    else if (ev.key === 'Enter') { pick(qsel); ev.preventDefault(); }
+    else if (ev.key === 'Escape') { qres.hidden = true; q.blur(); }
+  });
+
+  $('#tLoops').addEventListener('click', function () { setLoops(!S.loopsOn); });
+  $('#tHuman').addEventListener('click', function () { setHuman(!S.human); });
+  $('#tDrift').addEventListener('click', function () { setDrift(!S.driftOn); });
+  $('#zIn').addEventListener('click', function () { zoomBy(1.5); });
+  $('#zOut').addEventListener('click', function () { zoomBy(1 / 1.5); });
+  $('#zFit').addEventListener('click', function () { fitAll(); });
+  function zoomBy(f) {
+    if (!cy) return;
+    var z = clamp(cy.zoom() * f, cy.minZoom(), cy.maxZoom());
+    var c = { x: cy.width() / 2, y: cy.height() / 2 };
+    S.cursor = c;
+    cy.stop();
+    cy.animate({ zoom: { level: z, renderedPosition: c } }, { duration: dur(260), complete: function () { autoCheck(f > 1); } });
+  }
+  function panBy(dx, dy) { if (!cy) return; cy.stop(); cy.animate({ panBy: { x: dx, y: dy } }, { duration: dur(160) }); }
+  function stepBack() {
+    if (!$('#details').hidden) { closeDetails(); return; }
+    if (S.trace) { endTrace(); return; }
+    if (S.gapSel != null) { selectGap(S.gapSel); return; }
+    if (S.spSel) { selectSetpoint(S.spSel); return; }
+    if (S.loopSel) { selectLoop(S.loopSel); return; }
+    for (var i = S.order.length - 1; i >= 0; i--) if (S.exp.has(S.order[i])) { closeBox(S.order[i], 'tap'); return; }
+  }
+  doc.addEventListener('keydown', function (ev) {
+    var tg = ev.target;
+    if (tg && /input|textarea|select/i.test(tg.tagName)) return;
+    if (ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    var onMap = !tg || tg === doc.body || tg === $('#cy') || stage.contains(tg) && tg.tagName !== 'BUTTON';
+    if (ev.key === 'Escape') stepBack();
+    else if (S.trace && ev.key === 'ArrowRight') { pause(); go(S.trace.i + 1); }
+    else if (S.trace && ev.key === 'ArrowLeft') { pause(); go(S.trace.i - 1); }
+    else if (S.trace && ev.key === ' ' && onMap) { ev.preventDefault(); togglePlay(); }
+    else if (ev.key === '/') { ev.preventDefault(); q.focus(); }
+    else if (ev.key === '+' || ev.key === '=') { ev.preventDefault(); zoomBy(1.4); }
+    else if (ev.key === '-' || ev.key === '_') { ev.preventDefault(); zoomBy(1 / 1.4); }
+    else if (ev.key === '0') { ev.preventDefault(); fitAll(); }
+    else if (onMap && /^Arrow/.test(ev.key)) {
+      ev.preventDefault();
+      var s = 90; panBy(ev.key === 'ArrowLeft' ? s : ev.key === 'ArrowRight' ? -s : 0, ev.key === 'ArrowUp' ? s : ev.key === 'ArrowDown' ? -s : 0);
+    }
+  });
+
+  // ---------------------------------------------------------------- tooltip
+  var tip = $('#tip');
+  function hideTip() { tip.hidden = true; }
+  function showTip(evt) {
+    if (matchMedia('(hover: none)').matches) return;
+    var t = evt.target, html = [];
+    if (t.isNode()) {
+      if (t.hasClass('dbadge')) {
+        var ds = driftAtReps(S.exp).get(t.data('at')) || [];
+        html = [h('b', { text: ds.length + ' drift item' + (ds.length === 1 ? '' : 's') + ' at ' + N.get(t.data('at')).label }),
+          h('ul', null, ds.slice(0, 6).map(function (d) { return h('li', { text: (d.sp ? d.sp.id + ' ' + HOLDS[d.sp.holds].toLowerCase() + ': ' : GAP_KIND_WORD[d.gap.kind] + ': ') + clip(d.label, 80) }); })),
+          ds.length > 6 ? '+' + (ds.length - 6) + ' more; click for the list' : 'Click the part for the list'];
+      } else if (t.hasClass('lbadge')) {
+        var l = loopById(t.data('loop'));
+        if (l) html = [h('b', { text: typeWord(l) + ' loop: ' + l.label + ' (' + stabWord(l) + ')' }), firstSentence(l.story)];
+        else {
+          var at = t.data('at'), ls = LOOPS.filter(function (x) { return x.nodes.some(function (y) { return rep(y, S.exp) === at; }); });
+          html = [h('b', { text: ls.length + (ls.length === 1 ? ' loop passes through ' : ' loops pass through ') + N.get(at).label }), h('ul', null, ls.map(function (x) { return h('li', { text: (x.type === 'reinforcing' ? 'R: ' : 'B: ') + x.label + ' (' + stabWord(x) + ')' }); })), 'Pick one in the Loops list to draw it.'];
+        }
+      } else if (t.hasClass('mn')) {
+        var n = N.get(t.data('mid'));
+        var dn = S.driftOn ? (driftAtReps(S.exp).get(n.id) || []).length : 0;
+        html = [h('b', { text: n.label }), hasSees(n) ? h('span', { class: 'sees', text: 'People see: ' + firstSentence(n.human_sees) }) : null, firstSentence(n.does) || kindLabel(n.kind),
+          dn ? h('span', { class: 'sees', text: dn + ' drift item' + (dn === 1 ? '' : 's') + ' pass through here; click for the list' }) : null,
+          isC(n.id) ? h('span', { class: 'sees', text: t.hasClass('collapsed') ? '(click to open)' : '(click the title to close)' }) : null];
+      } else return;
+    } else if (t.hasClass('me')) {
+      var m = t.data('members') || [];
+      if (m.length === 1) { var e = E.get(m[0]); html = [h('b', { text: e.label || (EDGE_KINDS[e.kind] || {}).label || e.kind }), N.get(e.from).label + ' → ' + N.get(e.to).label]; }
+      else html = [h('b', { text: m.length + ' connections' }), h('ul', null, m.slice(0, 6).map(function (x) { var e = E.get(x); return h('li', { text: e.label + ' (' + N.get(e.from).label + ' → ' + N.get(e.to).label + ')' }); })), m.length > 6 ? '+' + (m.length - 6) + ' more; click to list them all' : 'Click to list them with evidence'];
+    } else if (t.hasClass('loop')) { var l2 = loopById(t.data('loop')); if (!l2) return; html = [h('b', { text: typeWord(l2) + ' loop: ' + l2.label }), firstSentence(l2.story)]; }
+    else return;
+    fill(tip, html);
+    var p = evt.renderedPosition || { x: 0, y: 0 };
+    tip.hidden = false;
+    var x = Math.min(p.x + 14, stage.clientWidth - tip.offsetWidth - 8), y = p.y + 16;
+    if (y + tip.offsetHeight > stage.clientHeight - 8) y = p.y - tip.offsetHeight - 12;
+    tip.style.left = Math.max(8, x) + 'px'; tip.style.top = Math.max(8, y) + 'px';
+  }
+
+  // ---------------------------------------------------------------- header
+  $('#mname').textContent = str(META.name) || 'System map';
+  $('#mscope').textContent = str(META.scope);
+  $('#mscope').title = str(META.scope);
+  $('#asof').textContent = str(META.as_of) || 'undated';
+  // Last mapped: meta.mapped_at (UTC) when the model has it, else the as_of date alone; shown as written, never
+  // through the reader's locale, so every viewer sees the same words
+  (function () {
+    var at = str(META.mapped_at), mt = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})(:\d{2})?Z$/.exec(at), t = $('#mapped');
+    t.textContent = mt ? mt[1] + ' ' + mt[2] + ' UTC' : (str(META.as_of) ? str(META.as_of) + ' (date only)' : 'not recorded');
+    if (mt) t.setAttribute('datetime', at);
+    // the source commits: meta.commits when present, else each "owner/repo @ sha" line in meta.sources
+    var cs = arr(META.commits).filter(function (c) { return c && c.repo && c.commit; }).map(function (c) { return { repo: str(c.repo), commit: str(c.commit) }; });
+    if (!cs.length) arr(META.sources).forEach(function (s) { var m = /^([\w.-]+\/[\w.-]+)\s*@\s*([0-9a-f]{7,40})\b/.exec(str(s)); if (m) cs.push({ repo: m[1], commit: m[2] }); });
+    var box = $('#commits');
+    if (!cs.length) { box.textContent = 'Source commits not recorded'; return; }
+    fill(box, [document.createTextNode('Read from ')].concat([].concat.apply([], cs.map(function (c, i) {
+      return [i ? document.createTextNode(i === cs.length - 1 ? (cs.length > 2 ? ', and ' : ' and ') : ', ') : null,
+        h('span', { title: c.repo + ' @ ' + c.commit, text: c.repo + ' @ ' }), h('code', { title: c.commit, text: c.commit.slice(0, 7) })];
+    })).filter(Boolean)));
+  })();
+  $('#counts').textContent = N.size + ' parts, ' + EDGES.length + ' connections';
+  // a model with no setpoints has nothing to compare the map with, so the Done vs actual lens stays hidden
+  $('#tab-drift').hidden = !SETPOINTS.length;
+  $('#tDrift').hidden = !SETPOINTS.length;
+  renderLists(); renderKey(); renderAbout(); renderHint();
+
+  // ---------------------------------------------------------------- boot
+  window.__sysmap = {
+    ready: false, state: S,
+    startTrace: function (id) { var t = TRIGGERS.filter(function (x) { return x.id === id; })[0]; return t ? startTrace(t) : Promise.resolve(); },
+    selectLoop: selectLoop, selectGap: selectGap, showNode: showNode, setHuman: setHuman, setLoops: setLoops, fitAll: fitAll,
+    selectSetpoint: selectSetpoint, setDrift: setDrift, drift: function () { return DRIFT.map(function (d) { return { key: d.key, sev: d.sev, nodes: Array.from(d.nodes), edges: Array.from(d.edges) }; }); },
+    openBox: openBox, closeBox: closeBox, setFloor: setFloor, go: function (i) { pause(); go(i); }, setSheet: setSheet
+  };
+  function msg(text) { var m = $('#stageMsg'); m.textContent = text; m.hidden = false; }
+  if (!N.size) { msg('This model has no parts yet. Add nodes to the model and rebuild.'); window.__sysmap.ready = true; return; }
+  if (typeof window.cytoscape !== 'function') { msg('The map library did not load, so the canvas is empty. The index still works.'); window.__sysmap.ready = true; return; }
+
+  TARGET = clamp(stage.clientWidth / Math.max(1, stage.clientHeight), 0.6, 2.2);
+  if (typeof window.ELK === 'function') ELK_INST = new ELK();
+  else problems.push('The layout library did not load; a simple grid was used.');
+
+  var els = [];
+  N.forEach(function (n) {
+    var d = depth(n.id), c = isC(n.id);
+    var cs = c ? closedSize(n.id) : { w: LEAF_W, h: LEAF_H };
+    var data = { id: nid(n.id), mid: n.id, label: n.label, d: d, w: cs.w, h: cs.h, tmw: cs.w - (c ? 26 : 22), fs: c ? BOX_F : LEAF_F };
+    if (c) { data.clabel = COUNT.get(n.id); data.hlabel = HLABEL.get(n.id); }
+    els.push({ group: 'nodes', data: data, position: { x: 0, y: 0 }, classes: ['mn', c ? 'c collapsed d' + Math.min(d, HEAD.length - 1) : 'leaf', 'k-' + safe(n.kind), 'st-' + safe(n.status), n.unmeasured ? 'um' : ''].join(' ').trim() });
+  });
+  cy = window.cytoscape({
+    container: $('#cy'), elements: els, style: buildStyle(), layout: { name: 'preset' },
+    minZoom: 0.02, maxZoom: 3, boxSelectionEnabled: false, autoungrabify: true, autounselectify: true,
+    pixelRatio: 'auto', textureOnViewport: false, motionBlur: false
+  });
+  window.__sysmap.cy = cy;
+  function firstLayout() {
+    return layoutFor(computeExpanded()).catch(function (err) {
+      problems.push('Automatic layout failed (' + err.message + '); a simple grid was used.');
+      ELK_INST = null; LCACHE.clear(); SUB.clear();
+      return layoutFor(computeExpanded());
+    });
+  }
+  firstLayout().then(function (pos) {
+    applyLayout(pos, computeExpanded());
+    applyFonts();
+    fitAll(true);
+    S.lastZoom = cy.zoom();
+    cy.on('viewport', onViewport);
+    onViewport();
+    var box = $('#cy');
+    box.addEventListener('wheel', function (ev) {
+      var r = box.getBoundingClientRect();
+      S.cursor = { x: ev.clientX - r.left, y: ev.clientY - r.top };
+      if (cy.animated()) cy.stop();
+      if (ev.deltaY) setTimeout(function () { autoCheck(ev.deltaY < 0); }, 0);
+    }, { passive: true, capture: true });
+    var pinch = 0;
+    box.addEventListener('touchmove', function (ev) {
+      if (ev.touches.length < 2) { pinch = 0; return; }
+      var r = box.getBoundingClientRect(), a = ev.touches[0], b = ev.touches[1];
+      S.cursor = { x: (a.clientX + b.clientX) / 2 - r.left, y: (a.clientY + b.clientY) / 2 - r.top };
+      var d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+      if (pinch && Math.abs(d - pinch) > 2) setTimeout(function (dirIn) { autoCheck(dirIn); }, 0, d > pinch);
+      pinch = d;
+    }, { passive: true, capture: true });
+    box.addEventListener('touchend', function () { pinch = 0; }, { passive: true });
+    cy.on('tap', function (evt) {
+      var t = evt.target;
+      if (t === cy) { hideTip(); if (!$('#details').hidden) closeDetails(); return; }
+      if (t.isNode && t.isNode()) {
+        if (t.hasClass('lbadge') || t.hasClass('dbadge')) { if (t.data('at')) showNode(t.data('at')); return; }
+        if (!t.hasClass('mn')) return;
+        var id = t.data('mid');
+        if (isC(id) && t.hasClass('collapsed')) { S.selected = id; S.selectedEdge = null; showDetailsCard(); openBox(id, 'tap').then(function () { if (S.selected === id) renderDetails(); }); return; }
+        if (isC(id)) {
+          // an open box: its title band closes it, the rest of it selects it
+          var bb = t.boundingBox({ includeLabels: false }), band = head(depth(id)).pad;
+          if (evt.position && evt.position.y < bb.y1 + band) { closeBox(id, 'tap'); return; }
+        }
+        showNode(id, false);
+      } else if (t.isEdge && t.isEdge()) {
+        if (t.hasClass('loop')) { showTab('loops'); return; }
+        showEdge(t);
+      }
+    });
+    cy.on('mouseover', 'node, edge', showTip);
+    cy.on('mouseout', 'node, edge', hideTip);
+    box.addEventListener('mouseleave', hideTip);
+    if (window.ResizeObserver) new ResizeObserver(function () { if (cy) { cy.resize(); onViewport(); } }).observe($('#cy'));
+    var restyle = function () { if (cy) { cy.style(buildStyle()); applyFonts(); } };
+    if (window.matchMedia) {
+      var mq = matchMedia('(prefers-color-scheme: dark)'); if (mq.addEventListener) mq.addEventListener('change', restyle);
+      var pq = matchMedia('(max-width: 760px)'); if (pq.addEventListener) pq.addEventListener('change', function () { renderHint(); renderLens(); });
+    }
+    new MutationObserver(restyle).observe(root, { attributes: true, attributeFilter: ['data-theme', 'class'] });
+    if (doc.fonts && doc.fonts.load) {
+      // the canvas caches label sizes, so once the font arrives, nudge every size to force a re-measure
+      Promise.all(['500 16px "Barlow Condensed"', '600 16px "Barlow Condensed"', '700 16px "Barlow Condensed"'].map(function (f) { return doc.fonts.load(f).catch(function () {}); }))
+        .then(function () { return doc.fonts.ready; })
+        .then(function () { FONT = '"Barlow Condensed", "Arial Narrow", Arial, sans-serif'; restyle(); drawOverlays(); declutter(); });
+    }
+    renderAbout();
+    window.__sysmap.ready = true;
+    // lay out the deeper levels while idle, so the Detail buttons answer at once
+    var idle = window.requestIdleCallback || function (f) { return setTimeout(f, 400); };
+    idle(function () {
+      var saved = { floor: S.floor, open: S.open, shut: S.shut, trace: S.trace, loopSel: S.loopSel, gapSel: S.gapSel, spSel: S.spSel };
+      var jobs = [];
+      for (var d = 1; d < LEVEL_N.length; d++) {
+        S.floor = d; S.open = new Set(); S.shut = new Set(); S.trace = null; S.loopSel = null; S.gapSel = null; S.spSel = null;
+        jobs.push(computeExpanded());
+      }
+      S.floor = saved.floor; S.open = saved.open; S.shut = saved.shut; S.trace = saved.trace; S.loopSel = saved.loopSel; S.gapSel = saved.gapSel; S.spSel = saved.spSel;
+      jobs.reduce(function (p, exp) { return p.then(function () { return layoutFor(exp); }); }, Promise.resolve()).catch(function () {});
+    });
+  }).catch(function (err) {
+    msg('The map could not be drawn: ' + err.message + '. The index still works.');
+    window.__sysmap.ready = true;
+    window.__sysmap.error = String(err && err.stack || err);
+  });
+})();
+</script>
