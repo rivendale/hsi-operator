@@ -71,11 +71,17 @@ jobs:
       # waru.edu, which sits behind a bot challenge and answered 403 to the runner on
       # main (run 36590433197, 2026-09-29) after passing on the PR run. A human browser
       # still gets the page; a check that flips on a host's bot rules is not a link check.
+      # Second exclusion, 2026-10-02: github.com answered 503 to every rivendale blob link on
+      # three consecutive attempts of PR #47's run (37017232142) after the same links passed
+      # minutes earlier. Links between rivendale repos are what the `siblings` job checks, and
+      # links inside this repo are relative paths lychee reads from disk, so excluding the
+      # absolute github.com/rivendale form loses no coverage the other checks do not hold.
       - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8  # v2.9.0
         with:
           args: >-
             --verbose --no-progress
             --exclude '^https?://(www\.)?(dau|waru)\.edu/'
+            --exclude '^https://github\.com/rivendale/'
             './**/*.md' './**/*.html' './**/*.rst'
 
   # This repo is the hub a person points an agent at, and the siblings are maintained
