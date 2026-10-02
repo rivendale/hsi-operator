@@ -12,6 +12,15 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **Every merge re-ran the full eval job on main, on content its pull request had just
+  passed: 14 of the last 40 runs (2026-09-26 to 10-02), and a superseded push kept running
+  beside its replacement.** `evals.yml` now cancels an outdated run on the same branch, and
+  after a merge it skips `trigger` only when it can prove the merged tree is the one a pull
+  request run passed. The PR run records that tree as the `evals/tested-tree` commit status;
+  a direct push, a fork PR, a base that moved or an API error cannot prove it, so those run
+  everything as before. `siblings` always runs after a merge, because the sibling repos are
+  inputs this tree does not pin.
+
 - **An operator lost track of what their own live app did: which jobs ran with nobody
   watching, where an output fed back into its own input, and which promised notices never
   reached a person. Nothing in this repo could map a system, and a diagram drawn by a model
