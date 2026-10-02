@@ -103,7 +103,9 @@ jobs:
   # passed. Fork PRs cannot write statuses; the post-merge run then simply runs everything.
   record-tested-tree:
     needs: trigger
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    # always() plus an explicit success test: without it, the skipped already-tested job two
+    # links up propagates its skip down the needs chain and this job never runs.
+    if: always() && needs.trigger.result == 'success' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     permissions:
       statuses: write
