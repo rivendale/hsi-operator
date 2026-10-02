@@ -6,7 +6,25 @@ Agents are good at producing things and bad at knowing whether anyone wanted the
 is the other half: **surface only what genuinely needs a person, and find out what "done"
 means before building.**
 
-Three skills. The first has two doors:
+## Start here
+
+This is the one repo to point an agent at. Give it the link and say "read AGENTS.md":
+`https://github.com/rivendale/hsi-operator`. It routes to the sibling repo the task needs.
+Each sibling is maintained separately and links back here.
+
+| when the task is | read |
+|---|---|
+| keeping a person at the strategic level of agent work: what needs them, what done means | this repo |
+| data that may never reach a hosted model; local models and runtimes, private search, finding personal information | [local-ai](https://github.com/rivendale/local-ai) |
+| building from open source instead of from scratch; what a license lets you reuse | [opensource](https://github.com/rivendale/opensource) |
+| running services on your own machines: WSL, systemd user services, networking, sync and backup, alerting | [homelab](https://github.com/rivendale/homelab) |
+
+The same facts for a program are in [`repos.json`](repos.json). `evals/siblings/` fails CI when
+this page or `AGENTS.md` stops linking a sibling, or a sibling stops linking back.
+
+## Skills
+
+Four skills. The first has two doors:
 
 **`hsi-operator`**
 - **`how can I help`** — the 3 things that most need you, each as an answerable question
@@ -33,6 +51,31 @@ detail **out** rather than summarizing it **away**. A summary is a pointer, not 
 drops the file path, the exact error and the number, and it drops them silently. Includes the
 gauge rule that prompted it — check the actual context meter, not a token budget, and act at 80%
 rather than 95%.
+
+**`system-map`**: when you have lost track of how a system actually works, map it. One
+app, many repos, or the infrastructure under them; a web app, a game or an operating
+system. It finds every trigger first (user actions, webhooks, schedules, queues, inbound
+email, agent tools, outside updates), then follows each one through the parts and stores
+it touches to what a person sees at the end. It also finds the feedback loops and says
+which hold steady and which are running away. The output is a model where every box,
+arrow and loop cites a file and line or a dated live check, and one HTML map you can zoom
+from the whole system of systems down to a single route, play a trigger step by step on, and
+overlay with loops.
+
+A map is a measurement, so it is half of a loop. Door 2's setpoint says what the system
+should do, the map measures what it does, and the difference becomes drift: built but
+never intended, intended but missing, or running away. `sysmap items` turns drift into
+DECIDE items that `hsi` ranks with everything else, and re-mapping after a change is the
+feedback.
+
+```
+sysmap check system-model.json --src owner/repo=PATH   # refuses uncited, dangling or self-contradicting maps
+sysmap render system-model.json -o system-map.html     # the zoomable map, one file
+sysmap render system-model.json -o map.html --vendor-dir DIR  # same, with no CDN request
+sysmap items system-model.json > drift-items.json      # drift as questions for Door 1
+sysmap diff old.json new.json                          # what left, first
+sysmap selftest                                        # proves check still refuses
+```
 
 ## Why three
 
@@ -67,16 +110,29 @@ changes what your agent does with no review on your machine. The installer copie
 so a later `git pull` in your clone changes nothing already installed; to move to a newer
 commit, review it, check it out, and run the same install again.
 
-Or track `main`, all three:
+Or track `main`, all four:
 
 ```
 npx skills add rivendale/hsi-operator --skill '*' -g -a claude-code
 ```
 
-Either way, one of them: `--skill hsi-operator`, `--skill repo-triage`, `--skill context-steward`.
+Either way, one of them: `--skill hsi-operator`, `--skill repo-triage`, `--skill context-steward`,
+`--skill system-map`.
+
+Or, in Claude Code, as a plugin from the same pinned clone:
+
+```
+claude plugin marketplace add "$PWD"
+claude plugin install hsi-operator@rivendale
+```
+
+Claude Code reads a plugin from a marketplace added as a local directory in place, so here the
+checkout is the pin: moving it changes what loads at the next session start, which the `npx`
+copy above does not do. Adding the marketplace as `rivendale/hsi-operator` instead tracks
+`main`: each `claude plugin update hsi-operator@rivendale` takes whatever `main` holds.
 
 Or read the `SKILL.md` you want and keep the file — each skill is one page of prose, and
-the prose is the skill. `bin/hsi` and `bin/triage` are scripts **inside** the skills, not
+the prose is the skill. `bin/hsi`, `bin/triage` and `bin/sysmap` are scripts **inside** the skills, not
 commands on your PATH: after installing they sit at `~/.claude/skills/<skill>/bin/`.
 
 ## The contract
@@ -141,6 +197,12 @@ has no ledger line yet.
   `hsi answered --use FILE` records a real answer, and after fourteen days of silence the
   board is replaced by a single line saying nobody is using this. It cannot make the tool
   useful; it can stop the tool from being quietly useless.
+- **`sysmap check` cannot tell whether a citation supports its claim.** It refuses a map
+  with missing evidence, dangling references, a loop type that contradicts its own signs, a
+  secret file cited or a credential-shaped string, and with `--src` a cited line that does
+  not exist. Whether the line says what the map claims is still read by a second agent or
+  a person. Static reading also misses routes built from config, feature flags and dynamic
+  dispatch; a map says what it did not trace.
 
 ## The working agreement
 
@@ -206,6 +268,13 @@ of L0 live in `skills/hsi-operator/references/hsi-se.md`. Steal patterns; do not
 The timeline's lane per actor, with a kind on every event, is an idea from
 [microsoft/TinyTroupe](https://github.com/microsoft/TinyTroupe) (MIT), whose simulations print
 each agent's stream with its action kind. We took the idea; no code.
+
+The system map borrows its zoom levels from the C4 model and Backstage's catalog kinds,
+its trigger vocabulary from event storming, its loop notation from causal loop diagrams,
+and its control-and-feedback reading from STPA. The pattern of an agent writing a typed
+model that a validator checks before anything is drawn is from
+[tt-a1i/archify](https://github.com/tt-a1i/archify) (MIT), and the step-by-step flow over
+a zoomable diagram is IcePanel's interaction. We took the ideas; no code.
 
 ## License
 

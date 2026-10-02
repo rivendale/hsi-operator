@@ -1,0 +1,44 @@
+{
+  "about": "Routing facts for agents: the sibling repos this hub knows, what each is for, and when to read it. Each is maintained separately; read the one the task needs and link its rules rather than restating them. Pinned commits live only in .claude-plugin/marketplace.json. Checked by evals/siblings/run.py.",
+  "hub": {
+    "name": "hsi-operator",
+    "url": "https://github.com/rivendale/hsi-operator",
+    "start": "AGENTS.md"
+  },
+  "repos": [
+    {
+      "name": "local-ai",
+      "url": "https://github.com/rivendale/local-ai",
+      "start": "README.md",
+      "purpose": "Run AI on your own hardware so private information never leaves the machine: open models and runtimes, a small local classifier, private document search, and tools for finding and removing personal information.",
+      "read_when": [
+        "data may never reach a hosted model",
+        "choosing a local model or runtime for the hardware you have",
+        "searching your own documents privately",
+        "finding or redacting personal information before a model sees it"
+      ]
+    },
+    {
+      "name": "opensource",
+      "url": "https://github.com/rivendale/opensource",
+      "start": "README.md",
+      "purpose": "Open-source projects to build on instead of starting from scratch, for games and for software beyond games, each with its license read from GitHub and a plain rule for what you may reuse.",
+      "read_when": [
+        "starting a game or a tool from existing open source",
+        "deciding what a project's license lets you copy",
+        "looking for a self-hosted or open-source tool before building one"
+      ]
+    },
+    {
+      "name": "homelab",
+      "url": "https://github.com/rivendale/homelab",
+      "start": "README.md",
+      "purpose": "Practice from running a small home lab, each rule with the failure behind it and a check you can run: WSL, systemd user services, networking, sync and backup, alerting.",
+      "read_when": [
+        "running services on your own machines",
+        "a service or check reports healthy while doing nothing",
+        "setting up alerting, backup or remote access at home"
+      ]
+    }
+  ]
+}

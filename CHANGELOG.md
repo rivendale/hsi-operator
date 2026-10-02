@@ -12,6 +12,46 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **An operator lost track of what their own live app did: which jobs ran with nobody
+  watching, where an output fed back into its own input, and which promised notices never
+  reached a person. Nothing in this repo could map a system, and a diagram drawn by a model
+  from a vague prompt invents boundaries in exactly the places nobody checks.** New
+  `skills/system-map/`: triggers first, then components, stores, flows, human touchpoints
+  and feedback loops, every claim cited to a file and line or a dated live check, rendered
+  as one zoomable HTML map. The map is the measurement half of the loop Door 2 already
+  sets: drift between setpoint and map becomes DECIDE items for Door 1 via `sysmap items`.
+  `bin/sysmap check` refuses an uncited, dangling or self-contradicting map, a cited secret
+  file and a credential-shaped string, and with `--src` a cited line that does not exist.
+  `sysmap render --vendor-dir` builds a page that makes no CDN request, and refuses a
+  library whose local copy does not match its pinned hash. `sysmap selftest` proves each
+  refusal and now runs in CI. The schema's own example is the selftest's input, so the
+  documented contract cannot drift from the checked one.
+
+- **The repo meant to be the one a person points an agent at named one of its three sibling
+  repos, once, inside a docs page, and no sibling linked back: an agent sent here never learned
+  that local-ai or homelab existed, and a reader who landed on a sibling never found the hub.**
+  `README.md` and `AGENTS.md` now open with a "start here" table saying what each sibling is
+  for and when to read it, and `repos.json` holds the same routing facts for a program.
+  `evals/siblings/run.py` fails when either page stops linking a sibling, when a marketplace
+  entry for a sibling has no 40-hex `sha` or its description drifts from `repos.json`, and,
+  given the siblings' checkouts, when a sibling's `README.md` or `AGENTS.md` does not link
+  back here within its first 12 lines; `--selftest` proves each of its 19 refusals and 3
+  passing verdicts. A new `siblings` CI job clones each sibling and runs both. The check lives
+  under `evals/`, not a top-level `bin/`, because this repo is its own plugin root and a
+  plugin's `bin/` joins the Bash tool's `PATH` while the plugin is enabled.
+
+- **`.claude-plugin/plugin.json` set `"version": "0.1.0"` in its first commit and never changed
+  it, so anyone who installed the plugin through its marketplace stayed on that first copy
+  through every later commit: Claude Code takes the manifest's version first and treats an
+  unchanged version as no update.** Measured from a clean home directory against a copy of
+  this repo: after a new commit to a skill, `claude plugin update hsi-operator@rivendale`
+  printed `hsi-operator is already at the latest version (0.1.0).` and the installed copy
+  lacked the change. `version` is removed, so the version is the commit, which is what the
+  pin rule in `AGENTS.md` already asks a reader to review; `evals/siblings/run.py` refuses a
+  `version` in `plugin.json` or in any marketplace entry. `README.md` gains the plugin install
+  from a pinned clone. Documented behavior:
+  [plugin versions](https://code.claude.com/docs/en/plugins/loading#versions-and-updates).
+
 - **The starter told an agent in a code repo to make the smallest change, and nothing about
   where logic belongs: a refactor could ride in the same commit as a behavior change, a
   second copy of a price rule or model name could be written beside the first, and a rule

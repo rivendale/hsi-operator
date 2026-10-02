@@ -1,0 +1,17 @@
+{
+  "skill": "system-map",
+  "how_these_were_written": "From how an operator actually asks after losing the thread of their own system: 'I forgot what it does', 'draw me how it fits together', 'what happens when someone pays'. 'explain this codebase like a picture' is kept and marked non-lexical: a person says it, and no honest description contains those words. The near-misses share real vocabulary with this description and belong elsewhere: adopting a diagram library (repo-triage), defining done for a map before building it (hsi-operator Door 2), saving architecture notes before compaction (context-steward), and fixing a webhook bug, which is code work and no skill.",
+  "cases": [
+    {"id": "lost-track", "prompt": "I've lost track of what our app actually does, can you map how it all works", "should_trigger": true},
+    {"id": "zoomable-canvas", "prompt": "build me a zoomable canvas of our architecture across these repos", "should_trigger": true},
+    {"id": "what-happens-when", "prompt": "what happens step by step when a user signs up and then a payment webhook fires", "should_trigger": true},
+    {"id": "feedback-loops", "prompt": "which feedback loops in this system are running away and which hold steady", "should_trigger": true},
+    {"id": "infra-overview", "prompt": "give me an interactive map of how our services and infrastructure connect", "should_trigger": true},
+    {"id": "game-flow", "prompt": "map how our game works from a player's input to what they see", "should_trigger": true},
+    {"id": "like-a-picture", "prompt": "explain this codebase to me like a picture", "should_trigger": true, "lexical": false},
+    {"id": "near-diagram-library", "prompt": "is this diagram library worth adopting as a dependency", "should_trigger": false},
+    {"id": "near-done-for-map", "prompt": "before we build the map, what does done mean for it", "should_trigger": false},
+    {"id": "near-compaction", "prompt": "save the architecture notes before the context window is compacted", "should_trigger": false},
+    {"id": "near-fix-webhook", "prompt": "fix the bug in the webhook handler so the test passes", "should_trigger": false}
+  ]
+}

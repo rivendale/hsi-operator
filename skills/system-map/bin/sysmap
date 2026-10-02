@@ -1,0 +1,1204 @@
+#!/usr/bin/env python3
+"""system-map's checker and helpers. Standard library only: no network, no model.
+
+    sysmap check MODEL.json [--src owner/repo=DIR ...] [--strict]
+    sysmap items MODEL.json > drift-items.json   # drift and runaway loops, as hsi-operator items
+    sysmap diff OLD.json NEW.json                # what left, what arrived, what changed status
+    sysmap render MODEL.json -o MAP.html [--viewer FILE] [--title "Two To Four Words"] [--standalone]
+                 [--vendor-dir DIR]                # DIR holds the libraries: the page makes no CDN request
+    sysmap selftest                              # prove check still refuses what it must
+
+The contract is references/model-schema.md. Exit codes: 0 pass, 1 refused, 2 unreadable input.
+
+WAYS A MAP LIES, written before the code; each is a FAIL unless marked WARN.
+  Omissions
+    1. A top-level section is missing, or is not a list (a map with no loops key is not a map
+       with no loops).
+    2. meta has no name, scope, as_of date or sources; a meta.mapped_at that is not a UTC time;
+       a meta.commits entry with no repo or no hex commit, or one that contradicts meta.sources.
+    3. A trigger ends with an empty human_feedback (the word "none" is a finding, a blank is not).
+  Inventions
+    4. An edge, trigger step, loop member, link or data use names an id that does not exist.
+    5. A node, edge, loop or gap has no evidence and is not marked status unknown.
+    6. An evidence entry is not a citation (path:LINE), a URL, or "live YYYY-MM-DD: ...".
+    7. A loop's stated type contradicts the signs of its own links.
+    8. With --src, a citation names a file that is missing, outside the checkout, or shorter
+       than the cited line; or no citation matched any --src prefix (the check did not run).
+  Wrong structure
+    9. Duplicate ids, including a node id reused as an edge id.
+   10. A parent that is unknown or not exactly one level up; a level-0 node with a parent; a
+       level-2 node with none; a level that is not declared.
+   11. An enum value outside the contract (kind, status, type, stability, sign).
+   12. Loop links that do not close one cycle through exactly the listed nodes.
+  Rendering with --vendor-dir (render refuses; it never writes a page that would still fetch)
+   20. A CDN script with no integrity hash: nothing proves the local copy is the same file.
+   21. No file in DIR with the script's name, or none whose hash matches the pinned integrity.
+   22. Any <script src>, <link href>, @import or url() left pointing at http(s) after vendoring.
+  Leaks
+   13. A citation that points at a secret file, or any string in one of seven common credential shapes
+       (private keys, AWS, GitHub, sk- keys, Slack, JWTs, passwords inside URLs). Not exhaustive.
+       The location is printed, never the value.
+  Weak but legal (WARN; --strict makes them fail)
+   14. A node called live with no live measurement on it or on any ancestor.
+   15. A loop called stable or unstable with no live measurement.
+   16. A loop with no links (type asserted, not computed), and loop hops that are not edges.
+   17. A trigger step that starts where no earlier step arrived.
+   18. A node with no edges and no children; data nobody reads; an orphan level-1 node.
+   19. --src checkout HEAD differs from the commit meta.sources names.
+  The controller half: setpoints (what done means) and drift
+   20. A setpoint with an empty field, a source, status or holds outside the contract, a
+       duplicate id, or an about that names no trigger and no node.
+   21. A setpoint marked confirmed that is not the operator's words, or the operator's own
+       words left proposed (a document's intent stays proposed until the operator confirms it).
+   22. A gap with no kind or a kind outside the contract; a trigger or gap that names a
+       setpoint the model does not have; a gap that names a part that does not exist.
+   23. WARN: no setpoints at all. The map is a measurement with nothing to compare against,
+       so it cannot show drift.
+"""
+import datetime
+import argparse
+import base64
+import copy
+import hashlib
+import html as htmlmod
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+SKILL = os.path.dirname(HERE)
+SCHEMA_DOC = os.path.join(SKILL, "references", "model-schema.md")
+DEFAULT_VIEWER = os.path.join(SKILL, "assets", "viewer.html")
+
+TOP = ["meta", "levels", "nodes", "edges", "triggers", "loops", "data_uses", "gaps"]
+NODE_KINDS = {"human", "ui", "service", "job", "store", "external", "agent", "queue", "channel"}
+STATUS = {"live", "partial", "dead", "unknown"}
+EDGE_KINDS = {"call", "data", "event", "webhook", "schedule", "human"}
+TRIG_KINDS = {"user_action", "event", "webhook", "schedule", "external_update"}
+LOOP_TYPES = {"balancing", "reinforcing"}
+STABILITY = {"stable", "watch", "unstable"}
+GAP_KINDS = {"unintended", "missing", "runaway", "unknown"}
+DRIFT_KINDS = ("unintended", "missing", "runaway")   # gaps that count as drift; "unknown" does not
+SP_FIELDS = ("id", "about", "intent", "measure", "source_ref", "why")
+SP_ENUMS = (("source", {"operator", "doc", "decision"}), ("status", {"proposed", "confirmed"}),
+            ("holds", {"yes", "no", "unknown"}))
+
+CITE = re.compile(r"^(?P<path>[^\s:]+):(?P<a>\d+)(?:-(?P<b>\d+))?(?:\s|$)")
+URL = re.compile(r"^https?://\S+")
+LIVE = re.compile(r"^live \d{4}-\d{2}-\d{2}: \S")
+DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+UTC_TIME = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?Z$")
+SHA = re.compile(r"^[0-9a-f]{7,40}$")
+
+SECRET_FILE = re.compile(
+    r"(^|/)(\.env(\.(?!example$|sample$|template$|dist$)[^/]+)?|id_(rsa|dsa|ecdsa|ed25519)(\.pub)?"
+    r"|[^/]*\.(pem|key|p12|pfx|jks|keystore)|credentials(\.(json|ya?ml|toml|ini|csv))?|secrets?\.(json|ya?ml|toml|env))$",
+    re.I)
+SECRET_SHAPES = [
+    ("a private key block", re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")),
+    ("an AWS access key id", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+    ("a GitHub token", re.compile(r"\b(ghp|gho|ghs|ghu|ghr)_[A-Za-z0-9]{30,}|\bgithub_pat_[A-Za-z0-9_]{30,}")),
+    ("an API key with an sk- prefix", re.compile(r"\bsk-(ant-|proj-|live_|test_)?[A-Za-z0-9_-]{24,}")),
+    ("a Slack token", re.compile(r"\bxox[abprs]-[A-Za-z0-9-]{10,}")),
+    ("a JSON web token", re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.")),
+    ("a password inside a URL", re.compile(r"\b[a-z][a-z0-9+.-]*://[^\s/:@]+:[^\s/@]+@[^\s/]+")),
+]
+
+
+class Report:
+    def __init__(self, out):
+        self.out, self.fails, self.warns = out, 0, 0
+
+    def fail(self, msg):
+        self.fails += 1
+        self.out(f"FAIL  {msg}")
+
+    def warn(self, msg):
+        self.warns += 1
+        self.out(f"WARN  {msg}")
+
+    def info(self, msg):
+        self.out(f"INFO  {msg}")
+
+
+def _list(x):
+    return x if isinstance(x, list) else []
+
+
+def _short(ids, n=6):
+    ids = list(ids)
+    return ", ".join(map(str, ids[:n])) + (f" and {len(ids) - n} more" if len(ids) > n else "")
+
+
+def evidence_form(e):
+    if not isinstance(e, str) or not e.strip():
+        return None
+    if LIVE.match(e):
+        return "live"
+    if URL.match(e):
+        return "url"
+    if CITE.match(e):
+        return "cite"
+    return None
+
+
+def walk_strings(x, path="$"):
+    if isinstance(x, str):
+        yield path, x
+    elif isinstance(x, dict):
+        for k, v in x.items():
+            yield from walk_strings(v, f"{path}.{k}")
+    elif isinstance(x, list):
+        for i, v in enumerate(x):
+            yield from walk_strings(v, f"{path}[{i}]")
+
+
+def check_evidence(r, owner, obj, status=None, cites=None):
+    ev = obj.get("evidence")
+    if ev is None:
+        ev = []
+    if not isinstance(ev, list):
+        r.fail(f"{owner}: evidence must be a list of strings, not {type(ev).__name__}")
+        return []
+    if not ev and status != "unknown":
+        r.fail(f"{owner}: no evidence and not marked status unknown")
+    forms = []
+    for e in ev:
+        f = evidence_form(e)
+        if f is None:
+            r.fail(f"{owner}: evidence {str(e)[:60]!r} is not a citation (path:LINE), a URL, "
+                   f"or 'live YYYY-MM-DD: what was run: what it showed'")
+            continue
+        forms.append(f)
+        if f == "live":
+            try:
+                datetime.date.fromisoformat(e[5:15])
+            except ValueError:
+                r.fail(f"{owner}: evidence {str(e)[:40]!r} has a date that is not a real date")
+        if f == "cite":
+            m = CITE.match(e)
+            if SECRET_FILE.search(m.group("path")):
+                r.fail(f"{owner}: cites a secret file ({os.path.basename(m.group('path'))}); "
+                       f"cite the code that reads the variable instead")
+            if cites is not None:
+                cites.append((owner, m.group("path"), int(m.group("b") or m.group("a"))))
+    return forms
+
+
+def check(m, src=None, strict=False, out=print):
+    r = Report(out)
+    if not isinstance(m, dict):
+        r.fail("the model is not a JSON object")
+        return r
+    for k in TOP:
+        if k not in m:
+            r.fail(f"missing top-level section {k!r} (write [] if it is truly empty, and say why in meta.notes)")
+        elif k != "meta" and not isinstance(m[k], list):
+            r.fail(f"{k!r} must be a list")
+    meta = m.get("meta") if isinstance(m.get("meta"), dict) else {}
+    if not isinstance(m.get("meta"), dict):
+        r.fail("meta must be an object")
+    for k in ("name", "scope"):
+        if not str(meta.get(k) or "").strip():
+            r.fail(f"meta.{k} is empty")
+    if not DATE.match(str(meta.get("as_of") or "")):
+        r.fail("meta.as_of must be YYYY-MM-DD: the day the measurements were taken")
+    if not _list(meta.get("sources")):
+        r.fail("meta.sources is empty: name each repo @ commit and each kind of live check")
+    if "mapped_at" in meta and not UTC_TIME.match(str(meta.get("mapped_at") or "")):
+        r.fail("meta.mapped_at must be a UTC time, YYYY-MM-DDTHH:MMZ: when the map was last made")
+    if "commits" in meta:
+        if not isinstance(meta["commits"], list):
+            r.fail("meta.commits must be a list of {repo, commit}")
+        for ci, cm in enumerate(_list(meta.get("commits")), 1):
+            if not isinstance(cm, dict) or not str(cm.get("repo") or "").strip() \
+                    or not SHA.match(str(cm.get("commit") or "")):
+                r.fail(f"meta.commits entry {ci} needs a repo and a hex commit of 7 to 40 characters")
+                continue
+            stated = next((s for s in _list(meta.get("sources")) if isinstance(s, str)
+                           and re.match(re.escape(cm["repo"]) + r"\s*@", s)), "")
+            sm = re.search(r"@\s*([0-9a-f]{7,40})", stated)
+            if sm and not (cm["commit"].startswith(sm.group(1)) or sm.group(1).startswith(cm["commit"])):
+                r.fail(f"meta.commits says {cm['repo']} @ {cm['commit'][:12]} but meta.sources says @ {sm.group(1)}")
+
+    levels = {lv.get("id") for lv in _list(m.get("levels")) if isinstance(lv, dict)}
+    nodes = [n for n in _list(m.get("nodes")) if isinstance(n, dict)]
+    edges = [e for e in _list(m.get("edges")) if isinstance(e, dict)]
+    triggers = [t for t in _list(m.get("triggers")) if isinstance(t, dict)]
+    loops = [lp for lp in _list(m.get("loops")) if isinstance(lp, dict)]
+    cites = []
+
+    # ids
+    seen = {}
+    for coll, items in (("node", nodes), ("edge", edges)):
+        for x in items:
+            i = x.get("id")
+            if not isinstance(i, str) or not i:
+                r.fail(f"a {coll} has no id: {json.dumps(x)[:60]}")
+                continue
+            if i in seen:
+                r.fail(f"duplicate id {i!r} ({seen[i]} and {coll}); nodes and edges share one namespace")
+            seen[i] = coll
+    for coll, items in (("trigger", triggers), ("loop", loops)):
+        ids = [x.get("id") for x in items]
+        for i in sorted({i for i in ids if ids.count(i) > 1}, key=str):
+            r.fail(f"duplicate {coll} id {i!r}")
+    N = {n["id"]: n for n in nodes if isinstance(n.get("id"), str)}
+    E = {e["id"]: e for e in edges if isinstance(e.get("id"), str)}
+    has_sp = "setpoints" in m
+    sps = [s for s in _list(m.get("setpoints")) if isinstance(s, dict)]
+    SPIDS = {s.get("id") for s in sps if isinstance(s.get("id"), str) and s.get("id")}
+    unbound = []
+
+    def sp_ref(o, v):
+        if not isinstance(v, str) or not v.strip():
+            r.fail(f"{o}: setpoint must be a setpoint id string")
+        elif has_sp and v not in SPIDS:
+            r.fail(f"{o}: setpoint {v!r} is not in setpoints")
+        elif not has_sp:
+            unbound.append(v)
+
+    # nodes
+    req = ["label", "kind", "level", "parent", "does", "human_sees", "inputs", "outputs", "status"]
+    has_l0 = any(n.get("level") == 0 for n in nodes)
+    orphans = []
+    for n in nodes:
+        o = f"node {n.get('id')!r}"
+        for k in req:
+            if k not in n:
+                r.fail(f"{o}: missing {k!r}")
+        if n.get("kind") not in NODE_KINDS:
+            r.fail(f"{o}: kind {n.get('kind')!r} is not one of {sorted(NODE_KINDS)}")
+        if n.get("status") not in STATUS:
+            r.fail(f"{o}: status {n.get('status')!r} is not one of {sorted(STATUS)}")
+        lv, p = n.get("level"), n.get("parent")
+        if lv not in levels:
+            r.fail(f"{o}: level {lv!r} is not declared in levels")
+        if not str(n.get("does") or "").strip():
+            r.fail(f"{o}: 'does' is empty")
+        if "human_sees" in n and not isinstance(n["human_sees"], str):
+            r.fail(f"{o}: human_sees must be a string, \"\" when nobody sees anything here")
+        for k in ("inputs", "outputs"):
+            if k in n and not isinstance(n[k], list):
+                r.fail(f"{o}: {k} must be a list")
+        if p is None:
+            if lv == 2:
+                r.fail(f"{o}: a level-2 component needs a parent system")
+            elif lv == 1 and has_l0:
+                orphans.append(n.get("id"))
+        elif p not in N:
+            r.fail(f"{o}: parent {p!r} does not exist")
+        elif lv == 0:
+            r.fail(f"{o}: a level-0 node cannot have a parent")
+        elif isinstance(lv, int) and N[p].get("level") != lv - 1:
+            r.fail(f"{o}: parent {p!r} is level {N[p].get('level')}, not {lv - 1}")
+        check_evidence(r, o, n, n.get("status"), cites)
+    if orphans:
+        r.warn(f"{len(orphans)} level-1 node(s) sit outside every level-0 system: {_short(orphans)}")
+
+    def ancestors(i):
+        out, guard = [], 0
+        while i in N and guard < 10:
+            out.append(i)
+            i, guard = N[i].get("parent"), guard + 1
+        return out
+
+    # edges
+    for e in edges:
+        o = f"edge {e.get('id')!r}"
+        for k in ("from", "to"):
+            if e.get(k) not in N:
+                r.fail(f"{o}: {k} {e.get(k)!r} is not a node")
+        if e.get("kind") not in EDGE_KINDS:
+            r.fail(f"{o}: kind {e.get('kind')!r} is not one of {sorted(EDGE_KINDS)}")
+        if "status" in e and e["status"] not in STATUS:
+            r.fail(f"{o}: status {e['status']!r} is not one of {sorted(STATUS)}")
+        if not str(e.get("label") or "").strip():
+            r.fail(f"{o}: label is empty")
+        if "data" not in e:
+            r.fail(f"{o}: missing 'data' (\"\" when nothing is carried)")
+        check_evidence(r, o, e, e.get("status"), cites)
+
+    # adjacency lifted through containment, for tracing loops on the canvas
+    lifted = set()
+    for e in edges:
+        for a in ancestors(e.get("from")):
+            for b in ancestors(e.get("to")):
+                lifted.add((a, b))
+
+    # triggers
+    for t in triggers:
+        o = f"trigger {t.get('id')!r}"
+        if t.get("kind") not in TRIG_KINDS:
+            r.fail(f"{o}: kind {t.get('kind')!r} is not one of {sorted(TRIG_KINDS)}")
+        if not str(t.get("label") or "").strip():
+            r.fail(f"{o}: label is empty")
+        steps = _list(t.get("steps"))
+        if not steps:
+            r.fail(f"{o}: no steps")
+        reached, jumps = set(), []
+        for i, s in enumerate(steps, 1):
+            if not isinstance(s, dict):
+                r.fail(f"{o}: step {i} is not an object")
+                continue
+            ed = E.get(s.get("edge"))
+            if ed is None:
+                r.fail(f"{o}: step {i} names edge {s.get('edge')!r}, which does not exist")
+            if not str(s.get("narration") or "").strip():
+                r.fail(f"{o}: step {i} has no narration")
+            if "evidence" in s:
+                check_evidence(r, f"{o} step {i}", s, "unknown", cites)
+            if ed is not None:
+                if i > 1 and ed.get("from") not in reached:
+                    jumps.append(i)
+                reached.update((ed.get("from"), ed.get("to")))
+        if jumps:
+            r.warn(f"{o}: step(s) {_short(jumps)} start where no earlier step arrived; "
+                   f"a time jump or a missing step, so say which in the narration")
+        if not str(t.get("outcome") or "").strip():
+            r.fail(f"{o}: outcome is empty")
+        if not str(t.get("human_feedback") or "").strip():
+            r.fail(f"{o}: human_feedback is empty; write 'none' and why, because no feedback is a finding")
+        if "setpoint" in t:
+            sp_ref(o, t["setpoint"])
+
+    # loops
+    asserted = []
+    for lp in loops:
+        o = f"loop {lp.get('id')!r}"
+        ty, st = lp.get("type"), lp.get("stability")
+        if ty not in LOOP_TYPES:
+            r.fail(f"{o}: type {ty!r} is not balancing or reinforcing")
+        if st not in STABILITY:
+            r.fail(f"{o}: stability {st!r} is not one of {sorted(STABILITY)}")
+        members = _list(lp.get("nodes"))
+        if len(members) < 2:
+            r.fail(f"{o}: a loop needs at least two nodes")
+        for x in members:
+            if x not in N:
+                r.fail(f"{o}: member {x!r} is not a node")
+        for k in ("story", "why"):
+            if not str(lp.get(k) or "").strip():
+                r.fail(f"{o}: {k} is empty")
+        if "label" in lp and not isinstance(lp["label"], str):
+            r.fail(f"{o}: label must be a string")
+        forms = check_evidence(r, o, lp, lp.get("status"), cites)
+        if st in ("stable", "unstable") and "live" not in forms:
+            r.warn(f"{o}: called {st} with no live measurement; measure it or call it watch, unmeasured")
+        links = lp.get("links")
+        if links is None:
+            asserted.append(lp.get("id"))
+            hops = list(zip(members, members[1:] + members[:1]))
+            off = [f"{a}->{b}" for a, b in hops if (a, b) not in lifted and (b, a) not in lifted]
+            if off and len(members) >= 2:
+                r.warn(f"{o}: {len(off)} of {len(hops)} hops are not edges on the map ({_short(off, 3)}); "
+                       f"the viewer cannot trace it. Add the edges or signed links")
+            continue
+        if not isinstance(links, list) or not links:
+            r.fail(f"{o}: links must be a non-empty list when present")
+            continue
+        nexts, bad = {}, False
+        for i, ln in enumerate(links, 1):
+            if not isinstance(ln, dict):
+                r.fail(f"{o}: link {i} is not an object")
+                bad = True
+                continue
+            if ln.get("from") not in members or ln.get("to") not in members:
+                r.fail(f"{o}: link {i} {ln.get('from')!r}->{ln.get('to')!r} leaves the loop's nodes")
+                bad = True
+            if ln.get("sign") not in ("+", "-"):
+                r.fail(f"{o}: link {i} sign {ln.get('sign')!r} is not '+' or '-'")
+                bad = True
+            if ln.get("from") in nexts:
+                r.fail(f"{o}: {ln.get('from')!r} has two outgoing links; a loop is one cycle")
+                bad = True
+            nexts[ln.get("from")] = ln.get("to")
+        if not bad and members:
+            cur, visited = members[0], []
+            for _ in range(len(links)):
+                visited.append(cur)
+                cur = nexts.get(cur)
+            if cur != members[0] or sorted(map(str, visited)) != sorted(map(str, members)) or len(links) != len(members):
+                r.fail(f"{o}: links do not close one cycle through exactly its nodes")
+            else:
+                neg = sum(1 for ln in links if ln.get("sign") == "-")
+                computed = "balancing" if neg % 2 else "reinforcing"
+                if ty in LOOP_TYPES and ty != computed:
+                    r.fail(f"{o}: says {ty} but its links have {neg} negative sign(s), which makes it {computed}")
+    if asserted:
+        r.warn(f"{len(asserted)} of {len(loops)} loop(s) assert their type without signed links: {_short(asserted)}")
+
+    # data uses
+    unread = []
+    for d in _list(m.get("data_uses")):
+        if not isinstance(d, dict):
+            r.fail("a data_uses entry is not an object")
+            continue
+        o = f"data use {str(d.get('data'))[:40]!r}"
+        if not str(d.get("data") or "").strip():
+            r.fail(f"{o}: data is empty")
+        for k in ("produced_by", "used_by"):
+            for x in _list(d.get(k)):
+                if x not in N:
+                    r.fail(f"{o}: {k} names {x!r}, which is not a node")
+        if not _list(d.get("used_by")):
+            unread.append(str(d.get("data"))[:40])
+    if unread:
+        r.warn(f"{len(unread)} piece(s) of data nobody reads: {_short(unread, 3)}")
+
+    # gaps
+    for g in _list(m.get("gaps")):
+        if not isinstance(g, dict):
+            r.fail("a gaps entry is not an object")
+            continue
+        o = f"gap {str(g.get('title'))[:40]!r}"
+        for k in ("title", "detail"):
+            if not str(g.get(k) or "").strip():
+                r.fail(f"{o}: {k} is empty")
+        if "kind" not in g:
+            r.fail(f"{o}: no kind; say unintended, missing, runaway or unknown, so the correction step can route it")
+        elif g["kind"] not in GAP_KINDS:
+            r.fail(f"{o}: kind {g['kind']!r} is not one of {sorted(GAP_KINDS)}")
+        if "setpoint" in g:
+            sp_ref(o, g["setpoint"])
+        if "nodes" in g:
+            if not isinstance(g["nodes"], list):
+                r.fail(f"{o}: nodes must be a list of node ids")
+            for x in _list(g.get("nodes")):
+                if x not in N:
+                    r.fail(f"{o}: nodes names {x!r}, which is not a node")
+        check_evidence(r, o, g, None, cites)
+
+    # setpoints: what done means, the reference the map is compared against
+    if has_sp and not isinstance(m.get("setpoints"), list):
+        r.fail("'setpoints' must be a list when present")
+    TIDS = {t.get("id") for t in triggers if isinstance(t.get("id"), str)}
+    seen_sp = set()
+    for s in _list(m.get("setpoints")):
+        if not isinstance(s, dict):
+            r.fail("a setpoints entry is not an object")
+            continue
+        o = f"setpoint {s.get('id')!r}"
+        for k in SP_FIELDS:
+            if not isinstance(s.get(k), str) or not s.get(k).strip():
+                r.fail(f"{o}: {k} is empty")
+        for k, allowed in SP_ENUMS:
+            if s.get(k) not in allowed:
+                r.fail(f"{o}: {k} {s.get(k)!r} is not one of {sorted(allowed)}")
+        if s.get("id") in seen_sp:
+            r.fail(f"duplicate setpoint id {s.get('id')!r}")
+        seen_sp.add(s.get("id"))
+        ab = s.get("about")
+        if isinstance(ab, str) and ab.strip() and ab not in TIDS and ab not in N:
+            r.fail(f"{o}: about {ab!r} names no trigger and no node")
+        if s.get("source") == "operator" and s.get("status") == "proposed":
+            r.fail(f"{o}: the operator's own words are confirmed by definition; mark it confirmed")
+        if s.get("status") == "confirmed" and s.get("source") in ("doc", "decision"):
+            r.fail(f"{o}: confirmed, but taken from a {s.get('source')}; a document's intent stays proposed "
+                   f"until the operator confirms it, and then the source is operator and source_ref quotes them")
+    if not has_sp or (isinstance(m.get("setpoints"), list) and not sps):
+        r.warn("no setpoints: the map measures what runs and has nothing to compare it with, so it cannot "
+               "show drift. Ask the operator what done means (hsi-operator Door 2) and record it")
+    if unbound:
+        r.warn(f"{len(unbound)} setpoint reference(s) but no setpoints section, so they cannot be checked "
+               f"or drawn: {_short(unbound)}")
+
+    # meta.glossary (optional): names that mean the same thing
+    if "glossary" in meta:
+        if not isinstance(meta["glossary"], list):
+            r.fail("meta.glossary must be a list of {term, means}")
+        for gi, gl in enumerate(_list(meta.get("glossary")), 1):
+            if not isinstance(gl, dict) or not str(gl.get("term") or "").strip() or not str(gl.get("means") or "").strip():
+                r.fail(f"meta.glossary entry {gi} needs a term and what it means")
+
+    # isolated nodes
+    touched = set()
+    for e in edges:
+        touched.update(ancestors(e.get("from")))
+        touched.update(ancestors(e.get("to")))
+    parents = {n.get("parent") for n in nodes}
+    lonely = [i for i in N if i not in touched and i not in parents]
+    if lonely:
+        r.warn(f"{len(lonely)} node(s) with no edges and no children: {_short(lonely)}")
+
+    # in code is not live
+    def measured(i):
+        return any(any(evidence_form(e) == "live" for e in _list(N[a].get("evidence"))) for a in ancestors(i))
+    live = [i for i, n in N.items() if n.get("status") == "live" and n.get("kind") != "human"]
+    code_only = [i for i in live if not measured(i)]
+    if code_only:
+        r.warn(f"{len(code_only)} of {len(live)} live node(s) have no live measurement on them or any "
+               f"ancestor; in code is not live: {_short(code_only)}")
+
+    # leaks
+    for path, s in walk_strings(m):
+        for name, rx in SECRET_SHAPES:
+            if rx.search(s):
+                r.fail(f"{path} contains what looks like {name}; remove it and rotate it if it was real")
+
+    # --src
+    if src:
+        resolved, unmatched = 0, 0
+        for owner, cpath, line in cites:
+            hit = next(((p, d) for p, d in src.items() if cpath.startswith(p.rstrip("/") + "/")), None)
+            if not hit:
+                unmatched += 1
+                continue
+            prefix, root = hit
+            rel = cpath[len(prefix.rstrip("/")) + 1:]
+            full = os.path.realpath(os.path.join(root, rel))
+            if not full.startswith(os.path.realpath(root) + os.sep):
+                r.fail(f"{owner}: citation {cpath} escapes its checkout")
+                continue
+            if not os.path.isfile(full):
+                r.fail(f"{owner}: cited file {cpath} does not exist in {root}")
+                continue
+            with open(full, "rb") as fh:
+                data = fh.read()
+            count = data.count(b"\n") + (1 if data and not data.endswith(b"\n") else 0)
+            if line > count:
+                r.fail(f"{owner}: cites {cpath}:{line}, past the end ({count} lines)")
+                continue
+            resolved += 1
+        r.info(f"citations: {len(cites)} total, {resolved} resolved under --src, "
+               f"{unmatched} under no --src prefix")
+        if cites and resolved == 0 and r.fails == 0:
+            r.fail("no citation resolved under any --src prefix, so the citation check did not run")
+        for prefix, root in src.items():
+            stated = next((s for s in _list(meta.get("sources")) if isinstance(s, str)
+                           and s.startswith(prefix.rstrip("/"))), "")
+            sm = re.search(r"@\s*([0-9a-f]{7,40})", stated)
+            try:
+                head = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"], capture_output=True,
+                                      text=True, timeout=20).stdout.strip()
+            except (OSError, subprocess.SubprocessError):
+                head = ""
+            if not sm:
+                r.info(f"meta.sources names no commit for {prefix}; cannot tell whether {root} is the mapped version")
+            elif not head:
+                r.info(f"{root} is not a git checkout; cannot compare it with {sm.group(1)}")
+            elif not head.startswith(sm.group(1)) and not sm.group(1).startswith(head):
+                r.warn(f"{prefix}: the map was built at {sm.group(1)} but {root} is at {head[:12]}; "
+                       f"citations were checked against a different version")
+
+    r.out(f"\n{len(nodes)} nodes, {len(edges)} edges, {len(triggers)} triggers, {len(loops)} loops, "
+          f"{len(_list(m.get('gaps')))} gaps, {len(sps)} setpoints checked: {r.fails} failure(s), {r.warns} warning(s)")
+    if strict and r.warns and not r.fails:
+        r.out("--strict: warnings count as failures")
+    return r
+
+
+def load(path):
+    try:
+        with open(path, encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, json.JSONDecodeError) as e:
+        print(f"sysmap: cannot read {path}: {e}", file=sys.stderr)
+        return None
+
+
+def slug(s):
+    return re.sub(r"[^a-z0-9]+", "-", str(s).lower()).strip("-")[:48] or "item"
+
+
+def _first(s):
+    return re.split(r"(?<=[.!?])\s", str(s or "").strip(), maxsplit=1)[0]
+
+
+def items(m):
+    """Drift as hsi-operator items: drift gaps, setpoints that fail or are unmeasured, unstable loops.
+
+    Drift is every gap of kind unintended, missing or runaway, plus every setpoint whose holds is
+    no or unknown. A gap that names a setpoint carries it, so that setpoint is not asked twice.
+    signal is error only when a CONFIRMED setpoint fails: a document's intent is a claim until the
+    operator says that is what done means, so a failure against it is a proposal.
+    """
+    out = []
+    sps = {s.get("id"): s for s in _list(m.get("setpoints")) if isinstance(s, dict) and s.get("id")}
+    names = {n.get("id"): n.get("label") for n in _list(m.get("nodes")) if isinstance(n, dict)}
+    names.update({x.get("id"): x.get("label") for x in _list(m.get("triggers")) if isinstance(x, dict)})
+    carried = set()
+
+    def meant(sp):
+        return str(sp.get("intent", "")).strip().rstrip(".")
+
+    def proposed_note(sp):
+        if sp.get("status") == "confirmed":
+            return ""
+        return f" That intent is only proposed (taken from a {sp.get('source')}); confirm or correct it first."
+
+    for g in _list(m.get("gaps")):
+        if not isinstance(g, dict) or g.get("kind") not in DRIFT_KINDS:
+            continue
+        k = g["kind"]
+        title = str(g.get("title", "")).rstrip(".")
+        sp = sps.get(g.get("setpoint"))
+        if sp:
+            carried.add(sp["id"])
+        per = f" by {sp['id']} ('{meant(sp)}')" if sp else ""
+        q = {
+            "unintended": f"The map shows '{title}', and no stated intent asks for it"
+                          + (f"; it cuts against {sp['id']} ('{meant(sp)}')" if sp else "")
+                          + ". Remove or change it, or keep it and write it into the intent?",
+            "missing": f"'{title}': intended{per}, but absent or broken on the map. "
+                       f"Build or fix it, shrink what done means, or drop the intent?",
+            "runaway": f"'{title}' is moving away from its target{per}. Add a limit, accept it, or change the target?",
+        }[k] + (proposed_note(sp) if sp else "")
+        failed = bool(sp) and sp.get("status") == "confirmed" and (k != "unintended" or sp.get("holds") == "no")
+        out.append({
+            "id": f"map-{slug(title)}",
+            "kind": "DECIDE",
+            "signal": "error" if failed else "proposal",
+            "question": q,
+            "why_you": "Whether to change the system or the intent depends on what you want it to do. "
+                       "The map can measure the difference; it cannot choose.",
+            "options": [],
+            "if_ignored_30d": str(g.get("detail", ""))[:240],
+            "blocks": [],
+            "reversible": "partly",
+            "cost": "a decision",
+            "deadline": None,
+            "evidence": "; ".join(_list(g.get("evidence"))[:3]) + (f" (setpoint {sp['id']})" if sp else ""),
+        })
+    for sid, sp in sps.items():
+        if sid in carried or sp.get("holds") not in ("no", "unknown"):
+            continue
+        about = names.get(sp.get("about")) or sp.get("about")
+        said = "You said" if sp.get("status") == "confirmed" else f"A {sp.get('source')} says"
+        if sp.get("holds") == "no":
+            q = (f"{said}: '{meant(sp)}' ({sid}, about {about}). It does not hold: {_first(sp.get('why'))} "
+                 f"Fix the system, change what done means, or accept the gap?")
+        else:
+            q = (f"Nobody has measured whether '{meant(sp)}' holds ({sid}, about {about}). {_first(sp.get('why'))} "
+                 f"Have it measured, accept not knowing, or drop the intent?")
+        out.append({
+            "id": f"map-sp-{slug(sid)}",
+            "kind": "DECIDE",
+            "signal": "error" if sp.get("holds") == "no" and sp.get("status") == "confirmed" else "proposal",
+            "question": q + proposed_note(sp),
+            "why_you": "Only you can say what done means. The map measures the system against it; it cannot "
+                       "decide whether the system or the intent should change.",
+            "options": [],
+            "if_ignored_30d": str(sp.get("why", ""))[:240],
+            "blocks": [],
+            "reversible": "partly",
+            "cost": "a decision",
+            "deadline": None,
+            "evidence": f"measure: {sp.get('measure', '')}; intent from: {sp.get('source_ref', '')}"[:400],
+        })
+    for lp in _list(m.get("loops")):
+        if lp.get("stability") != "unstable":
+            continue
+        story = _first(lp.get("story"))
+        if lp.get("type") == "reinforcing":
+            ask = "Add a brake (a cap, a budget, an off switch), accept the growth, or remove a part of it?"
+            why = "A brake trades something away (output, speed, cost); which trade is acceptable is your call."
+        else:
+            ask = "Its correction is not closing. Repair what measures or acts, change the target, or retire the loop?"
+            why = "Whether the target still matters, and what fixing it is worth, depends on what you want."
+        out.append({
+            "id": f"map-loop-{slug(lp.get('id'))}",
+            "kind": "DECIDE",
+            "signal": "proposal",
+            "question": f"An unstable {lp.get('type')} loop ({lp.get('id')}): {story} {ask}",
+            "why_you": why,
+            "options": [],
+            "if_ignored_30d": str(lp.get("why", ""))[:240],
+            "blocks": [],
+            "reversible": "partly",
+            "cost": "a decision",
+            "deadline": None,
+            "evidence": "; ".join(_list(lp.get("evidence"))[:3]),
+        })
+    return out
+
+
+def diff(a, b, out=print):
+    gone, new, changed = [], [], []
+    for coll, fields in (("nodes", ("status", "parent", "kind")), ("edges", ("status", "from", "to", "kind")),
+                         ("triggers", ("kind", "setpoint")), ("loops", ("type", "stability")),
+                         ("setpoints", ("holds", "status", "about"))):
+        A = {x.get("id"): x for x in _list(a.get(coll)) if isinstance(x, dict)}
+        B = {x.get("id"): x for x in _list(b.get(coll)) if isinstance(x, dict)}
+        for i in sorted(set(A) - set(B), key=str):
+            gone.append(f"GONE     {coll[:-1]} {i}: {A[i].get('label') or str(A[i].get('story') or A[i].get('intent') or '')[:60]}")
+        for i in sorted(set(B) - set(A), key=str):
+            new.append(f"NEW      {coll[:-1]} {i}: {B[i].get('label') or str(B[i].get('story') or B[i].get('intent') or '')[:60]}")
+        for i in sorted(set(A) & set(B), key=str):
+            for f in fields:
+                if A[i].get(f) != B[i].get(f):
+                    changed.append(f"CHANGED  {coll[:-1]} {i}: {f} {A[i].get(f)!r} -> {B[i].get(f)!r}")
+            if coll == "triggers":
+                sa = [s.get("edge") for s in _list(A[i].get("steps")) if isinstance(s, dict)]
+                sb = [s.get("edge") for s in _list(B[i].get("steps")) if isinstance(s, dict)]
+                if sa != sb:
+                    changed.append(f"CHANGED  trigger {i}: steps {sa} -> {sb}")
+    ga = {g.get("title") for g in _list(a.get("gaps")) if isinstance(g, dict)}
+    gb = {g.get("title") for g in _list(b.get("gaps")) if isinstance(g, dict)}
+    gone += [f"CLOSED   gap: {t}" for t in sorted(ga - gb, key=str)]
+    new += [f"OPENED   gap: {t}" for t in sorted(gb - ga, key=str)]
+    for line in gone + new + changed:
+        out(line)
+    total = len(gone) + len(new) + len(changed)
+    out(f"\n{total} change(s) from {a.get('meta', {}).get('as_of')} to {b.get('meta', {}).get('as_of')}; "
+        f"what left is listed first, because a deletion is the change nobody sees in the new map")
+    return total
+
+
+VIEWER_SLOT = re.compile(r'(<script[^>]*\bid="model"[^>]*>)(.*?)(</script>)', re.S | re.I)
+TITLE = re.compile(r"<title>.*?</title>", re.S | re.I)
+SKELETON_HEAD = (
+    '<!doctype html>\n<html lang="en">\n<head>\n<meta charset="utf-8">\n'
+    '<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">\n'
+    "<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}"
+    "body{margin:0}[hidden]{display:none!important}</style>\n")
+
+
+def render(m, viewer_text, title=None, standalone=False):
+    """Embed the model in the viewer. The viewer is an artifact body (no doctype); standalone wraps it
+    in a document so the file also opens from disk. The page title is a name of two to four words."""
+    slots = VIEWER_SLOT.findall(viewer_text)
+    if len(slots) != 1:
+        raise ValueError(f"the viewer needs exactly one <script type=\"application/json\" id=\"model\"> "
+                         f"element; found {len(slots)}")
+    payload = json.dumps(m, ensure_ascii=False, separators=(",", ":")).replace("<", "\\u003c")
+    page = VIEWER_SLOT.sub(lambda mo: mo.group(1) + payload + mo.group(3), viewer_text, count=1)
+    if title:
+        tag = "<title>" + htmlmod.escape(title) + "</title>"
+        page = TITLE.sub(lambda _: tag, page, count=1) if TITLE.search(page) else tag + "\n" + page
+    if standalone and not page.lstrip().lower().startswith("<!doctype"):
+        mo = TITLE.search(page)
+        head_title = mo.group(0) if mo else "<title>System Map</title>"
+        page = SKELETON_HEAD + head_title + "\n</head>\n<body>\n" + TITLE.sub("", page, count=1) + "\n</body>\n</html>\n"
+    return page
+
+
+CDN_SCRIPT = re.compile(r'<script\b[^>]*\bsrc="(https?://[^"]+)"[^>]*>\s*</script>', re.I)
+INTEGRITY = re.compile(r'\bintegrity="(sha256|sha384|sha512)-([A-Za-z0-9+/=]+)"')
+FONT_CSS = re.compile(r'<link\b[^>]*\bhref="https://fonts\.googleapis\.com/css[^"]*"[^>]*>', re.I)
+FONT_PRECONNECT = re.compile(r'<link\b[^>]*\brel="preconnect"[^>]*\bhref="https://fonts\.(?:googleapis|gstatic)\.com"[^>]*>\n?', re.I)
+VIEWER_NOTE = re.compile(r"<!-- system-map viewer\. Loads at view time:.*?-->", re.S)
+REMOTE = re.compile(r'<(?:script|link|img|iframe|source)\b[^>]*\b(?:src|href)="(?:https?:)?//[^"]*"'
+                    r'|@import\s+(?:url\()?["\']?(?:https?:)?//|url\(\s*["\']?(?:https?:)?//', re.I)
+
+
+def vendorize(page, vendor_dir, out_dir):
+    """Point every CDN script at a file in vendor_dir whose hash matches the script's pinned integrity, keep the
+    integrity on the local tag, and swap the Google Fonts links for vendor_dir/fonts/fonts.css (system fonts when
+    that file is absent). Raises ValueError rather than write a page that would still reach a third party."""
+    if not os.path.isdir(vendor_dir):
+        raise ValueError(f"--vendor-dir {vendor_dir} is not a directory")
+    index = {}
+    for root, _, files in os.walk(vendor_dir):
+        for f in files:
+            index.setdefault(f, []).append(os.path.join(root, f))
+
+    def rel(path):
+        return os.path.relpath(path, out_dir).replace(os.sep, "/")
+
+    def local(mo):
+        tag, url = mo.group(0), mo.group(1)
+        im = INTEGRITY.search(tag)
+        if not im:
+            raise ValueError(f"{url} has no integrity hash, so nothing proves a local copy is the same file")
+        alg, want = im.group(1), im.group(2)
+        name = url.split("?")[0].rsplit("/", 1)[-1]
+        for path in sorted(index.get(name, [])):
+            with open(path, "rb") as fh:
+                got = base64.b64encode(hashlib.new(alg, fh.read()).digest()).decode()
+            if got == want:
+                return f'<script src="{htmlmod.escape(rel(path))}" integrity="{alg}-{want}"></script>'
+        found = len(index.get(name, []))
+        raise ValueError(f"no file named {name} under {vendor_dir} matches {alg}-{want[:16]}... "
+                         f"({found} file(s) with that name checked); download it from {url} and verify it")
+
+    page = CDN_SCRIPT.sub(local, page)
+    page = FONT_PRECONNECT.sub("", page)
+    fonts = os.path.join(vendor_dir, "fonts", "fonts.css")
+    css = f'<link rel="stylesheet" href="{htmlmod.escape(rel(fonts))}">' if os.path.isfile(fonts) else ""
+    page = FONT_CSS.sub(lambda _: css, page)
+    page = VIEWER_NOTE.sub(lambda _: "<!-- system-map viewer, rendered with --vendor-dir: the libraries and fonts load "
+                           "from files beside this page, each script pinned to its integrity hash. The model is "
+                           "embedded below; the page requests nothing from any other host. -->", page, count=1)
+    left = REMOTE.search(VIEWER_SLOT.sub(lambda mo: mo.group(1) + mo.group(3), page))
+    if left:
+        raise ValueError(f"after vendoring the page still reaches another host: {left.group(0)[:120]}")
+    return page
+
+
+def example():
+    with open(SCHEMA_DOC, encoding="utf-8") as fh:
+        text = fh.read()
+    mo = re.search(r"<!-- sysmap:example -->\s*```json\n(.*?)\n```", text, re.S)
+    if not mo:
+        raise ValueError(f"no <!-- sysmap:example --> json block in {SCHEMA_DOC}")
+    return json.loads(mo.group(1))
+
+
+def selftest():
+    try:
+        base = example()
+    except (OSError, ValueError) as e:
+        print(f"FAIL  {e}")
+        return 1
+    quiet = []
+    r = check(base, out=quiet.append)
+    ok = True
+    if r.fails or r.warns:
+        print(f"FAIL  the schema's own example does not pass cleanly ({r.fails} failure(s), {r.warns} warning(s)):")
+        print("\n".join("      " + q for q in quiet if q.startswith(("FAIL", "WARN"))))
+        ok = False
+    else:
+        print("PASS  the schema's example passes with no warnings (the passing verdict is reachable)")
+
+    def node(m, i):
+        return next(n for n in m["nodes"] if n["id"] == i)
+
+    def edge(m, i):
+        return next(e for e in m["edges"] if e["id"] == i)
+
+    def sp(m, i):
+        return next(s for s in m["setpoints"] if s["id"] == i)
+
+    mutations = [
+        ("a live node loses its evidence", "no evidence", lambda m: node(m, "worker").update(evidence=[])),
+        ("evidence that is not a citation", "is not a citation", lambda m: node(m, "api").update(evidence=["see the docs"])),
+        ("an edge to a node that does not exist", "is not a node", lambda m: edge(m, "e3").update(to="cdn")),
+        ("a trigger step on a missing edge", "does not exist", lambda m: m["triggers"][0]["steps"].append({"edge": "e99", "narration": "x"})),
+        ("a loop type that contradicts its signs", "which makes it", lambda m: m["loops"][0].update(type="reinforcing")),
+        ("loop links that do not close", "do not close", lambda m: m["loops"][0]["links"].pop()),
+        ("a level-2 node parented on level 0", "is level 0", lambda m: node(m, "r_hook").update(parent="product")),
+        ("a level-2 node with no parent", "needs a parent", lambda m: node(m, "r_hook").update(parent=None)),
+        ("the loops section omitted entirely", "missing top-level section 'loops'", lambda m: m.pop("loops")),
+        ("an empty human_feedback", "human_feedback is empty", lambda m: m["triggers"][1].update(human_feedback="")),
+        ("a node id reused as an edge id", "duplicate id", lambda m: edge(m, "e1").update(id="web")),
+        ("data used by a node that does not exist", "is not a node", lambda m: m["data_uses"][0]["used_by"].append("ghost")),
+        ("a citation of a secret file", "secret file", lambda m: node(m, "api")["evidence"].append("acme/uploads/.env.production:3")),
+        ("a credential pasted into a label", "looks like", lambda m: edge(m, "e13").update(data="ghp_" + "A1b2C3d4E5" * 4)),
+        ("a password inside a connection URL", "looks like", lambda m: edge(m, "e13").update(data="postgres://app:" + "s3cretPass" + "@db.internal:5432/app")),
+        ("an impossible live date", "not a real date", lambda m: node(m, "api")["evidence"].append("live 2026-13-45: probed")),
+        ("an undated as_of", "meta.as_of", lambda m: m["meta"].update(as_of="last week")),
+        ("a gap with no evidence", "no evidence", lambda m: m["gaps"][0].update(evidence=[])),
+        ("a gap kind from the retired contract", "is not one of", lambda m: m["gaps"][0].update(kind="drift_missing")),
+        ("a gap with no kind", "no kind", lambda m: m["gaps"][1].pop("kind")),
+        ("a gap naming a part that does not exist", "is not a node", lambda m: m["gaps"][0]["nodes"].append("ghost")),
+        ("a trigger naming a setpoint the model does not have", "is not in setpoints", lambda m: m["triggers"][0].update(setpoint="ghost")),
+        ("a gap naming a setpoint the model does not have", "is not in setpoints", lambda m: m["gaps"][0].update(setpoint="ghost")),
+        ("a setpoint about nothing on the map", "names no trigger and no node", lambda m: m["setpoints"][0].update(about="ghost")),
+        ("a document's setpoint marked confirmed", "stays proposed", lambda m: sp(m, "retry-capped").update(status="confirmed")),
+        ("the operator's own words left proposed", "confirmed by definition", lambda m: sp(m, "upload-feedback").update(status="proposed")),
+        ("a holds value outside the contract", "holds 'mostly'", lambda m: m["setpoints"][0].update(holds="mostly")),
+        ("a setpoint with no measure", "measure is empty", lambda m: m["setpoints"][1].update(measure="")),
+        ("two setpoints with one id", "duplicate setpoint id", lambda m: m["setpoints"].append(dict(m["setpoints"][0]))),
+    ]
+    for name, token, mutate in mutations:
+        m = copy.deepcopy(base)
+        mutate(m)
+        lines = []
+        rr = check(m, out=lines.append)
+        caught = any(ln.startswith("FAIL") and token in ln for ln in lines)
+        print(f"{'PASS' if caught else 'FAIL'}  refuses {name}" + ("" if caught else f" (expected a FAIL containing {token!r})"))
+        ok &= caught and rr.fails > 0
+
+    # warnings exist and --strict turns them into failures
+    m = copy.deepcopy(base)
+    m["nodes"].append({"id": "orphan_job", "label": "Old export", "kind": "job", "level": 1, "parent": "product",
+                       "does": "Exports something nobody remembers.", "human_sees": "", "inputs": [], "outputs": [],
+                       "status": "unknown", "evidence": []})
+    lines = []
+    rr = check(m, out=lines.append)
+    warned = rr.fails == 0 and any("no edges and no children" in ln for ln in lines)
+    print(f"{'PASS' if warned else 'FAIL'}  warns, without failing, on a node with no edges (strict would refuse it)")
+    ok &= warned
+    m = copy.deepcopy(base)
+    m.pop("setpoints")
+    for x in m["triggers"]:
+        x.pop("setpoint", None)
+    for x in m["gaps"]:
+        x.pop("setpoint", None)
+    lines = []
+    rr = check(m, out=lines.append)
+    open_loop = rr.fails == 0 and any("no setpoints" in ln for ln in lines)
+    print(f"{'PASS' if open_loop else 'FAIL'}  warns, without failing, on a map with no setpoints (a measurement with nothing to compare)")
+    ok &= open_loop
+
+    # --src: resolves real files, refuses a short one, refuses a check that resolved nothing
+    with tempfile.TemporaryDirectory() as tmp:
+        want = {}
+        for _, x in walk_strings(base):
+            mo = CITE.match(x)
+            if mo and mo.group("path").startswith("acme/uploads/"):
+                p = mo.group("path")[len("acme/uploads/"):]
+                want[p] = max(want.get(p, 0), int(mo.group("b") or mo.group("a")))
+        for p, n in want.items():
+            os.makedirs(os.path.dirname(os.path.join(tmp, p)) or tmp, exist_ok=True)
+            with open(os.path.join(tmp, p), "w") as fh:
+                fh.write("x\n" * n)
+        lines = []
+        rr = check(base, src={"acme/uploads": tmp}, out=lines.append)
+        good = rr.fails == 0 and any("resolved under --src" in ln and " 0 resolved" not in ln for ln in lines)
+        print(f"{'PASS' if good else 'FAIL'}  --src resolves every citation against a checkout that has them")
+        ok &= good
+        with open(os.path.join(tmp, "worker/src/index.ts"), "w") as fh:
+            fh.write("x\n" * 5)
+        lines = []
+        check(base, src={"acme/uploads": tmp}, out=lines.append)
+        short = any(ln.startswith("FAIL") and "past the end" in ln for ln in lines)
+        print(f"{'PASS' if short else 'FAIL'}  --src refuses a citation past the end of its file")
+        ok &= short
+        lines = []
+        check(base, src={"other/repo": tmp}, out=lines.append)
+        idle = any(ln.startswith("FAIL") and "did not run" in ln for ln in lines)
+        print(f"{'PASS' if idle else 'FAIL'}  --src refuses a run where no citation matched (a check that did not run)")
+        ok &= idle
+
+    # render round-trips, including a label that tries to close the script element
+    m = copy.deepcopy(base)
+    node(m, "web")["label"] = "Web app </script><script>alert(1)</script> <!-- x"
+    stub = '<!doctype html><title>t</title><script type="application/json" id="model">{}</script>'
+    html = render(m, stub)
+    back = json.loads(VIEWER_SLOT.search(html).group(2))
+    rt = back == m and html.count("</script>") == 1
+    print(f"{'PASS' if rt else 'FAIL'}  render embeds the model so it reads back identical and cannot close its script element")
+    ok &= rt
+    page = render(m, stub, title="Tiny Uploads <Map>", standalone=True)
+    mo = VIEWER_SLOT.search(page)
+    wrapped = page.startswith("<!doctype html>") and page.count("<title>") == 1 \
+        and "<title>Tiny Uploads &lt;Map&gt;</title>" in page and json.loads(mo.group(2)) == m
+    print(f"{'PASS' if wrapped else 'FAIL'}  render --title --standalone sets one escaped title, adds a doctype, and keeps the model identical")
+    ok &= wrapped
+    try:
+        render(m, "<html>no slot</html>")
+        print("FAIL  render accepted a viewer with no model slot")
+        ok = False
+    except ValueError:
+        print("PASS  render refuses a viewer with no model slot")
+
+    # meta.mapped_at and meta.commits: each malformed shape must be refused, the good shape accepted
+    for why, mut, want in (
+        ("a mapped_at in local time", lambda mm: mm["meta"].update(mapped_at="2026-10-01 15:51"), "mapped_at"),
+        ("a commit that is not hex", lambda mm: mm["meta"].update(commits=[{"repo": "acme/uploads", "commit": "main"}]), "commits"),
+        ("a commit that contradicts meta.sources", lambda mm: mm["meta"].update(commits=[{"repo": "acme/uploads", "commit": "abcdef1"}]), "contradict"),
+    ):
+        mm = copy.deepcopy(base)
+        mut(mm)
+        lines = []
+        check(mm, out=lines.append)
+        hit = any(ln.startswith("FAIL") and (want in ln or (want == "contradict" and "but meta.sources says" in ln)) for ln in lines)
+        print(f"{'PASS' if hit else 'FAIL'}  check refuses {why}")
+        ok &= hit
+    mm = copy.deepcopy(base)
+    mm["meta"].update(mapped_at="2026-10-01T19:51Z", commits=[{"repo": "acme/uploads", "commit": "3f2c9e1"}])
+    lines = []
+    clean = check(mm, out=lines.append).fails == 0
+    print(f"{'PASS' if clean else 'FAIL'}  check accepts a UTC mapped_at and a commit that agrees with meta.sources")
+    ok &= clean
+
+    # --vendor-dir: the page must name local files whose hashes match, or refuse
+    with tempfile.TemporaryDirectory() as vd:
+        lib = b"window.lib = 1;\n"
+        dig = base64.b64encode(hashlib.sha384(lib).digest()).decode()
+        os.makedirs(os.path.join(vd, "vendor", "lib", "1.0", ), exist_ok=True)
+        with open(os.path.join(vd, "vendor", "lib", "1.0", "lib.min.js"), "wb") as fh:
+            fh.write(lib)
+        cdn = ('<link rel="preconnect" href="https://fonts.googleapis.com">\n'
+               '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=X">\n'
+               '<script type="application/json" id="model">{}</script>\n'
+               '<script src="https://cdn.example/lib/1.0/lib.min.js" integrity="sha384-%s" crossorigin="anonymous"></script>')
+        good = vendorize(cdn % dig, os.path.join(vd, "vendor"), vd)
+        loc = 'src="vendor/lib/1.0/lib.min.js" integrity="sha384-' + dig + '"' in good and not REMOTE.search(good)
+        print(f"{'PASS' if loc else 'FAIL'}  --vendor-dir points the script at the matching local file and leaves no remote request")
+        ok &= loc
+        for why, text in (
+            ("a local file whose hash differs from the pin", cdn % ("A" * 64)),
+            ("a CDN script with no integrity hash", cdn.replace(' integrity="sha384-%s"', "")),
+            ("a CDN script with no local file of that name", (cdn % dig).replace("lib.min.js", "other.min.js")),
+            ("a remote stylesheet it does not know how to vendor", (cdn % dig) + '\n<link rel="stylesheet" href="https://cdn.example/x.css">'),
+            ("a remote @import inside a style block", (cdn % dig) + "\n<style>@import url('https://cdn.example/y.css');</style>"),
+        ):
+            try:
+                vendorize(text, os.path.join(vd, "vendor"), vd)
+                print(f"FAIL  --vendor-dir accepted {why}")
+                ok = False
+            except ValueError:
+                print(f"PASS  --vendor-dir refuses {why}")
+
+    # the viewer ships with the schema's example built in, so the two cannot drift apart
+    try:
+        with open(DEFAULT_VIEWER, encoding="utf-8") as fh:
+            mo = VIEWER_SLOT.search(fh.read())
+        same = bool(mo) and json.loads(mo.group(2)) == base
+        print(f"{'PASS' if same else 'FAIL'}  assets/viewer.html carries the schema's example as its built-in model"
+              + ("" if same else "; re-render it: sysmap render <the example> -o assets/viewer.html --viewer assets/viewer.html"))
+        ok &= same
+    except (OSError, ValueError) as e:
+        print(f"FAIL  cannot read the built-in model of {DEFAULT_VIEWER}: {e}")
+        ok = False
+
+    # diff names what left, first
+    m = copy.deepcopy(base)
+    m["nodes"] = [n for n in m["nodes"] if n["id"] != "r_status"]
+    m["loops"][1]["stability"] = "unstable"
+    sp(m, "paid-sees-receipt")["holds"] = "yes"
+    lines = []
+    diff(base, m, out=lines.append)
+    dl = lines[0].startswith("GONE") and "r_status" in lines[0] and any("stability" in ln for ln in lines) \
+        and any("setpoint paid-sees-receipt: holds 'no' -> 'yes'" in ln for ln in lines)
+    lines = []
+    same = diff(base, copy.deepcopy(base), out=lines.append) == 0
+    print(f"{'PASS' if dl and same else 'FAIL'}  diff lists a removed node first, reports a changed loop and a setpoint that now holds, and finds nothing between identical maps")
+    ok &= dl and same
+
+    # items reach the controller in its own contract: every drift item once, nothing that holds
+    its = items(base)
+    ids = sorted(i["id"] for i in its)
+    want = sorted(["map-a-paying-customer-sees-no-confirmation", "map-originals-are-kept-forever",
+                   "map-sp-retry-capped", "map-sp-mobile-upload"])
+    sig = {i["id"]: i["signal"] for i in its}
+    shape = ids == want and all(i["kind"] == "DECIDE" for i in its) \
+        and sig["map-a-paying-customer-sees-no-confirmation"] == "error" \
+        and sig["map-sp-retry-capped"] == "proposal" and sig["map-sp-mobile-upload"] == "proposal"
+    print(f"{'PASS' if shape else 'FAIL'}  items routes 2 drift gaps and 2 setpoints the gaps do not carry; the confirmed "
+          f"failure is an error, the proposed and the unmeasured are proposals; the setpoint that holds and the "
+          f"unknown gap are not routed" + ("" if shape else f" (got {sig})"))
+    ok &= shape
+    m = copy.deepcopy(base)
+    sp(m, "paid-sees-receipt")["status"] = "proposed"
+    sp(m, "paid-sees-receipt")["source"] = "doc"
+    demoted = {i["id"]: i["signal"] for i in items(m)}.get("map-a-paying-customer-sees-no-confirmation") == "proposal"
+    print(f"{'PASS' if demoted else 'FAIL'}  items makes a failure against a merely proposed setpoint a proposal, not an error")
+    ok &= demoted
+    # The consuming end, in the hub layout (skills/system-map beside skills/hsi-operator).
+    # Ways this check could lie, written before it: hsi's default board shows only the top 3,
+    # so "every item in the default output" fails on a correct handoff of 4 or more; a matched
+    # 40-character prefix can match the wrong item; a missing question crashes the check instead
+    # of failing it; and an hsi that accepts anything proves nothing. So: --all must list every
+    # full question, the default board must rank the confirmed failure first and name the
+    # held-back count, and a copy with one item's kind removed must be refused.
+    hsi = os.path.join(SKILL, "..", "hsi-operator", "bin", "hsi")
+    if os.path.exists(hsi):
+        def run_hsi(payload, *flags):
+            with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as fh:
+                json.dump(payload, fh)
+            try:
+                return subprocess.run([sys.executable, hsi, fh.name, *flags], capture_output=True, text=True,
+                                      timeout=60)
+            finally:
+                os.unlink(fh.name)
+        qs = [str(i.get("question") or "") for i in its]
+        full = run_hsi({"items": its}, "--all")
+        every = full.returncode == 0 and f"ALL {len(its)} item(s)" in full.stdout and all(q and q in full.stdout for q in qs)
+        board = run_hsi({"items": its})
+        held = max(len(its) - 3, 0)
+        first = next((q for q, i in zip(qs, its) if i.get("signal") == "error"), "")
+        ranked = board.returncode == 0 and (not first or f"1. [DECIDE] {first}" in board.stdout) \
+            and (not held or f"{held} more held back" in board.stdout)
+        broken = [dict(i) for i in its]
+        if broken:
+            broken[0].pop("kind", None)
+        refused = bool(broken) and run_hsi({"items": broken}).returncode != 0
+        took = every and ranked and refused
+        print(f"{'PASS' if took else 'FAIL'}  hsi-operator's own hsi takes the items: --all lists all {len(its)}, the "
+              f"default board ranks the confirmed failure first and names the {held} held back, and a copy with one "
+              f"item's kind removed is refused"
+              + ("" if took else f" (--all exit {full.returncode}, every item listed: {every}; board exit "
+                                 f"{board.returncode}, ranked and counted: {ranked}; broken copy refused: {refused})"))
+        ok &= took
+    else:
+        print("SKIP  hsi-operator is not installed beside this skill, so the consuming end was not run")
+
+    print("\nselftest " + ("passed" if ok else "FAILED"))
+    return 0 if ok else 1
+
+
+def main(argv):
+    ap = argparse.ArgumentParser(prog="sysmap", description=__doc__.split("\n\n")[0])
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    c = sub.add_parser("check")
+    c.add_argument("model")
+    c.add_argument("--src", action="append", default=[], metavar="owner/repo=DIR")
+    c.add_argument("--strict", action="store_true")
+    i = sub.add_parser("items")
+    i.add_argument("model")
+    d = sub.add_parser("diff")
+    d.add_argument("old")
+    d.add_argument("new")
+    rn = sub.add_parser("render")
+    rn.add_argument("model")
+    rn.add_argument("-o", "--out", required=True)
+    rn.add_argument("--viewer", default=DEFAULT_VIEWER)
+    rn.add_argument("--title", help="page title, a name of two to four words (default: the viewer's)")
+    rn.add_argument("--standalone", action="store_true", help="add a doctype and head so the file opens from disk")
+    rn.add_argument("--force", action="store_true", help="write even when the model fails check")
+    rn.add_argument("--vendor-dir", metavar="DIR", help="serve the libraries and fonts from DIR (each script must match "
+                    "its pinned integrity) so the page makes no third-party request")
+    sub.add_parser("selftest")
+    a = ap.parse_args(argv)
+
+    if a.cmd == "selftest":
+        return selftest()
+    if a.cmd == "diff":
+        old, new = load(a.old), load(a.new)
+        if old is None or new is None:
+            return 2
+        diff(old, new)
+        return 0
+    m = load(a.model)
+    if m is None:
+        return 2
+    if a.cmd == "check":
+        src = {}
+        for s in a.src:
+            if "=" not in s:
+                print(f"sysmap: --src needs owner/repo=DIR, not {s!r}", file=sys.stderr)
+                return 2
+            k, v = s.split("=", 1)
+            src[k] = v
+        r = check(m, src=src or None, strict=a.strict)
+        return 1 if r.fails or (a.strict and r.warns) else 0
+    if a.cmd == "items":
+        its = items(m)
+        json.dump({"items": its}, sys.stdout, indent=1, ensure_ascii=False)
+        print(f"\nsysmap: {len(its)} candidate item(s). Options are empty: an agent or the operator frames "
+              f"them before they reach Door 1.", file=sys.stderr)
+        return 0
+    if a.cmd == "render":
+        lines = []
+        r = check(m, out=lines.append)
+        if r.fails:
+            print("\n".join(ln for ln in lines if ln.startswith("FAIL")))
+            if not a.force:
+                print("sysmap: refusing to render a model that fails check (--force writes it anyway)", file=sys.stderr)
+                return 1
+            print(f"sysmap: --force: writing a model with {r.fails} failure(s)", file=sys.stderr)
+        if a.title and not 2 <= len(a.title.split()) <= 4:
+            print(f"sysmap: warning: the title has {len(a.title.split())} words; a page title reads best at two to four",
+                  file=sys.stderr)
+        try:
+            with open(a.viewer, encoding="utf-8") as fh:
+                html = render(m, fh.read(), title=a.title, standalone=a.standalone)
+            if a.vendor_dir:
+                html = vendorize(html, a.vendor_dir, os.path.dirname(os.path.abspath(a.out)))
+        except OSError as e:
+            print(f"sysmap: no viewer at {a.viewer}: {e}", file=sys.stderr)
+            return 2
+        except ValueError as e:
+            print(f"sysmap: {e}", file=sys.stderr)
+            return 2
+        meta = m.get("meta") if isinstance(m.get("meta"), dict) else {}
+        if not meta.get("mapped_at"):
+            print("sysmap: warning: meta.mapped_at is not set, so the page can show only the as_of date as when it "
+                  "was last mapped", file=sys.stderr)
+        with open(a.out, "w", encoding="utf-8") as fh:
+            fh.write(html)
+        print(f"wrote {a.out}: {len(html.encode())} bytes, {len(_list(m.get('nodes')))} nodes, "
+              f"{len(_list(m.get('setpoints')))} setpoints, {r.warns} warning(s) from check")
+        return 0
+    return 2
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
