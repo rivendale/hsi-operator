@@ -36,14 +36,21 @@ jobs:
           SHA: ${{ github.sha }}
         run: |
           set -u
-          tree=$(git rev-parse "HEAD^{tree}")
+          tree=$(git rev-parse "HEAD^{tree}" 2>/dev/null) || tree=""
           skip=false
-          heads=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[].head.sha' 2>/dev/null) || heads=""
+          # An empty tree would match an empty status line below and skip on nothing (laptop
+          # review of #47). No tree, no proof: run everything.
+          if [ -z "$tree" ]; then
+            echo "::warning::could not read the merged tree; running everything"
+            echo "skip=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          heads=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[].head.sha') ||
+            { echo "::warning::could not list the PR for $SHA; running everything"; heads=""; }
           for h in $heads; do
             # Captured first, then compared: `gh ... | grep -q` under pipefail can fail on SIGPIPE.
             tested=$(gh api "repos/$REPO/commits/$h/statuses" \
               --jq '.[] | select(.context=="evals/tested-tree" and .state=="success") | .description' \
-              2>/dev/null) || tested=""
+              ) || { echo "::warning::could not read statuses for $h; treating as untested"; tested=""; }
             if printf '%s\n' "$tested" | grep -Fxq -- "$tree"; then
               skip=true; echo "tree $tree already passed on PR head $h"
             fi
@@ -53,8 +60,9 @@ jobs:
 
   trigger:
     needs: already-tested
-    # always() so the push-free pull_request path, where already-tested is skipped, still runs.
-    if: always() && needs.already-tested.outputs.skip != 'true'
+    # !cancelled() so the pull_request path, where already-tested is skipped, still runs; unlike
+    # always(), it does not keep running after the run itself is cancelled.
+    if: ${{ !cancelled() && needs.already-tested.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -71,17 +79,16 @@ jobs:
       # waru.edu, which sits behind a bot challenge and answered 403 to the runner on
       # main (run 36590433197, 2026-09-29) after passing on the PR run. A human browser
       # still gets the page; a check that flips on a host's bot rules is not a link check.
-      # Second exclusion, 2026-10-02: github.com answered 503 to every rivendale blob link on
-      # three consecutive attempts of PR #47's run (37017232142) after the same links passed
-      # minutes earlier. Links between rivendale repos are what the `siblings` job checks, and
-      # links inside this repo are relative paths lychee reads from disk, so excluding the
-      # absolute github.com/rivendale form loses no coverage the other checks do not hold.
+      # 2026-10-02: github.com answered 503 to every rivendale blob link on three consecutive
+      # attempts of PR #47's run (37017232142). The fix is fewer, slower requests with the job
+      # token (the action passes GITHUB_TOKEN by default), not excluding the links.
       - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8  # v2.9.0
         with:
+          token: ${{ github.token }}
           args: >-
             --verbose --no-progress
             --exclude '^https?://(www\.)?(dau|waru)\.edu/'
-            --exclude '^https://github\.com/rivendale/'
+            --max-concurrency 4 --max-retries 4 --retry-wait-time 5
             './**/*.md' './**/*.html' './**/*.rst'
 
   # This repo is the hub a person points an agent at, and the siblings are maintained
@@ -109,9 +116,9 @@ jobs:
   # passed. Fork PRs cannot write statuses; the post-merge run then simply runs everything.
   record-tested-tree:
     needs: trigger
-    # always() plus an explicit success test: without it, the skipped already-tested job two
+    # !cancelled() plus an explicit success test: without it, the skipped already-tested job two
     # links up propagates its skip down the needs chain and this job never runs.
-    if: always() && needs.trigger.result == 'success' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    if: ${{ !cancelled() && needs.trigger.result == 'success' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     permissions:
       statuses: write
