@@ -6,8 +6,63 @@ on:
   push:
     branches: [main]
   pull_request:
+
+# A newer push to the same branch makes the older run worthless, so it cancels itself.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
+  # After a merge, skip `trigger` only when this commit's tree is byte-identical to a tree a
+  # pull_request run already passed. The PR run records the tree it tested (the merge ref's
+  # tree) as a commit status on the PR head; this job compares. Anything it cannot prove, a
+  # direct push, a fork PR with no status, a base that moved, an API error, runs everything.
+  # Measured before this change (2026-09-26 to 10-02): 14 of the last 40 runs were the push to
+  # main re-running checks its pull request had just passed.
+  already-tested:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.cmp.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: cmp
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -u
+          tree=$(git rev-parse "HEAD^{tree}" 2>/dev/null) || tree=""
+          skip=false
+          # An empty tree would match an empty status line below and skip on nothing (laptop
+          # review of #47). No tree, no proof: run everything.
+          if [ -z "$tree" ]; then
+            echo "::warning::could not read the merged tree; running everything"
+            echo "skip=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          heads=$(gh api "repos/$REPO/commits/$SHA/pulls" --jq '.[].head.sha') ||
+            { echo "::warning::could not list the PR for $SHA; running everything"; heads=""; }
+          for h in $heads; do
+            # Captured first, then compared: `gh ... | grep -q` under pipefail can fail on SIGPIPE.
+            tested=$(gh api "repos/$REPO/commits/$h/statuses" \
+              --jq '.[] | select(.context=="evals/tested-tree" and .state=="success") | .description' \
+              ) || { echo "::warning::could not read statuses for $h; treating as untested"; tested=""; }
+            if printf '%s\n' "$tested" | grep -Fxq -- "$tree"; then
+              skip=true; echo "tree $tree already passed on PR head $h"
+            fi
+          done
+          echo "skip=$skip" >> "$GITHUB_OUTPUT"
+          echo "skip=$skip (tree $tree)"
+
   trigger:
+    needs: already-tested
+    # !cancelled() so the pull_request path, where already-tested is skipped, still runs; unlike
+    # always(), it does not keep running after the run itself is cancelled.
+    if: ${{ !cancelled() && needs.already-tested.outputs.skip != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,11 +79,19 @@ jobs:
       # waru.edu, which sits behind a bot challenge and answered 403 to the runner on
       # main (run 36590433197, 2026-09-29) after passing on the PR run. A human browser
       # still gets the page; a check that flips on a host's bot rules is not a link check.
+      # 2026-10-02: github.com answered 503 to every rivendale blob link on three consecutive
+      # attempts of PR #47's run (37017232142). The fix is fewer, slower requests with the job
+      # token, not excluding the links. Throttling alone did not clear it: the same six rendered
+      # blob pages kept answering 503 to the runner while curl elsewhere got 200, so blob links
+      # are remapped to raw.githubusercontent.com, which still proves the file exists.
       - uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8  # v2.9.0
         with:
+          token: ${{ github.token }}
           args: >-
             --verbose --no-progress
             --exclude '^https?://(www\.)?(dau|waru)\.edu/'
+            --max-concurrency 4 --max-retries 4 --retry-wait-time 5
+            --remap 'https://github\.com/rivendale/([^/]+)/blob/(.+) https://raw.githubusercontent.com/rivendale/$1/$2'
             './**/*.md' './**/*.html' './**/*.rst'
 
   # This repo is the hub a person points an agent at, and the siblings are maintained
@@ -51,3 +114,25 @@ jobs:
           done
       - run: python3 evals/siblings/run.py --siblings "$RUNNER_TEMP/siblings"
       - run: python3 evals/siblings/run.py --selftest
+
+  # Record the tree this pull_request run tested, so the post-merge run can prove it already
+  # passed. Fork PRs cannot write statuses; the post-merge run then simply runs everything.
+  record-tested-tree:
+    needs: trigger
+    # !cancelled() plus an explicit success test: without it, the skipped already-tested job two
+    # links up propagates its skip down the needs chain and this job never runs.
+    if: ${{ !cancelled() && needs.trigger.result == 'success' && github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - uses: actions/checkout@v4
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          tree=$(git rev-parse "HEAD^{tree}")
+          gh api "repos/$REPO/statuses/$HEAD_SHA" -f state=success \
+            -f context=evals/tested-tree -f description="$tree" >/dev/null
+          echo "recorded tested tree $tree on $HEAD_SHA"
