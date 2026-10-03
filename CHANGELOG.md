@@ -12,6 +12,12 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **Agent replies were correct but slow to act on: one setting called three things, warnings
+  before the command, 40- to 54-word sentences, and banned em dashes in 11 of 40 sampled replies
+  because nothing checked.** New `docs/plain-writing-for-agent-output.md`: six ASD-STE100 rules
+  chosen by scoring 40 replies against 11 rules (with the counts), the five rejected and why, and a
+  warn-only check for the three mechanical ones.
+
 - **Every merge re-ran the full eval job on main, on content its pull request had just
   passed: 14 of the last 40 runs (2026-09-26 to 10-02), and a superseded push kept running
   beside its replacement.** `evals.yml` now cancels an outdated run on the same branch, and
