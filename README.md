@@ -230,7 +230,9 @@ the rules that work; [design rules for code](docs/design-rules-for-code.md), eac
 with the check that enforces it; [testing a detector with planted defects](docs/planted-defect-evals.md);
 [eval and hillclimb](docs/eval-and-hillclimb.md) with two gates a person holds (a draft until its
 first run); [naming the reader](docs/every-output-needs-a-reader.md) before building the
-producer; and [an overnight read-only audit](docs/read-only-audit.md) that someone reads.
+producer; [plain writing for agent output](docs/plain-writing-for-agent-output.md), six
+ASD-STE100 rules chosen by measurement; and [an overnight read-only audit](docs/read-only-audit.md)
+that someone reads.
 
 ## Changes
 
