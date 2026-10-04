@@ -22,6 +22,18 @@ Each sibling is maintained separately and links back here.
 The same facts for a program are in [`repos.json`](repos.json). `evals/siblings/` fails CI when
 this page or `AGENTS.md` stops linking a sibling, or a sibling stops linking back.
 
+## Continuing work with an agent
+
+Read [AGENTS.md](AGENTS.md) for this repository's working rules. Use the current
+checkout and the linked source dates, rather than a summary from an older session.
+Keep project-specific state and tool readiness in the project that uses this
+guidance; this repository does not certify an installation or a deployed service.
+
+For existing projects, use [the adoption guide](docs/adopting-an-existing-repo.md)
+and [the context-steward skill](skills/context-steward/SKILL.md). Installing an
+updated skill and updating a checkout are separate actions; verify what the
+receiving session loaded.
+
 ## Skills
 
 Four skills. The first has two doors:
