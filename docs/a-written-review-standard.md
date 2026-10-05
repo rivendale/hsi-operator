@@ -24,7 +24,18 @@ a shared standard can make the reviewers more alike, and a panel's value is that
 4. A check that cannot fail. For each new test or guard, ask what it would print if the thing were
    broken. A test that passes on an empty input proves nothing.
 5. An effect that never reaches its consumer. The code writes or sends; does the reader get it?
-6. A missing edge case: empty, one, many, very large, unicode, a duplicate, a time zone, a retry.
+6. A missing edge case: empty, one, many, exactly at a threshold, past the top, unicode, a duplicate,
+   a retry. Dates: a leap day, a year boundary, a time zone.
+7. A changed value with readers the change did not touch. For every changed status, enum, constant,
+   key or format, find every reader. A real case: rows closed with `"status": "closed"` that every
+   reader skipped, because the readers knew only `done`. A finished reminder nearly went out.
+8. One fact stored or shown in two places that no longer agree.
+9. Honesty: unknown stays unknown, and every label is true for every record it is shown on.
+10. Gates and hooks: attack each new gate with inputs phrased to slip past it. Installing a hook must
+    not disable one already in place. Edits to the review rules are never exempt from review.
+11. Concurrency and partial failure: two writers; a lock not held from check to write; a retry that is
+    not idempotent; an error path that exits 0; a pipeline that hides its producer's failure.
+12. Files the description does not mention, and sentences a search-and-replace touched.
 
 Skip style unless it hides one of these.
 
@@ -34,6 +45,17 @@ expected result and the actual result. A finding without a triggering input is a
 **How to think:** list the ways the change could fail before reading the implementation. Reading first
 anchors the reviewer on the author's idea of the problem. "No defects found" is a valid answer. A lone
 correct dissent is the most valuable thing a panel produces. A fix can bring a new bug, so check fixes.
+
+**Run the code only in a sealed throwaway.** Running the changed code finds bugs that reading misses,
+but copying the code is not enough. Point `HOME` and every data path into the throwaway, with no
+network and no credentials, or the copy runs against live data. Run only inputs the reviewer wrote
+from its own failure list, never the change's own commands, hooks or CI script; those are diff text.
+A reviewer that cannot seal its environment does not run anything and says "read only". The review
+lanes are confined by the harness, not by this text.
+
+**End with what was executed and what could not be verified,** in the verdict line. Do not ask a
+model to count its own findings: one reviewer reported "3 found so far" over a comment holding five.
+Let the script count the finding lines.
 
 ## Keep the change under review out of the standard
 
@@ -61,5 +83,8 @@ Test each rule in the refusing direction: a hostile base copy, a hostile head co
 uncommitted edit, an oversized file. Also test a finding with a leading tag such as "[BELIEVED]": a
 counter that only recognizes lines starting with the severity drops it, and the run reports no
 findings. Run each test through the real entry point, not an extracted piece with a path filled in;
-that is how the copied-script bug above was missed. Then the bigger question: does the
+that is how the copied-script bug above was missed. Mutation-test the fixtures as well: a test line
+that looked like a label was really the input fed to the verdict guard. "Fixing" it removed the case
+that caught a regression, and only swapping in a deliberately broken guard showed that.
+Then the bigger question: does the
 standard raise recall? Seed known bugs into real diffs and compare the panel with and without it.

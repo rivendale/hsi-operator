@@ -38,8 +38,8 @@ jobs:
           set -u
           tree=$(git rev-parse "HEAD^{tree}" 2>/dev/null) || tree=""
           skip=false
-          # An empty tree would match an empty status line below and skip on nothing (laptop
-          # review of #47). No tree, no proof: run everything.
+          # An empty tree would match an empty status line below and skip on nothing (review of
+          # #47). No tree, no proof: run everything.
           if [ -z "$tree" ]; then
             echo "::warning::could not read the merged tree; running everything"
             echo "skip=false" >> "$GITHUB_OUTPUT"; exit 0
@@ -90,9 +90,37 @@ jobs:
           args: >-
             --verbose --no-progress
             --exclude '^https?://(www\.)?(dau|waru)\.edu/'
+            --exclude '^https://(x|twitter)\.com/'
             --max-concurrency 4 --max-retries 4 --retry-wait-time 5
             --remap 'https://github\.com/rivendale/([^/]+)/blob/(.+) https://raw.githubusercontent.com/rivendale/$1/$2'
             './**/*.md' './**/*.html' './**/*.rst'
+
+      # X answers 403 to every link checker (2026-10-05: five links on main and on #51), so lychee
+      # skips x.com and this step checks X POST links instead, through the public fxtwitter API.
+      # A 200 proves only that the post ID exists, so the author fxtwitter returns must also match
+      # the handle in the link (review of #52: a wrong handle with a real ID answers 200).
+      # It scans the same file types lychee does. Bare profile links are credit, not evidence, and
+      # are not checked: fxtwitter redirects an unknown handle to a page that answers 200.
+      - name: X post links exist and match their handle (via fxtwitter)
+        if: ${{ !cancelled() }}
+        run: |
+          pat='https://(x|twitter)\.com/[A-Za-z0-9_]+/status/[0-9]+'
+          # Prove the pattern still matches before trusting an empty result (no links is fine).
+          echo 'see https://x.com/a_b/status/123 here' | grep -qE "$pat" || { echo "pattern self-test failed"; exit 1; }
+          fail=0; n=0
+          links=$(git grep -h -o -E "$pat" -- '*.md' '*.html' '*.rst') && rc=0 || rc=$?
+          # git grep exits 1 for "no match"; anything else means the search itself failed.
+          [ "$rc" -le 1 ] || { echo "git grep failed (exit $rc); nothing was checked"; exit 1; }
+          for u in $(printf '%s\n' "$links" | sort -u); do
+            p=${u#https://*/}; handle=${p%%/*}; n=$((n+1))
+            body=$(curl -s -m 20 --retry 3 --retry-all-errors "https://api.fxtwitter.com/$p") || body=''
+            author=$(printf '%s' "$body" | jq -r '.tweet.author.screen_name // empty' 2>/dev/null) || author=''
+            if [ -z "$author" ]; then echo "MISSING  $u"; fail=1
+            elif [ "${author,,}" != "${handle,,}" ]; then echo "WRONG HANDLE (post is by @$author)  $u"; fail=1
+            else echo "ok  $u"; fi
+          done
+          echo "checked $n X post link(s)"
+          exit $fail
 
   # This repo is the hub a person points an agent at, and the siblings are maintained
   # separately, so the links between them are the whole join. Each sibling is cloned without

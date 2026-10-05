@@ -66,3 +66,9 @@ em dashes that the operator's own instructions forbade, because nothing checked.
 
 Rerun the sample after a few weeks. A rule that stops catching anything has done its job or never
 mattered, and the counts tell you which.
+
+**Lead with what you need from the operator.** When a long task ends, or the agent is stuck on the
+person, the reply opens with what it needs. Number the items, one thing each. Say what to do, where,
+and what to send back ("Log in to the vendor portal, export the September report, put it in inbox/").
+The most blocking item goes first. If nothing is needed, the reply says so in one line. Requests
+buried mid-reply read as narration, and the person finds them a day late.
