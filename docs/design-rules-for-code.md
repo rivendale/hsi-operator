@@ -72,6 +72,9 @@ decision from an accident, and it is the only part of the choice anyone can revi
 
 ## 6. Gates, not promises
 
+Credit: the phrase and the practice are Tomas Vykruta's ([@tvykruta](https://x.com/tvykruta)), from his
+review.md work: enforce review with hooks, not prompt instructions.
+
 A rule that matters ships with a check (a lint rule, a test, a hook) that fails when the rule is
 broken. **Add a rule with its check, or label it review-only**, and prove the check in the denying direction:
 feed it a violation and watch it fail before trusting it green.

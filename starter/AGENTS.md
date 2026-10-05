@@ -95,7 +95,7 @@ rivendale/hsi-operator.
   response payload does not contain the restricted field.*
 - **When two principles conflict, choose the lowest future cost for this repo,** and say
   which and why in the commit message. *Check: review.*
-- **Gates, not promises.** A rule that matters ships with a lint, test or hook that fails
+- **Gates, not promises** (Tomas Vykruta's phrase, [@tvykruta](https://x.com/tvykruta)). A rule that matters ships with a lint, test or hook that fails
   when it is broken, proven on a violation it must refuse, or is labeled review-only. [List your gates here, e.g. model
   names only in the model-config file; every model in use has a price entry; no code path
   creates a parent record without its required child.]
