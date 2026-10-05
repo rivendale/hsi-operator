@@ -243,7 +243,8 @@ with the check that enforces it; [testing a detector with planted defects](docs/
 [eval and hillclimb](docs/eval-and-hillclimb.md) with two gates a person holds (a draft until its
 first run); [naming the reader](docs/every-output-needs-a-reader.md) before building the
 producer; [plain writing for agent output](docs/plain-writing-for-agent-output.md), six
-ASD-STE100 rules chosen by measurement; and [an overnight read-only audit](docs/read-only-audit.md)
+ASD-STE100 rules chosen by measurement; [a written review standard](docs/a-written-review-standard.md)
+that the reviewed change cannot rewrite; and [an overnight read-only audit](docs/read-only-audit.md)
 that someone reads.
 
 ## Changes
