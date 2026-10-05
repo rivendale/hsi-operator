@@ -1,5 +1,13 @@
 # Give every code reviewer one written standard, and keep the reviewed change out of it
 
+Credit: Tomas Vykruta measured the test-first habit in "AI Code Review review.md"
+([@tvykruta](https://x.com/tvykruta), [post](https://x.com/tvykruta/status/2106138620780261842)).
+His runs showed recall rising from about 50% to nearly 90%. They also showed fresh reviewers beating the
+author, and gates beating prompt instructions.
+Naming the triggering input, expected and actual result in each finding follows OpenAI's Codex
+code-review guidance, as surfaced in Voxyz's `verify` skill post
+([@Voxyz_ai](https://x.com/Voxyz_ai), [post](https://x.com/Voxyz_ai/status/2106715960531120386)).
+
 A review panel of several models, or of people and models, is easier to read when every reviewer is
 asked the same question. Put that question in one file, `REVIEW.md`, and feed it to each reviewer with
 the diff. Then a difference in findings is a difference in judgment, not in instructions. Whether it

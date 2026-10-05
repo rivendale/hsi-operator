@@ -316,9 +316,33 @@ before rendering anything, and give notes in camera terms: framing, movement, ti
   technique turns a curated notebook into `SKILL.md` files; the same kind of tool has been seen
   narrating blanks as content and dropping table headings. Read a generated skill against its
   sources before installing it.
+- **Point the pin at the original repo, not your copy.** The `PINNED` note and any install recipe name
+  the upstream repo and commit, so its author gets the visibility. A fallback to your own clone is
+  fine for the day the original disappears; say so in the note.
 - More skills, and the conventions they follow: [anthropics/skills](https://github.com/anthropics/skills).
 
 ---
+
+## Credit
+
+Rule adapted from Mia AI Lab's AGENTS.md credit section
+([@MiaAI_lab](https://x.com/MiaAI_lab), [source](https://mia-ai.net/lab/downloads/agents-md-credit-and-attribution)).
+
+- **Credit is part of the receipt, not a courtesy added after.** When a change adopts someone's idea,
+  measurement, code or wording, name them: their name or handle, a link to their profile, and a link to
+  the source (repo and commit, or the post).
+- **Write it as authorship.** "Tomas Vykruta measured..." or "adapted from X's Y", not "inspired by"
+  or "informed by", which hide who did the work.
+- **Put it where a reader sees it before they use the thing:** above the install steps in a README,
+  near the top of a doc.
+- **Keep existing credits when you edit,** and record the source while it is still in front of you;
+  reconstructing it later is how credit gets lost.
+- **Done means a second read shows it:** the name is there, linked, worded as authorship, and placed
+  before the steps.
+- **If outside people contribute code,** Nous Research's Hermes Agent keeps one file per contributor
+  in [`contributors/emails/`](https://github.com/NousResearch/hermes-agent/tree/main/contributors/emails)
+  (filename: commit email; contents: GitHub handle), fails CI for an unmapped author, and cherry-picks
+  outside PRs so the author keeps the commit. Worth copying once a repo has outside contributors.
 
 ## Secrets
 
