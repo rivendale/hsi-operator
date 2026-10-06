@@ -30,7 +30,8 @@ relative to the current project, not the skill installation.
 Optional thresholds: `--since-hours 48`, `--stall-days 3`, `--agent-stale-hours 24`.
 `--now 2026-10-06T12:00:00Z` supplies a deterministic evaluation clock. An optional agents
 file is a JSON array of objects with string `name`, `last_report` (ISO time with offset)
-and `on`; missing report times remain UNKNOWN. Inputs must be UTF-8 and at most 1 MiB each.
+and `on`; missing report times remain UNKNOWN. Without `--agents`, no default JSON file is
+read: only the objective record supplies agents. With none, print `agents: none listed`. Inputs must be UTF-8 and at most 1 MiB each.
 
 ## Deliver one concise page, in this order
 
@@ -72,11 +73,15 @@ Repeatable fields:
 
 - `needs-you: WHAT | WHERE | SEND-BACK` — an explicit operator action. Put the most
   blocking objective/action first; the report prints that ranking rule.
-- `proof: RECEIPT` — a recorded reference, not independently verified by the script.
+- `proof: RECEIPT` — a repo#N or PR URL, 7–40 digit hexadecimal commit SHA,
+  HTTP(S) URL, or named test run with PASS/FAIL/SUCCESS/FAILURE result. Free text is
+  `claimed, no proof`. The script does not visit receipt URLs and marks their HTTP
+  status `not checked`; recognized references still need independent verification.
 - `agent: NAME | ISO_TIMESTAMP | ON` — omit timestamp rather than invent freshness.
 
 `blocked-on: WHO | YYYY-MM-DD | REASON` records one gate; the objective owner is
-accountable, WHO is the party it waits on, and missing date/party is UNKNOWN.
+accountable for the objective. In the gate, `owner` is WHO: the party that must
+act to unblock it. An absent WHO prints `owner: NONE`; a missing date is UNKNOWN.
 
 Unknown lines are quoted as unparsed data. Duplicate titles are retained and flagged
 `DUPLICATE`. An empty record needs an objective and its done-when. A completed objective
