@@ -1,6 +1,6 @@
 ---
 name: update
-description: Use when an operator asks for an update, status, recently completed work, agent coordination, workflow progress, blockers, or what needs their decision next. Gives a concise report against explicit completion criteria and distinguishes evidence from claims.
+description: Use when asked for a status update or report on recently completed work, agent coordination, workflow progress, blockers and completion objectives. Shows explicit finish lines, dated evidence and pending operator decisions.
 license: MIT
 ---
 
