@@ -1,0 +1,34 @@
+{
+ "id": "04g-boundary-three-days-is-stalled",
+ "spec_item": 4,
+ "tag": "spec",
+ "title": "ruling (h): 3 days old at the default threshold of 3 is STALLED (3 days)",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Three days\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-3}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "contains": [
+   "STALLED \\(3 days\\)"
+  ],
+  "count": [
+   {
+    "rx": "STALLED",
+    "exactly": 1
+   }
+  ]
+ }
+}

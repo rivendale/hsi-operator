@@ -1,0 +1,28 @@
+{
+ "id": "04f-boundary-two-days-is-fresh",
+ "spec_item": 4,
+ "tag": "spec",
+ "title": "ruling (h): the stall boundary is inclusive: 2 days old at the default threshold of 3 is not stalled",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Two days\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-2}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "not_contains": [
+   "STALLED"
+  ]
+ }
+}
