@@ -47,11 +47,15 @@ def moved(value):
         return None
 
 
+class InputTooLarge(ValueError):
+    pass
+
+
 def read_text(path):
     with Path(path).open('rb') as stream:
         data = stream.read(MAX_INPUT + 1)
     if len(data) > MAX_INPUT:
-        raise ValueError('input too large')
+        raise InputTooLarge('input too large')
     return clean(data.decode('utf-8'))
 
 
@@ -138,6 +142,9 @@ def main():
     except FileNotFoundError:
         objective_error = 'objectives: NOT FOUND (' + field(objective_path) + ')'
         source_error = True
+    except InputTooLarge:
+        objective_error = 'objectives: CANNOT READ (over 1 MiB)'
+        source_error = True
     except (OSError, UnicodeError, ValueError):
         objective_error = 'objectives: CANNOT READ (' + field(objective_path) + ')'
         source_error = True
@@ -159,6 +166,7 @@ def main():
             agents.append({'name': bits[0].strip(), 'last_report': bits[1].strip() if len(bits) > 1 else '',
                            'on': bits[2].strip() if len(bits) > 2 else o['title']})
     agent_error = False
+    agent_too_large = False
     if args.agents:
         try:
             extra = json.loads(read_text(args.agents))
@@ -168,6 +176,10 @@ def main():
                 entry = entry if isinstance(entry, dict) else {}
                 agents.append({key: entry.get(key) if isinstance(entry.get(key), str) else ''
                                for key in ('name', 'last_report', 'on')})
+        except InputTooLarge:
+            agent_error = True
+            agent_too_large = True
+            source_error = True
         except (OSError, UnicodeError, ValueError):
             agent_error = True
             source_error = True
@@ -310,7 +322,7 @@ def main():
         print('No recorded objective/PR completions in the window; source failures above remain unknown.')
     print('\n## Other agents')
     if agent_error:
-        print('agents: CANNOT READ')
+        print('agents: CANNOT READ (over 1 MiB)' if agent_too_large else 'agents: CANNOT READ')
     for agent in agents:
         at = timestamp(agent.get('last_report', ''))
         suffix = ''
