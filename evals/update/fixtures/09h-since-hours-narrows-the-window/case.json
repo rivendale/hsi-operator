@@ -1,0 +1,34 @@
+{
+ "id": "09h-since-hours-narrows-the-window",
+ "spec_item": 9,
+ "tag": "spec",
+ "title": "--since-hours 24: a completion dated two days ago is outside the window",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Two days old\nstatus: done\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] launch\nupdated: {{today-2}}\nproof: PR #4 merged\n\n## Ongoing\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--since-hours",
+  "24",
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "completed": {
+    "not_contains": [
+     "Two days old"
+    ]
+   }
+  }
+ }
+}

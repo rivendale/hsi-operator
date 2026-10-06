@@ -23,7 +23,10 @@
  "expect": {
   "not_contains": [
    "\\(-\\d+ days?\\)",
-   "last moved: \\{\\{today\\+9\\}\\}"
+   "last moved: {{today+9}}"
+  ],
+  "contains": [
+   "last moved: UNKNOWN"
   ]
  }
 }

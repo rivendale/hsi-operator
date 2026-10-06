@@ -48,7 +48,16 @@ verbs only, two runs that must print the same page, and a future-dated `updated:
 
 ## Proving the fixtures can fail
 
-A fixture that cannot fail proves nothing. Each fixture was run against a reference implementation (written from the
-spec, not part of this repository) and then against copies of it broken one behaviour at a time (a flag renamed, a
-threshold changed, a failure swallowed, the exit code dropped, control characters left in, and so on). The
-fixtures that notice each break, and any break no fixture notices, are listed in the pull request.
+A fixture that cannot fail proves nothing. The script was copied and broken one behaviour at a time, 73 ways (a flag
+renamed, a threshold ignored, a failure swallowed or reported as "none", the exit code dropped or reordered, escapes
+left in, a window or a cap removed, a write added, a gh write verb added, and so on); the full set of fixtures was run
+against each copy. 67 of the 73 breaks are caught. The 6 that survive are listed here with the reason, so none is silent:
+
+| break | why no fixture catches it |
+|---|---|
+| invalid UTF-8 no longer caught | equivalent: `UnicodeError` is a subclass of `ValueError`, behaviour unchanged |
+| `gh auth status` not checked | equivalent against real gh: an unauthenticated `gh pr list` fails by itself; the fake gh models that |
+| unknown-status objectives hide their needs | equivalent: the script already shows needs only for active and blocked objectives |
+| CRLF not handled by the splitter | equivalent: control characters are stripped afterwards |
+| input-size cap removed | the spec sets no input bound; unspecified, so no fixture asserts one |
+| stall boundary `>=` against `>` | the spec says "older than the stall threshold" without fixing whether day N counts; unspecified |

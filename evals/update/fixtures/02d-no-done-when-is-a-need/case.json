@@ -1,0 +1,39 @@
+{
+ "id": "02d-no-done-when-is-a-need",
+ "spec_item": 2,
+ "tag": "assumption",
+ "title": "an active objective with no done-when is something the operator must supply: a need-you item and exit 1",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Drifting work\nstatus: active\nowner: alice\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   1
+  ],
+  "in_section": {
+   "needs": {
+    "contains": [
+     "(?i)done-when|finish",
+     "Drifting work"
+    ],
+    "not_contains": [
+     "Nothing needed from you"
+    ]
+   }
+  }
+ }
+}

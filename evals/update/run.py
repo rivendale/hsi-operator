@@ -81,6 +81,10 @@ case "$GH_MODE" in
   ok-empty)
     case "$1 $2" in "auth status") echo "Logged in to github.com account fixture-bot"; exit 0;; esac
     case "$1" in --version) echo "gh version 2.99.0 (fixture)"; exit 0;; esac
+    case " $* " in
+      *" pr list "*" merged "*) [ -n "$GH_MERGED" ] && { cat "$GH_MERGED"; exit 0; };;
+      *" pr list "*" open "*) [ -n "$GH_OPEN" ] && { cat "$GH_OPEN"; exit 0; };;
+    esac
     case " $* " in *" --jq "*|*" -q "*) exit 0;; *" --json "*) echo "[]"; exit 0;; esac
     exit 0;;
 esac
@@ -200,6 +204,11 @@ def run_case(case, binpath, timing=False):
         env = {"PATH": path, "HOME": str(home), "TZ": "UTC", "LC_ALL": "C.UTF-8", "LANG": "C.UTF-8",
                "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_SYSTEM": "/dev/null",
                "GIT_CEILING_DIRECTORIES": str(root), "GH_MODE": gh_mode, "GH_LOG": str(gh_log), "PYTHONDONTWRITEBYTECODE": "1"}
+        for key, var in (("merged", "GH_MERGED"), ("open", "GH_OPEN")):
+            if key in case.get("gh_data", {}):
+                f = root / f"gh-{key}.json"
+                f.write_text(fmt_dates(json.dumps(case["gh_data"][key]), today, now))
+                env[var] = str(f)
         env.update(case.get("env", {}))
         before = snapshot(work)
         git_before = git(work, "rev-parse", "--verify", "-q", "HEAD") if (work / ".git").exists() and case.get("git", {}).get("commits") else ""
