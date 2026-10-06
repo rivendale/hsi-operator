@@ -12,6 +12,11 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- Add the `update` skill and read-only operator reporter: explicit finish lines,
+  next steps, dated blockers and agent reports, evidence-labelled completions, and
+  visible failures when objective/git/PR sources cannot be read. Includes an objective
+  template; independent failure fixtures and review remain release gates.
+
 - **Agent replies were correct but slow to act on: one setting called three things, warnings
   before the command, 40- to 54-word sentences, and banned em dashes in 11 of 40 sampled replies
   because nothing checked.** New `docs/plain-writing-for-agent-output.md`: six ASD-STE100 rules
