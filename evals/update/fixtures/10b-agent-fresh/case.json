@@ -1,0 +1,36 @@
+{
+ "id": "10b-agent-fresh",
+ "spec_item": 10,
+ "tag": "spec",
+ "title": "an agent that reported an hour ago is not stale",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\nagent: builder | {{now-1h}} | writing pages\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "agents": {
+    "contains": [
+     "builder"
+    ],
+    "not_contains": [
+     "STALE",
+     "UNKNOWN"
+    ]
+   }
+  }
+ }
+}

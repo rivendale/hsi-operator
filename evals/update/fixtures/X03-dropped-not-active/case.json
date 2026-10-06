@@ -1,0 +1,35 @@
+{
+ "id": "X03-dropped-not-active",
+ "spec_item": null,
+ "tag": "assumption",
+ "title": "status: dropped is not listed as an active objective",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Abandoned plan\nstatus: dropped\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n\n## Live plan\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "objectives": {
+    "contains": [
+     "Live plan"
+    ],
+    "not_contains": [
+     "Abandoned plan"
+    ]
+   }
+  }
+ }
+}

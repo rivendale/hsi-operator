@@ -1,0 +1,32 @@
+{
+ "id": "06e-empty-who-is-none",
+ "spec_item": 6,
+ "tag": "spec",
+ "title": "ruling: NONE only when no WHO is given (an empty WHO is none)",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Waiting on nobody\nstatus: blocked\nowner: carol\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\nblocked-on:  | {{today-5}} | reason unknown\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "gates": {
+    "contains": [
+     "owner: NONE"
+    ]
+   }
+  }
+ }
+}

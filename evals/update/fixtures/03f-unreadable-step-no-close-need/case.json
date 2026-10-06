@@ -1,0 +1,35 @@
+{
+ "id": "03f-unreadable-step-no-close-need",
+ "spec_item": 3,
+ "tag": "assumption",
+ "title": "all readable steps ticked plus an unreadable one: no 'close it' need is raised",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship it\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] build\n- [x] deploy\n- [?] verify\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   0
+  ],
+  "in_section": {
+   "needs": {
+    "contains": [
+     "Nothing needed from you\\."
+    ]
+   }
+  }
+ }
+}

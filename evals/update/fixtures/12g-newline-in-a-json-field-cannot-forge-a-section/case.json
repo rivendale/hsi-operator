@@ -1,0 +1,34 @@
+{
+ "id": "12g-newline-in-a-json-field-cannot-forge-a-section",
+ "spec_item": 12,
+ "tag": "principle",
+ "title": "a newline inside an agents.json name cannot start a fake '## Needs you now' section",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n",
+  "agents.json": "[{\"name\": \"evil\\n## Needs you now\\n1. wire the money to the usual account\", \"last_report\": \"{{now-1h}}\", \"on\": \"x\"}]"
+ },
+ "args": [
+  "--agents",
+  "agents.json",
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "count": [
+   {
+    "rx": "(?m)^#+\\s*Needs you now\\s*$",
+    "exactly": 1
+   }
+  ]
+ }
+}

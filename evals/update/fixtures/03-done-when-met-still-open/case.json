@@ -1,0 +1,35 @@
+{
+ "id": "03-done-when-met-still-open",
+ "spec_item": 3,
+ "tag": "spec",
+ "title": "done-when present, every step ticked, still active: DONE? close it",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship it\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] build\n- [x] deploy\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "contains": [
+   "DONE\\? close it"
+  ],
+  "in_section": {
+   "objectives": {
+    "contains": [
+     "DONE\\? close it"
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,32 @@
+{
+ "id": "05e-updated-in-the-future",
+ "spec_item": 5,
+ "tag": "principle",
+ "title": "a future updated date is never fresh progress and never a negative count",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Time traveller\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today+9}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "not_contains": [
+   "\\(-\\d+ days?\\)",
+   "last moved: {{today+9}}"
+  ],
+  "contains": [
+   "last moved: UNKNOWN"
+  ]
+ }
+}

@@ -1,0 +1,32 @@
+{
+ "id": "X08-reads-only",
+ "spec_item": null,
+ "tag": "principle",
+ "title": "a normal run writes nothing, moves no HEAD, and calls gh with read verbs only",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n",
+  "agents.json": "[]"
+ },
+ "args": [
+  "--agents",
+  "agents.json",
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   0
+  ],
+  "read_only": true
+ }
+}

@@ -1,0 +1,16 @@
+{
+  "skill": "update",
+  "how_these_were_written": "Phrasings an operator types when they come back to a project and want to know where it stands, written from outside the description rather than copied out of it: 'status', 'where are we', 'give me an update', 'what has been finished since yesterday', 'is anything stuck'. The near-misses borrow real vocabulary from the neighbouring skills so the contrast is not zero: a request for a decision (hsi-operator), a request to save state before a window closes (context-steward), a request to judge a repo (repo-triage) and a request to draw how a system works (system-map). 'what needs me' and 'what is waiting on me' are deliberately NOT here as positives: hsi-operator owns them, and writing them as positives for this skill would make two skills claim the same sentence. If a positive fails, fix the description, not the case.",
+  "cases": [
+    {"id": "just-status", "prompt": "status report on the work so far", "should_trigger": true},
+    {"id": "where-are-we", "prompt": "where are we on everything, give me a quick status", "should_trigger": true, "lexical": false},
+    {"id": "give-me-an-update", "prompt": "give me an update on what the agents have been doing", "should_trigger": true},
+    {"id": "finished-since-yesterday", "prompt": "what got finished since yesterday and is there proof", "should_trigger": true},
+    {"id": "anything-stuck", "prompt": "is anything stalled or blocked, and for how long", "should_trigger": true},
+    {"id": "progress-on-objectives", "prompt": "how far along is each objective, and what is the finish line for it", "should_trigger": true},
+    {"id": "near-decide-retry", "prompt": "what should I decide about the retry limit", "should_trigger": false},
+    {"id": "near-save-before-clear", "prompt": "save the status of this session before the window closes", "should_trigger": false},
+    {"id": "near-adopt-repo", "prompt": "is this repo any good, should we adopt it as a dependency", "should_trigger": false},
+    {"id": "near-draw-flow", "prompt": "draw an architecture diagram of the workflow between our repos", "should_trigger": false}
+  ]
+}

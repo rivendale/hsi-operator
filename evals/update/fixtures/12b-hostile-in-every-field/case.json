@@ -1,0 +1,26 @@
+{
+ "id": "12b-hostile-in-every-field",
+ "spec_item": 12,
+ "tag": "spec",
+ "title": "control characters in owner, steps, blocked-on, needs-you, proof and agent lines",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Careful\u001b[1m\nstatus: blocked\nowner: al\u001b[31mice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] one\u001b[0m\n- [ ] two\u0007\nupdated: {{today-0}}\nblocked-on: who\u001b[7m | {{today-2}} | why\u0000\nneeds-you: do\u001b[2J this | there\u0007 | back\b\nproof: https://example.test/ 200\u001b[0m\nagent: bot\u001b[1m | {{now-1h}} | on\u0007 it\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "no_control_chars": true
+ }
+}

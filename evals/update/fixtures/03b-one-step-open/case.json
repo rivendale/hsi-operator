@@ -1,0 +1,28 @@
+{
+ "id": "03b-one-step-open",
+ "spec_item": 3,
+ "tag": "spec",
+ "title": "an open step means no DONE? line",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship it\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] build\n- [ ] deploy\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "not_contains": [
+   "DONE\\? close it"
+  ]
+ }
+}

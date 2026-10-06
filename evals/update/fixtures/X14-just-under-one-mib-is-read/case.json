@@ -1,0 +1,44 @@
+{
+ "id": "X14-just-under-one-mib-is-read",
+ "spec_item": null,
+ "tag": "spec",
+ "title": "ruling (i) control: a 900 KB file is read, not refused",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {},
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   0,
+   1
+  ],
+  "not_contains": [
+   "CANNOT READ"
+  ],
+  "contains": [
+   "\\[truncated \\d+ chars\\]"
+  ],
+  "max_seconds": 30,
+  "max_line_length": 700
+ },
+ "timeout": 60,
+ "files_gen": {
+  "objectives.md": {
+   "head": "# Objectives\n\n## Big\nstatus: active\nowner: alice\ndone-when: ok\nsteps:\n- [ ] a\nupdated: {{today-0}}\n",
+   "repeat": "",
+   "times": 0,
+   "long_line": 900000
+  }
+ }
+}

@@ -1,0 +1,33 @@
+{
+ "id": "10r-agent-report-from-the-future",
+ "spec_item": 10,
+ "tag": "assumption",
+ "title": "an agent report dated after the evaluation clock is not 'fresh': last report UNKNOWN",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\nagent: builder | {{now+5h}} | writing pages\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "agents": {
+    "contains": [
+     "builder",
+     "last report: UNKNOWN"
+    ]
+   }
+  }
+ }
+}

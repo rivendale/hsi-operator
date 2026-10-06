@@ -1,0 +1,35 @@
+{
+ "id": "06d-named-party-no-owner-field",
+ "spec_item": 6,
+ "tag": "spec",
+ "title": "ruling: no owner: field but a WHO in blocked-on: the WHO is the owner, not NONE",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Waiting on legal\nstatus: blocked\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\nblocked-on: legal review | {{today-5}} | contract not signed\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "gates": {
+    "contains": [
+     "owner: legal review"
+    ],
+    "not_contains": [
+     "owner: NONE"
+    ]
+   }
+  }
+ }
+}

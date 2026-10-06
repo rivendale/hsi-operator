@@ -1,0 +1,31 @@
+{
+ "id": "14c-well-formed-no-note",
+ "spec_item": 14,
+ "tag": "spec",
+ "title": "a clean checklist prints steps: 2/3 and no 'unreadable'",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship it\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] a\n- [x] b\n- [ ] c\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "contains": [
+   "steps: 2/3"
+  ],
+  "not_contains": [
+   "unreadable"
+  ]
+ }
+}

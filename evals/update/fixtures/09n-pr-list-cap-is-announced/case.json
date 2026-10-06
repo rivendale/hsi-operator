@@ -1,0 +1,633 @@
+{
+ "id": "09n-pr-list-cap-is-announced",
+ "spec_item": 9,
+ "tag": "assumption",
+ "title": "when gh returns exactly 100 PRs the page says the listing may be incomplete",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "contains": [
+   "(?i)(capped|truncated|incomplete|additional entries|more than)"
+  ]
+ },
+ "gh_data": {
+  "merged": [],
+  "open": [
+   {
+    "number": 1,
+    "title": "pr 1",
+    "url": "https://example.test/o/r/pull/1",
+    "mergedAt": null
+   },
+   {
+    "number": 2,
+    "title": "pr 2",
+    "url": "https://example.test/o/r/pull/2",
+    "mergedAt": null
+   },
+   {
+    "number": 3,
+    "title": "pr 3",
+    "url": "https://example.test/o/r/pull/3",
+    "mergedAt": null
+   },
+   {
+    "number": 4,
+    "title": "pr 4",
+    "url": "https://example.test/o/r/pull/4",
+    "mergedAt": null
+   },
+   {
+    "number": 5,
+    "title": "pr 5",
+    "url": "https://example.test/o/r/pull/5",
+    "mergedAt": null
+   },
+   {
+    "number": 6,
+    "title": "pr 6",
+    "url": "https://example.test/o/r/pull/6",
+    "mergedAt": null
+   },
+   {
+    "number": 7,
+    "title": "pr 7",
+    "url": "https://example.test/o/r/pull/7",
+    "mergedAt": null
+   },
+   {
+    "number": 8,
+    "title": "pr 8",
+    "url": "https://example.test/o/r/pull/8",
+    "mergedAt": null
+   },
+   {
+    "number": 9,
+    "title": "pr 9",
+    "url": "https://example.test/o/r/pull/9",
+    "mergedAt": null
+   },
+   {
+    "number": 10,
+    "title": "pr 10",
+    "url": "https://example.test/o/r/pull/10",
+    "mergedAt": null
+   },
+   {
+    "number": 11,
+    "title": "pr 11",
+    "url": "https://example.test/o/r/pull/11",
+    "mergedAt": null
+   },
+   {
+    "number": 12,
+    "title": "pr 12",
+    "url": "https://example.test/o/r/pull/12",
+    "mergedAt": null
+   },
+   {
+    "number": 13,
+    "title": "pr 13",
+    "url": "https://example.test/o/r/pull/13",
+    "mergedAt": null
+   },
+   {
+    "number": 14,
+    "title": "pr 14",
+    "url": "https://example.test/o/r/pull/14",
+    "mergedAt": null
+   },
+   {
+    "number": 15,
+    "title": "pr 15",
+    "url": "https://example.test/o/r/pull/15",
+    "mergedAt": null
+   },
+   {
+    "number": 16,
+    "title": "pr 16",
+    "url": "https://example.test/o/r/pull/16",
+    "mergedAt": null
+   },
+   {
+    "number": 17,
+    "title": "pr 17",
+    "url": "https://example.test/o/r/pull/17",
+    "mergedAt": null
+   },
+   {
+    "number": 18,
+    "title": "pr 18",
+    "url": "https://example.test/o/r/pull/18",
+    "mergedAt": null
+   },
+   {
+    "number": 19,
+    "title": "pr 19",
+    "url": "https://example.test/o/r/pull/19",
+    "mergedAt": null
+   },
+   {
+    "number": 20,
+    "title": "pr 20",
+    "url": "https://example.test/o/r/pull/20",
+    "mergedAt": null
+   },
+   {
+    "number": 21,
+    "title": "pr 21",
+    "url": "https://example.test/o/r/pull/21",
+    "mergedAt": null
+   },
+   {
+    "number": 22,
+    "title": "pr 22",
+    "url": "https://example.test/o/r/pull/22",
+    "mergedAt": null
+   },
+   {
+    "number": 23,
+    "title": "pr 23",
+    "url": "https://example.test/o/r/pull/23",
+    "mergedAt": null
+   },
+   {
+    "number": 24,
+    "title": "pr 24",
+    "url": "https://example.test/o/r/pull/24",
+    "mergedAt": null
+   },
+   {
+    "number": 25,
+    "title": "pr 25",
+    "url": "https://example.test/o/r/pull/25",
+    "mergedAt": null
+   },
+   {
+    "number": 26,
+    "title": "pr 26",
+    "url": "https://example.test/o/r/pull/26",
+    "mergedAt": null
+   },
+   {
+    "number": 27,
+    "title": "pr 27",
+    "url": "https://example.test/o/r/pull/27",
+    "mergedAt": null
+   },
+   {
+    "number": 28,
+    "title": "pr 28",
+    "url": "https://example.test/o/r/pull/28",
+    "mergedAt": null
+   },
+   {
+    "number": 29,
+    "title": "pr 29",
+    "url": "https://example.test/o/r/pull/29",
+    "mergedAt": null
+   },
+   {
+    "number": 30,
+    "title": "pr 30",
+    "url": "https://example.test/o/r/pull/30",
+    "mergedAt": null
+   },
+   {
+    "number": 31,
+    "title": "pr 31",
+    "url": "https://example.test/o/r/pull/31",
+    "mergedAt": null
+   },
+   {
+    "number": 32,
+    "title": "pr 32",
+    "url": "https://example.test/o/r/pull/32",
+    "mergedAt": null
+   },
+   {
+    "number": 33,
+    "title": "pr 33",
+    "url": "https://example.test/o/r/pull/33",
+    "mergedAt": null
+   },
+   {
+    "number": 34,
+    "title": "pr 34",
+    "url": "https://example.test/o/r/pull/34",
+    "mergedAt": null
+   },
+   {
+    "number": 35,
+    "title": "pr 35",
+    "url": "https://example.test/o/r/pull/35",
+    "mergedAt": null
+   },
+   {
+    "number": 36,
+    "title": "pr 36",
+    "url": "https://example.test/o/r/pull/36",
+    "mergedAt": null
+   },
+   {
+    "number": 37,
+    "title": "pr 37",
+    "url": "https://example.test/o/r/pull/37",
+    "mergedAt": null
+   },
+   {
+    "number": 38,
+    "title": "pr 38",
+    "url": "https://example.test/o/r/pull/38",
+    "mergedAt": null
+   },
+   {
+    "number": 39,
+    "title": "pr 39",
+    "url": "https://example.test/o/r/pull/39",
+    "mergedAt": null
+   },
+   {
+    "number": 40,
+    "title": "pr 40",
+    "url": "https://example.test/o/r/pull/40",
+    "mergedAt": null
+   },
+   {
+    "number": 41,
+    "title": "pr 41",
+    "url": "https://example.test/o/r/pull/41",
+    "mergedAt": null
+   },
+   {
+    "number": 42,
+    "title": "pr 42",
+    "url": "https://example.test/o/r/pull/42",
+    "mergedAt": null
+   },
+   {
+    "number": 43,
+    "title": "pr 43",
+    "url": "https://example.test/o/r/pull/43",
+    "mergedAt": null
+   },
+   {
+    "number": 44,
+    "title": "pr 44",
+    "url": "https://example.test/o/r/pull/44",
+    "mergedAt": null
+   },
+   {
+    "number": 45,
+    "title": "pr 45",
+    "url": "https://example.test/o/r/pull/45",
+    "mergedAt": null
+   },
+   {
+    "number": 46,
+    "title": "pr 46",
+    "url": "https://example.test/o/r/pull/46",
+    "mergedAt": null
+   },
+   {
+    "number": 47,
+    "title": "pr 47",
+    "url": "https://example.test/o/r/pull/47",
+    "mergedAt": null
+   },
+   {
+    "number": 48,
+    "title": "pr 48",
+    "url": "https://example.test/o/r/pull/48",
+    "mergedAt": null
+   },
+   {
+    "number": 49,
+    "title": "pr 49",
+    "url": "https://example.test/o/r/pull/49",
+    "mergedAt": null
+   },
+   {
+    "number": 50,
+    "title": "pr 50",
+    "url": "https://example.test/o/r/pull/50",
+    "mergedAt": null
+   },
+   {
+    "number": 51,
+    "title": "pr 51",
+    "url": "https://example.test/o/r/pull/51",
+    "mergedAt": null
+   },
+   {
+    "number": 52,
+    "title": "pr 52",
+    "url": "https://example.test/o/r/pull/52",
+    "mergedAt": null
+   },
+   {
+    "number": 53,
+    "title": "pr 53",
+    "url": "https://example.test/o/r/pull/53",
+    "mergedAt": null
+   },
+   {
+    "number": 54,
+    "title": "pr 54",
+    "url": "https://example.test/o/r/pull/54",
+    "mergedAt": null
+   },
+   {
+    "number": 55,
+    "title": "pr 55",
+    "url": "https://example.test/o/r/pull/55",
+    "mergedAt": null
+   },
+   {
+    "number": 56,
+    "title": "pr 56",
+    "url": "https://example.test/o/r/pull/56",
+    "mergedAt": null
+   },
+   {
+    "number": 57,
+    "title": "pr 57",
+    "url": "https://example.test/o/r/pull/57",
+    "mergedAt": null
+   },
+   {
+    "number": 58,
+    "title": "pr 58",
+    "url": "https://example.test/o/r/pull/58",
+    "mergedAt": null
+   },
+   {
+    "number": 59,
+    "title": "pr 59",
+    "url": "https://example.test/o/r/pull/59",
+    "mergedAt": null
+   },
+   {
+    "number": 60,
+    "title": "pr 60",
+    "url": "https://example.test/o/r/pull/60",
+    "mergedAt": null
+   },
+   {
+    "number": 61,
+    "title": "pr 61",
+    "url": "https://example.test/o/r/pull/61",
+    "mergedAt": null
+   },
+   {
+    "number": 62,
+    "title": "pr 62",
+    "url": "https://example.test/o/r/pull/62",
+    "mergedAt": null
+   },
+   {
+    "number": 63,
+    "title": "pr 63",
+    "url": "https://example.test/o/r/pull/63",
+    "mergedAt": null
+   },
+   {
+    "number": 64,
+    "title": "pr 64",
+    "url": "https://example.test/o/r/pull/64",
+    "mergedAt": null
+   },
+   {
+    "number": 65,
+    "title": "pr 65",
+    "url": "https://example.test/o/r/pull/65",
+    "mergedAt": null
+   },
+   {
+    "number": 66,
+    "title": "pr 66",
+    "url": "https://example.test/o/r/pull/66",
+    "mergedAt": null
+   },
+   {
+    "number": 67,
+    "title": "pr 67",
+    "url": "https://example.test/o/r/pull/67",
+    "mergedAt": null
+   },
+   {
+    "number": 68,
+    "title": "pr 68",
+    "url": "https://example.test/o/r/pull/68",
+    "mergedAt": null
+   },
+   {
+    "number": 69,
+    "title": "pr 69",
+    "url": "https://example.test/o/r/pull/69",
+    "mergedAt": null
+   },
+   {
+    "number": 70,
+    "title": "pr 70",
+    "url": "https://example.test/o/r/pull/70",
+    "mergedAt": null
+   },
+   {
+    "number": 71,
+    "title": "pr 71",
+    "url": "https://example.test/o/r/pull/71",
+    "mergedAt": null
+   },
+   {
+    "number": 72,
+    "title": "pr 72",
+    "url": "https://example.test/o/r/pull/72",
+    "mergedAt": null
+   },
+   {
+    "number": 73,
+    "title": "pr 73",
+    "url": "https://example.test/o/r/pull/73",
+    "mergedAt": null
+   },
+   {
+    "number": 74,
+    "title": "pr 74",
+    "url": "https://example.test/o/r/pull/74",
+    "mergedAt": null
+   },
+   {
+    "number": 75,
+    "title": "pr 75",
+    "url": "https://example.test/o/r/pull/75",
+    "mergedAt": null
+   },
+   {
+    "number": 76,
+    "title": "pr 76",
+    "url": "https://example.test/o/r/pull/76",
+    "mergedAt": null
+   },
+   {
+    "number": 77,
+    "title": "pr 77",
+    "url": "https://example.test/o/r/pull/77",
+    "mergedAt": null
+   },
+   {
+    "number": 78,
+    "title": "pr 78",
+    "url": "https://example.test/o/r/pull/78",
+    "mergedAt": null
+   },
+   {
+    "number": 79,
+    "title": "pr 79",
+    "url": "https://example.test/o/r/pull/79",
+    "mergedAt": null
+   },
+   {
+    "number": 80,
+    "title": "pr 80",
+    "url": "https://example.test/o/r/pull/80",
+    "mergedAt": null
+   },
+   {
+    "number": 81,
+    "title": "pr 81",
+    "url": "https://example.test/o/r/pull/81",
+    "mergedAt": null
+   },
+   {
+    "number": 82,
+    "title": "pr 82",
+    "url": "https://example.test/o/r/pull/82",
+    "mergedAt": null
+   },
+   {
+    "number": 83,
+    "title": "pr 83",
+    "url": "https://example.test/o/r/pull/83",
+    "mergedAt": null
+   },
+   {
+    "number": 84,
+    "title": "pr 84",
+    "url": "https://example.test/o/r/pull/84",
+    "mergedAt": null
+   },
+   {
+    "number": 85,
+    "title": "pr 85",
+    "url": "https://example.test/o/r/pull/85",
+    "mergedAt": null
+   },
+   {
+    "number": 86,
+    "title": "pr 86",
+    "url": "https://example.test/o/r/pull/86",
+    "mergedAt": null
+   },
+   {
+    "number": 87,
+    "title": "pr 87",
+    "url": "https://example.test/o/r/pull/87",
+    "mergedAt": null
+   },
+   {
+    "number": 88,
+    "title": "pr 88",
+    "url": "https://example.test/o/r/pull/88",
+    "mergedAt": null
+   },
+   {
+    "number": 89,
+    "title": "pr 89",
+    "url": "https://example.test/o/r/pull/89",
+    "mergedAt": null
+   },
+   {
+    "number": 90,
+    "title": "pr 90",
+    "url": "https://example.test/o/r/pull/90",
+    "mergedAt": null
+   },
+   {
+    "number": 91,
+    "title": "pr 91",
+    "url": "https://example.test/o/r/pull/91",
+    "mergedAt": null
+   },
+   {
+    "number": 92,
+    "title": "pr 92",
+    "url": "https://example.test/o/r/pull/92",
+    "mergedAt": null
+   },
+   {
+    "number": 93,
+    "title": "pr 93",
+    "url": "https://example.test/o/r/pull/93",
+    "mergedAt": null
+   },
+   {
+    "number": 94,
+    "title": "pr 94",
+    "url": "https://example.test/o/r/pull/94",
+    "mergedAt": null
+   },
+   {
+    "number": 95,
+    "title": "pr 95",
+    "url": "https://example.test/o/r/pull/95",
+    "mergedAt": null
+   },
+   {
+    "number": 96,
+    "title": "pr 96",
+    "url": "https://example.test/o/r/pull/96",
+    "mergedAt": null
+   },
+   {
+    "number": 97,
+    "title": "pr 97",
+    "url": "https://example.test/o/r/pull/97",
+    "mergedAt": null
+   },
+   {
+    "number": 98,
+    "title": "pr 98",
+    "url": "https://example.test/o/r/pull/98",
+    "mergedAt": null
+   },
+   {
+    "number": 99,
+    "title": "pr 99",
+    "url": "https://example.test/o/r/pull/99",
+    "mergedAt": null
+   },
+   {
+    "number": 100,
+    "title": "pr 100",
+    "url": "https://example.test/o/r/pull/100",
+    "mergedAt": null
+   }
+  ]
+ }
+}

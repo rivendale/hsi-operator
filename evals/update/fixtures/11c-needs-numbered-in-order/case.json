@@ -1,0 +1,37 @@
+{
+ "id": "11c-needs-numbered-in-order",
+ "spec_item": 11,
+ "tag": "assumption",
+ "title": "two needs are numbered 1 and 2, in file order, each with what, where and what to send back",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\nneeds-you: first thing | place one | answer one\nneeds-you: second thing | place two | answer two\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   1
+  ],
+  "in_section": {
+   "needs": {
+    "contains": [
+     "(?ms)^\\s*1[.)]\\s.*first thing.*^\\s*2[.)]\\s.*second thing",
+     "place two",
+     "answer two"
+    ]
+   }
+  }
+ }
+}

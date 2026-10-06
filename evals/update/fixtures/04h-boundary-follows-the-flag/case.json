@@ -1,0 +1,36 @@
+{
+ "id": "04h-boundary-follows-the-flag",
+ "spec_item": 4,
+ "tag": "spec",
+ "title": "ruling (h) with --stall-days 7: 6 days old is fresh, 7 days old is STALLED (7 days)",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Six days\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-6}}\n\n## Seven days\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-7}}\n"
+ },
+ "args": [
+  "--stall-days",
+  "7",
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "contains": [
+   "STALLED \\(7 days\\)"
+  ],
+  "count": [
+   {
+    "rx": "STALLED",
+    "exactly": 1
+   }
+  ]
+ }
+}

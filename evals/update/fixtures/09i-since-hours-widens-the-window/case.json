@@ -1,0 +1,34 @@
+{
+ "id": "09i-since-hours-widens-the-window",
+ "spec_item": 9,
+ "tag": "spec",
+ "title": "--since-hours 96: a completion dated four days ago is inside the window (control for 09h)",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Four days old\nstatus: done\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] launch\nupdated: {{today-4}}\nproof: PR #4 merged\n\n## Ongoing\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--since-hours",
+  "96",
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "completed": {
+    "contains": [
+     "Four days old"
+    ]
+   }
+  }
+ }
+}

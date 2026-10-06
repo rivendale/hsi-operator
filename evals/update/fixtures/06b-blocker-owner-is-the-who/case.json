@@ -1,0 +1,36 @@
+{
+ "id": "06b-blocker-owner-is-the-who",
+ "spec_item": 6,
+ "tag": "spec",
+ "title": "ruling: a blocker's owner is the WHO in blocked-on, so a named party is the owner and never NONE",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Waiting on legal\nstatus: blocked\nowner: carol\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\nblocked-on: legal review | {{today-5}} | contract not signed\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "gates": {
+    "contains": [
+     "owner: legal review",
+     "{{today-5}}"
+    ],
+    "not_contains": [
+     "owner: NONE"
+    ]
+   }
+  }
+ }
+}

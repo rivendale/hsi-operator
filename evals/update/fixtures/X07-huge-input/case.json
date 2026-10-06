@@ -1,0 +1,42 @@
+{
+ "id": "X07-huge-input",
+ "spec_item": null,
+ "tag": "spec",
+ "title": "ruling (f): recorded text is capped at 500 characters per field with [truncated N chars]; 3000 objectives and a 300 KB line finish quickly",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {},
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   0,
+   1,
+   2
+  ],
+  "max_seconds": 30,
+  "max_line_length": 700,
+  "contains": [
+   "\\[truncated \\d+ chars\\]"
+  ]
+ },
+ "timeout": 60,
+ "files_gen": {
+  "objectives.md": {
+   "head": "# Objectives\n\n",
+   "repeat": "## Task {n}\nstatus: active\nowner: alice\ndone-when: ok\nsteps:\n- [ ] a\nupdated: {{today-0}}\n\n",
+   "times": 3000,
+   "long_line": 300000
+  }
+ }
+}

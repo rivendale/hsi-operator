@@ -1,0 +1,43 @@
+{
+ "id": "10m-agents-json-number-time",
+ "spec_item": 10,
+ "tag": "spec",
+ "title": "ruling (g): a non-string last_report is that agent's UNKNOWN; the other agents still print and the file is not CANNOT READ",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n",
+  "agents.json": "[{\"name\": \"numbered\", \"last_report\": 12345, \"on\": \"x\"}, {\"name\": \"fine\", \"last_report\": \"{{now-1h}}\", \"on\": \"y\"}]"
+ },
+ "args": [
+  "--agents",
+  "agents.json",
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   0,
+   1
+  ],
+  "in_section": {
+   "agents": {
+    "contains": [
+     "numbered.*last report: UNKNOWN; STALE",
+     "fine"
+    ],
+    "not_contains": [
+     "CANNOT READ"
+    ]
+   }
+  }
+ }
+}

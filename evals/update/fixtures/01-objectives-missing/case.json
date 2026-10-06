@@ -1,0 +1,41 @@
+{
+ "id": "01-objectives-missing",
+ "spec_item": 1,
+ "tag": "spec",
+ "title": "objectives.md is missing: say so, exit 2, never an empty section",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {},
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   2
+  ],
+  "contains": [
+   "objectives: NOT FOUND \\(.*objectives\\.md\\)"
+  ],
+  "not_contains": [
+   "objectives: NONE DEFINED",
+   "(?i)no active objectives",
+   "(?i)nothing in progress"
+  ],
+  "in_section": {
+   "objectives": {
+    "contains": [
+     "NOT FOUND"
+    ]
+   }
+  }
+ }
+}

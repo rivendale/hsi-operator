@@ -1,0 +1,52 @@
+{
+ "id": "09l-merged-pr-in-window-listed",
+ "spec_item": 9,
+ "tag": "assumption",
+ "title": "a PR merged 10 hours ago is listed as a completion; one merged 100 hours ago is not",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "completed": {
+    "contains": [
+     "recent pr alpha"
+    ],
+    "not_contains": [
+     "ancient pr omega"
+    ]
+   }
+  }
+ },
+ "gh_data": {
+  "merged": [
+   {
+    "number": 31,
+    "title": "recent pr alpha",
+    "url": "https://example.test/o/r/pull/31",
+    "mergedAt": "{{now-10h}}"
+   },
+   {
+    "number": 5,
+    "title": "ancient pr omega",
+    "url": "https://example.test/o/r/pull/5",
+    "mergedAt": "{{now-100h}}"
+   }
+  ],
+  "open": []
+ }
+}

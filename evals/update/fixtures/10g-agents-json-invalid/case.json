@@ -1,0 +1,34 @@
+{
+ "id": "10g-agents-json-invalid",
+ "spec_item": 10,
+ "tag": "principle",
+ "title": "agents.json that is not JSON is a source that could not be read: exit 2, named, no crash",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n",
+  "agents.json": "[{not json"
+ },
+ "args": [
+  "--agents",
+  "agents.json",
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   2
+  ],
+  "contains": [
+   "(?i)agents.*(CANNOT READ|unreadable|invalid)"
+  ]
+ }
+}

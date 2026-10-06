@@ -1,0 +1,35 @@
+{
+ "id": "X06-invalid-utf8",
+ "spec_item": null,
+ "tag": "principle",
+ "title": "bytes that are not UTF-8 do not crash the report and do not print raw",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {},
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   0,
+   1,
+   2
+  ],
+  "no_control_chars": true,
+  "contains": [
+   "docs|objectives: CANNOT READ"
+  ]
+ },
+ "binary_files": {
+  "objectives.md": "23204f626a656374697665730a0a2323205368697020ff20646f63730a7374617475733a206163746976650a6f776e65723a20616c6963650a646f6e652d7768656e3a206f6b0a73746570733a0a2d205b205d20610a757064617465643a20323032362d31302d30360a"
+ }
+}

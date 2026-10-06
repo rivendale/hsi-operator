@@ -1,0 +1,40 @@
+{
+ "id": "X13-over-one-mib-is-unreadable",
+ "spec_item": null,
+ "tag": "spec",
+ "title": "ruling (i): an objectives file over 1 MiB prints 'CANNOT READ (over 1 MiB)' and exits 2",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {},
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   2
+  ],
+  "contains": [
+   "CANNOT READ \\(over 1 MiB\\)"
+  ],
+  "max_seconds": 30,
+  "max_line_length": 700
+ },
+ "timeout": 60,
+ "files_gen": {
+  "objectives.md": {
+   "head": "# Objectives\n\n## Big\nstatus: active\nowner: alice\ndone-when: ok\nsteps:\n- [ ] a\nupdated: {{today-0}}\n",
+   "repeat": "",
+   "times": 0,
+   "long_line": 1100000
+  }
+ }
+}

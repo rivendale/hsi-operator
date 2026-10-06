@@ -1,0 +1,36 @@
+{
+ "id": "12c-crlf-line-endings",
+ "spec_item": 12,
+ "tag": "extra",
+ "title": "a file saved with Windows line endings parses the same and prints no carriage returns",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\r\n\r\n## Ship the docs site\r\nstatus: active\r\nowner: alice\r\ndone-when: the site answers 200 at the production URL\r\nsteps:\r\n- [x] write pages\r\n- [ ] publish\r\nupdated: {{today-0}}\r\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   0
+  ],
+  "no_control_chars": true,
+  "exact_lines": [
+   "Nothing needed from you."
+  ],
+  "not_contains": [
+   "NO FINISH LINE",
+   "STALLED"
+  ]
+ }
+}

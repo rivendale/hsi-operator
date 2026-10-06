@@ -36,7 +36,7 @@ receiving session loaded.
 
 ## Skills
 
-Four skills. The first has two doors:
+Five skills. The first has two doors:
 
 **`hsi-operator`**
 - **`how can I help`** — the 3 things that most need you, each as an answerable question
@@ -89,6 +89,18 @@ sysmap diff old.json new.json                          # what left, first
 sysmap selftest                                        # proves check still refuses
 ```
 
+**`update`**: a status page against explicit completion criteria: operator decisions,
+human gates, objectives and their next steps, recent completions with proof, and other
+agents' dated reports. Missing finish lines, stale movement, checked-but-still-open goals,
+and unreadable sources stay visible. Python 3 standard library; fixed read-only git/gh
+commands. See [the skill and objective format](skills/update/SKILL.md).
+
+```sh
+skills/update/bin/update-report --objectives ./objectives.md
+# From a clean clone checked out at a reviewed commit:
+npx skills add . --skill update
+```
+
 ## Why three
 
 A list of twenty-seven is a list of zero. The scarce resource is not willingness, it is
@@ -122,7 +134,7 @@ changes what your agent does with no review on your machine. The installer copie
 so a later `git pull` in your clone changes nothing already installed; to move to a newer
 commit, review it, check it out, and run the same install again.
 
-Or track `main`, all four:
+Or track `main`, all five:
 
 ```
 npx skills add rivendale/hsi-operator --skill '*' -g -a claude-code

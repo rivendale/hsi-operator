@@ -1,0 +1,40 @@
+{
+ "id": "09m-open-prs-are-listed",
+ "spec_item": 9,
+ "tag": "assumption",
+ "title": "open PRs are shown (title and count) and are not presented as completions",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "contains": [
+   "open pr bravo",
+   "(?i)open PRs[^\\n]*\\b1\\b|1 open"
+  ]
+ },
+ "gh_data": {
+  "merged": [],
+  "open": [
+   {
+    "number": 7,
+    "title": "open pr bravo",
+    "url": "https://example.test/o/r/pull/7",
+    "mergedAt": null
+   }
+  ]
+ }
+}

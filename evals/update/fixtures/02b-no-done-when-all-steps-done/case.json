@@ -1,0 +1,31 @@
+{
+ "id": "02b-no-done-when-all-steps-done",
+ "spec_item": 2,
+ "tag": "spec",
+ "title": "no done-when and every step ticked is still never a finished objective",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Loose idea\nstatus: active\nowner: alice\nsteps:\n- [x] one\n- [x] two\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "contains": [
+   "NO FINISH LINE"
+  ],
+  "not_contains": [
+   "DONE\\? close it"
+  ]
+ }
+}

@@ -1,0 +1,35 @@
+{
+ "id": "06f-blocked-objective-needs-are-listed",
+ "spec_item": 6,
+ "tag": "assumption",
+ "title": "needs-you on a blocked objective still reaches the operator",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Waiting on legal\nstatus: blocked\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\nblocked-on: legal review | {{today-5}} | contract\nneeds-you: nudge legal | the legal channel | their answer\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   1
+  ],
+  "in_section": {
+   "needs": {
+    "contains": [
+     "nudge legal"
+    ]
+   }
+  }
+ }
+}
