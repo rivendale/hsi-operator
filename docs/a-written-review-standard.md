@@ -53,6 +53,13 @@ from its own failure list, never the change's own commands, hooks or CI script; 
 A reviewer that cannot seal its environment does not run anything and says "read only". The review
 lanes are confined by the harness, not by this text.
 
+**Run a test through the real path, not an extracted piece.** A check that lifts a block out of a script and
+supplies the inputs itself tests the block, not the path to it. In one case the extracted check set a directory
+variable by hand and printed the expected result, while every real run re-executed a copy of the script from a
+temporary folder, where that variable pointed somewhere else and the feature silently did nothing. A second
+reviewer ran the script the normal way and got the opposite answer. The bug lived in the one input the first check
+supplied. Invoke the program the way its users do, and treat any value the test fills in as a suspect.
+
 **End with what was executed and what could not be verified,** in the verdict line. Do not ask a
 model to count its own findings: one reviewer reported "3 found so far" over a comment holding five.
 Let the script count the finding lines.
