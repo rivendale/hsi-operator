@@ -149,7 +149,7 @@ def main():
             agent_error = True
             source_error = True
     since = (now - timedelta(hours=args.since_hours)).isoformat()
-    git = run(['git', 'log', '--since=' + since, '--format=%h %cI %s', '--no-decorate'])
+    git = run(['git', 'log', '--since=' + since, '--until=' + now.isoformat(), '--format=%h %cI %s', '--no-decorate'])
     if git is None:
         source_error = True
     prs = {}
@@ -238,7 +238,7 @@ def main():
         if day and day < (now - timedelta(hours=args.since_hours)).date():
             continue
         completions += 1
-        proof = '; '.join(o['proof']) if o['proof'] else 'claimed, no proof'
+        proof = '; '.join(p for p in o['proof'] if p.strip()) or 'claimed, no proof'
         print(quote(o['title'] + '; completed date: ' + (day.isoformat() if day else 'UNKNOWN') + '; PROOF: ' + proof))
     print('git: CANNOT READ' if git is None else 'git (commit evidence, not deployment proof):')
     if git is not None:
