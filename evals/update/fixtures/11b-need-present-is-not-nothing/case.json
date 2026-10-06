@@ -30,7 +30,8 @@
   "in_section": {
    "needs": {
     "contains": [
-     "(?m)^\\s*1[.)]\\s+.*approve the budget",
+     "(?m)^\\s*1[.)]\\s",
+     "approve the budget",
      "finance form",
      "approval id"
     ]

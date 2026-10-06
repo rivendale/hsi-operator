@@ -1,8 +1,8 @@
 {
- "id": "09g-not-proof-c-url-no-status",
+ "id": "09f-proof-f-url-only",
  "spec_item": 9,
- "tag": "spec",
- "title": "unverifiable text (https://example.test/ is up) is 'claimed, no proof'",
+ "tag": "assumption",
+ "title": "ruling: a URL is checkable; one with no HTTP status is accepted as a receipt, not called 'no proof'",
  "git": {
   "repo": true,
   "commits": [
@@ -25,6 +25,9 @@
    "completed": {
     "contains": [
      "Launch the pilot",
+     "https://example\\.test/"
+    ],
+    "not_contains": [
      "claimed, no proof"
     ]
    }

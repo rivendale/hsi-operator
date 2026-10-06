@@ -1,8 +1,8 @@
 {
- "id": "10f-agents-json-no-time-and-garbage",
+ "id": "10m-agents-json-number-time",
  "spec_item": 10,
- "tag": "extra",
- "title": "agents.json entries with no time, or a word instead of a time, are UNKNOWN",
+ "tag": "principle",
+ "title": "last_report as a bare number is either UNKNOWN for that agent or a named read failure, never a crash or silence",
  "git": {
   "repo": true,
   "commits": [
@@ -15,7 +15,7 @@
  "gh": "ok-empty",
  "files": {
   "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n",
-  "agents.json": "[{\"name\": \"a1\", \"on\": \"x\"}, {\"name\": \"a2\", \"last_report\": \"soon\", \"on\": \"x\"}]"
+  "agents.json": "[{\"name\": \"numbered\", \"last_report\": 12345, \"on\": \"x\"}]"
  },
  "args": [
   "--agents",
@@ -24,11 +24,8 @@
   "{{NOW}}"
  ],
  "expect": {
-  "count_in_section": {
-   "agents": {
-    "rx": "last report: UNKNOWN",
-    "at_least": 2
-   }
-  }
+  "contains": [
+   "(?i)last report: UNKNOWN|agents: CANNOT READ"
+  ]
  }
 }

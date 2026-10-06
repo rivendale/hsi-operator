@@ -27,8 +27,7 @@
   "in_section": {
    "needs": {
     "contains": [
-     "(?m)^\\s*1[.)]\\s+.*first thing",
-     "(?m)^\\s*2[.)]\\s+.*second thing",
+     "(?ms)^\\s*1[.)]\\s.*first thing.*^\\s*2[.)]\\s.*second thing",
      "place two",
      "answer two"
     ]
