@@ -41,8 +41,8 @@ find a gap between that assumption and the world.
   visible text.
 - **Verify an export from the receiving end.** An AI build tool reported a project exported to a repository that held no
   commits, while the hosted build stayed live, so the code existed only on the platform. From the exporting side an empty
-  export looks finished. Check the receiving repository for the expected commit, newer than the hosted build.
-- **A fallback route must not hide a refusal.** A web reader tried a direct fetch, then a headless browser. The direct
+  export looks finished. Check the receiving repository for an export commit whose date is later than the hosted build's last update.
+- **A fallback route must not undo a safety refusal.** A web reader tried a direct fetch, then a headless browser. The direct
   route refused a redirect to a loopback address; the browser route followed it. A fallback that succeeds where the first
   route refused for safety undoes the refusal. Make a safety refusal stop every route, and filter addresses at connect
   time so redirects and DNS rebinding cannot reach private ranges.
