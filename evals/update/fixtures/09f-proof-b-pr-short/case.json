@@ -1,7 +1,7 @@
 {
  "id": "09f-proof-b-pr-short",
  "spec_item": 9,
- "tag": "assumption",
+ "tag": "spec",
  "title": "a bare 'PR #12 merged' is a PR reference (repo taken from the current repository)",
  "git": {
   "repo": true,

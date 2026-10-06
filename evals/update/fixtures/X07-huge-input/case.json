@@ -1,8 +1,8 @@
 {
  "id": "X07-huge-input",
  "spec_item": null,
- "tag": "principle",
- "title": "3000 objectives and a 300 KB line finish quickly and do not echo the long line",
+ "tag": "spec",
+ "title": "ruling (f): recorded text is capped at 500 characters per field with [truncated N chars]; 3000 objectives and a 300 KB line finish quickly",
  "git": {
   "repo": true,
   "commits": [
@@ -25,7 +25,10 @@
    2
   ],
   "max_seconds": 30,
-  "max_line_length": 5000
+  "max_line_length": 700,
+  "contains": [
+   "\\[truncated \\d+ chars\\]"
+  ]
  },
  "timeout": 60,
  "files_gen": {
