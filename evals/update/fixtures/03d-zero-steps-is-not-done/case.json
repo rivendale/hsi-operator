@@ -1,0 +1,28 @@
+{
+ "id": "03d-zero-steps-is-not-done",
+ "spec_item": 3,
+ "tag": "principle",
+ "title": "no steps at all is not 'every step ticked'",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship it\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "not_contains": [
+   "DONE\\? close it"
+  ]
+ }
+}

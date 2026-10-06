@@ -1,0 +1,38 @@
+{
+ "id": "07-gh-absent",
+ "spec_item": 7,
+ "tag": "spec",
+ "title": "gh not installed: PRs: CANNOT READ, git still prints, exit 2, never 'no open PRs'",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "absent",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   2
+  ],
+  "contains": [
+   "PRs: CANNOT READ \\(gh unavailable\\)",
+   "add readme"
+  ],
+  "not_contains": [
+   "(?i)no open (pull requests|prs)",
+   "(?i)\\b0 open\\b",
+   "(?i)nothing open"
+  ],
+  "gh_called": false
+ }
+}

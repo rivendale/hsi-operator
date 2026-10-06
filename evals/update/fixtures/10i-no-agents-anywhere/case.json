@@ -1,0 +1,32 @@
+{
+ "id": "10i-no-agents-anywhere",
+ "spec_item": 10,
+ "tag": "spec",
+ "title": "ruling: no agent: line and no --agents file prints 'agents: none listed'",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "agents": {
+    "contains": [
+     "agents: none listed"
+    ]
+   }
+  }
+ }
+}

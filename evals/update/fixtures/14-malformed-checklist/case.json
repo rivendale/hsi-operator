@@ -1,0 +1,28 @@
+{
+ "id": "14-malformed-checklist",
+ "spec_item": 14,
+ "tag": "spec",
+ "title": "one malformed checklist line: steps: 2/3 (+1 unreadable)",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship it\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] a\n- [x] b\n- [ ] c\n- [?] d\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "contains": [
+   "steps: 2/3 \\(\\+1 unreadable\\)"
+  ]
+ }
+}

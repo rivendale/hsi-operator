@@ -1,0 +1,32 @@
+{
+ "id": "X05-objectives-is-a-directory",
+ "spec_item": null,
+ "tag": "principle",
+ "title": "objectives.md that is a directory: exit 2, named, no crash",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {},
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   2
+  ],
+  "contains": [
+   "objectives: (NOT FOUND|CANNOT READ)"
+  ]
+ },
+ "mkdirs": [
+  "objectives.md"
+ ]
+}

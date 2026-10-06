@@ -1,0 +1,34 @@
+{
+ "id": "10f-agents-json-no-time-and-garbage",
+ "spec_item": 10,
+ "tag": "extra",
+ "title": "agents.json entries with no time, a word, or a bare number are all UNKNOWN",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n",
+  "agents.json": "[{\"name\": \"a1\", \"on\": \"x\"}, {\"name\": \"a2\", \"last_report\": \"soon\", \"on\": \"x\"}, {\"name\": \"a3\", \"last_report\": 12345, \"on\": \"x\"}]"
+ },
+ "args": [
+  "--agents",
+  "agents.json",
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "count_in_section": {
+   "agents": {
+    "rx": "last report: UNKNOWN",
+    "at_least": 3
+   }
+  }
+ }
+}

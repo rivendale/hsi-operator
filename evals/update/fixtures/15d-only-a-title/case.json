@@ -1,0 +1,41 @@
+{
+ "id": "15d-only-a-title",
+ "spec_item": 15,
+ "tag": "spec",
+ "title": "a single '# Objectives' title and no ## objective is the same",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\nnothing here yet\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   1
+  ],
+  "contains": [
+   "objectives: NONE DEFINED"
+  ],
+  "not_contains": [
+   "(?m)^\\s*Nothing needed from you\\.\\s*$"
+  ],
+  "in_section": {
+   "needs": {
+    "contains": [
+     "(?im)^\\s*1[.)]\\s+.*(define|done-when)"
+    ]
+   }
+  }
+ }
+}

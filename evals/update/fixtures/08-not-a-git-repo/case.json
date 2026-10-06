@@ -1,0 +1,30 @@
+{
+ "id": "08-not-a-git-repo",
+ "spec_item": 8,
+ "tag": "spec",
+ "title": "not a git repository: git: CANNOT READ, exit 2, objectives still printed",
+ "git": {
+  "repo": false
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   2
+  ],
+  "contains": [
+   "git: CANNOT READ",
+   "Ship the docs site"
+  ],
+  "not_contains": [
+   "(?i)no recent commits",
+   "(?i)no commits"
+  ]
+ }
+}

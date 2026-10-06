@@ -1,0 +1,31 @@
+{
+ "id": "01b-objectives-path-flag-missing",
+ "spec_item": 1,
+ "tag": "spec",
+ "title": "a --objectives path that does not exist is named in the line",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {},
+ "args": [
+  "--objectives",
+  "plans/q4.md",
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   2
+  ],
+  "contains": [
+   "objectives: NOT FOUND \\(.*plans/q4\\.md\\)"
+  ]
+ }
+}

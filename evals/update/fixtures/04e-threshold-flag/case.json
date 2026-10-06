@@ -1,0 +1,36 @@
+{
+ "id": "04e-threshold-flag",
+ "spec_item": 4,
+ "tag": "assumption",
+ "title": "--stall-days 10 makes a 6-day-old objective fresh and a 12-day-old one stalled",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Six days\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-6}}\n\n## Twelve days\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-12}}\n"
+ },
+ "args": [
+  "--stall-days",
+  "10",
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "contains": [
+   "STALLED \\(12 days\\)"
+  ],
+  "count": [
+   {
+    "rx": "STALLED",
+    "exactly": 1
+   }
+  ]
+ }
+}

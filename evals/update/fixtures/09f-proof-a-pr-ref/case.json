@@ -1,0 +1,35 @@
+{
+ "id": "09f-proof-a-pr-ref",
+ "spec_item": 9,
+ "tag": "spec",
+ "title": "checkable proof (https://example.test/org/repo/pull/12 merged) is accepted: no 'claimed, no proof'",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Launch the pilot\nstatus: done\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] launch\nupdated: {{today-1}}\nproof: https://example.test/org/repo/pull/12 merged\n\n## Ongoing\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "completed": {
+    "contains": [
+     "Launch the pilot"
+    ],
+    "not_contains": [
+     "claimed, no proof"
+    ]
+   }
+  }
+ }
+}

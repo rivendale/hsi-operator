@@ -1,0 +1,36 @@
+{
+ "id": "10j-agents-json-is-not-read-by-default",
+ "spec_item": 10,
+ "tag": "spec",
+ "title": "ruling: --agents has no default, so an agents.json in the directory is not read without the flag",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n",
+  "agents.json": "[{\"name\": \"ghostbot\", \"last_report\": \"{{now-1h}}\", \"on\": \"haunting\"}]"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "not_contains": [
+   "ghostbot"
+  ],
+  "in_section": {
+   "agents": {
+    "contains": [
+     "agents: none listed"
+    ]
+   }
+  }
+ }
+}

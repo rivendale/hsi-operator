@@ -1,0 +1,29 @@
+{
+ "id": "05-updated-missing",
+ "spec_item": 5,
+ "tag": "spec",
+ "title": "no updated: field: last moved UNKNOWN, treated as stalled",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Mystery\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "contains": [
+   "last moved: UNKNOWN",
+   "STALLED"
+  ]
+ }
+}

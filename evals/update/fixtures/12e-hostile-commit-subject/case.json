@@ -1,0 +1,26 @@
+{
+ "id": "12e-hostile-commit-subject",
+ "spec_item": 12,
+ "tag": "extra",
+ "title": "git history is untrusted too: escapes in a commit subject are stripped",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "fix \u001b[31mred\u001b[0m and \u0007bell",
+    "age_hours": 2
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "no_control_chars": true
+ }
+}

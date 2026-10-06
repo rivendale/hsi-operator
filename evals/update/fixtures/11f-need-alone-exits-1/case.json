@@ -1,0 +1,28 @@
+{
+ "id": "11f-need-alone-exits-1",
+ "spec_item": 11,
+ "tag": "spec",
+ "title": "a need-you item with every source readable exits 1 (control for 11d and 11e)",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish\nupdated: {{today-0}}\nneeds-you: approve the budget | the finance form | the approval id\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "exit": [
+   1
+  ]
+ }
+}

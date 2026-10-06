@@ -1,0 +1,35 @@
+{
+ "id": "X11-active-fields-printed",
+ "spec_item": null,
+ "tag": "spec",
+ "title": "an active objective prints its title, done-when, steps and next step",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship the docs site\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] write pages\n- [ ] publish to production\n- [ ] announce\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "in_section": {
+   "objectives": {
+    "contains": [
+     "Ship the docs site",
+     "the site answers 200 at the production URL",
+     "steps: 1/3",
+     "publish to production"
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,31 @@
+{
+ "id": "03e-one-unreadable-step-blocks-done",
+ "spec_item": 3,
+ "tag": "principle",
+ "title": "ticked steps plus an unreadable one cannot be declared done",
+ "git": {
+  "repo": true,
+  "commits": [
+   {
+    "subject": "add readme",
+    "age_hours": 5
+   }
+  ]
+ },
+ "gh": "ok-empty",
+ "files": {
+  "objectives.md": "# Objectives\n\n## Ship it\nstatus: active\nowner: alice\ndone-when: the site answers 200 at the production URL\nsteps:\n- [x] build\n- [x] deploy\n- [?] verify\nupdated: {{today-0}}\n"
+ },
+ "args": [
+  "--now",
+  "{{NOW}}"
+ ],
+ "expect": {
+  "not_contains": [
+   "DONE\\? close it"
+  ],
+  "contains": [
+   "steps: 2/2 \\(\\+1 unreadable\\)"
+  ]
+ }
+}
