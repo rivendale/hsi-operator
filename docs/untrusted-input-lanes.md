@@ -14,8 +14,8 @@ variable.
 It did both. Both canaries appeared in the output. A control prompt ("reply with one word") worked, so the lane
 was running. In that version an empty allow-list behaved as no restriction at all.
 
-- **Do not reason from one vendor's flag to another's.** The same flag name meant "no tools" in one CLI and
-  "no filter" in another.
+- **Do not reason from one vendor's flag to another's.** Claude Code's help says `--tools ""` disables all
+  built-in tools; the same flag value in this other CLI disabled nothing.
 - **Prove a lane in the denying direction.** Plant a canary the lane must not reach, ask for it, and check the
   output. A pass is zero hits plus a working control.
 - **A usage error is a vacuous pass.** The first attempt used a flag that took an argument and errored before
@@ -42,11 +42,13 @@ Two measured traps from the independent test of that design:
 - **Removing a flag can weaken nothing.** The test plan said to weaken the tool by deleting its loopback-bypass
   flag. The browser library adds the same flag itself, so the "weakened" copy was identical in behavior. Tests
   that assert launch arguments prove nothing; a local listener's log of who connected is the evidence.
-- **Every catching test must fail on a weakened copy first.** 212 black-box fixtures were written from the
-  failure list by a second agent that never read the code, and each was shown to fail against a deliberately
-  broken build before it counted.
+- **Every catching test must fail on a weakened copy first.** A second agent wrote 212 black-box fixtures from
+  the failure list before reading the code. Each fixture that claims to catch a fault was shown to fail against
+  one of five deliberately weakened copies before it counted. Controls, and vectors headless Chrome never
+  exercises, cannot fail there; they are labeled non-biting.
 
-The tool, its failure list and the tests are public: [rivendale/opensource `tools/web/`](https://github.com/rivendale/opensource/tree/main/tools/web).
+The tool, its failure list and the tests are proposed for rivendale/opensource as `tools/web/`, in review at
+[rivendale/opensource#20](https://github.com/rivendale/opensource/pull/20).
 
 ## The pattern under both
 

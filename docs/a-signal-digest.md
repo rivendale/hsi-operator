@@ -21,8 +21,8 @@ code      code       small model   model     code               code
 ## Rules that came from failures
 
 1. **Quote from the source, never from the model.** The search model cites post IDs; the exact text comes from a
-   second, independent fetch. A cited post that cannot be fetched is dropped and counted. A model asked for a
-   verbatim quote invented a sentence once; this rule is why the digest can be trusted.
+   second, independent fetch. A cited post that cannot be fetched is dropped and counted. In an earlier tool, a
+   model asked for a verbatim quote invented a sentence; this rule is why the digest can be trusted.
 2. **Counts must reconcile in every issue.** Posts cited = posts verified + dropped, and verified = the sum of
    the labels. The footer prints it, and says when it does not reconcile.
 3. **A search tool is not a feed.** The search returned about five posts per account per query: a sample of
@@ -30,8 +30,8 @@ code      code       small model   model     code               code
 4. **Require the tool call.** With the search tool optional, the model answered without searching: zero
    searches, zero posts, a confident empty answer. Set the tool as required and check the usage counters.
 5. **A lookup 404 under load is not absence.** A free profile-lookup service reported a well-known, active
-   account as "user not found" twice, then found it after a pause. It had also "lost" an account cited 44 times
-   in the operator's own saved links. Retry with backoff, and confirm absence a second way before acting on it.
+   account as "user not found" twice, then found it after a pause. It had also "lost" an account cited dozens of
+   times in the operator's own saved links. Retry with backoff, and confirm absence a second way before acting on it.
 6. **Size the calls.** One search call covering 20 accounts ran past a 10-minute read timeout. Six accounts per
    call, four in parallel, finished in under two minutes. A timed-out call may still be billed, so the budget
    ledger books a conservative estimate rather than zero.

@@ -16,7 +16,7 @@ Each sibling is maintained separately and links back here.
 |---|---|---|
 | keeping a person at the strategic level of agent work: what needs them, what done means | this repo | five skills, practice docs, evals, a starter kit, adapters |
 | data that may never reach a hosted model; local models and runtimes, private search, finding personal information | [local-ai](https://github.com/rivendale/local-ai) | models by hardware, a local classifier, private document search, PII tools |
-| building from open source instead of from scratch; what a license lets you reuse | [opensource](https://github.com/rivendale/opensource) | license-checked catalogs of games and software, build playbooks, and `tools/web` (safe page readers) |
+| building from open source instead of from scratch; what a license lets you reuse | [opensource](https://github.com/rivendale/opensource) | license-checked catalogs of games and software, and build playbooks; safe page readers (`tools/web`) are in review in [opensource#20](https://github.com/rivendale/opensource/pull/20) |
 | running services on your own machines: WSL, systemd user services, networking, sync and backup, alerting | [homelab](https://github.com/rivendale/homelab) | each rule with the failure behind it and a check you can run |
 
 The same facts for a program are in [`repos.json`](repos.json). `evals/siblings/` fails CI when
@@ -40,22 +40,22 @@ this page or `AGENTS.md` stops linking a sibling, or a sibling stops linking bac
 ```mermaid
 flowchart LR
   subgraph operator["The person (strategic level)"]
-    Q["3 questions that need them"]
-    D["done criteria / setpoint"]
+    Q["Door 1: the 3 questions<br/>that need them"]
+    D["Door 2: done criteria<br/>and setpoint"]
   end
   subgraph agent["Agent work"]
     W["build"] --> T["independent tests:<br/>failure list first,<br/>second seat writes fixtures,<br/>each fails on a weakened copy"]
     T --> R["second reader reviews"] --> M["merge the reviewed commit"]
   end
-  D -- "Door 2: what done means" --> W
+  D -- "what done means" --> W
   M -- "update: progress vs finish lines" --> Q
   SM["system-map: triggers, flows, loops"] -- "drift items" --> Q
   RT["repo-triage: license, maturity, runtime"] -- "adopt or not" --> W
   CS["context-steward: move detail out before the window closes"] -.-> agent
-  Q -- "Door 1: how can I help" --> D
+  Q -- "answers set direction" --> D
   subgraph siblings["Companion repos"]
     LA["local-ai"]
-    OS["opensource<br/>(catalogs, tools/web)"]
+    OS["opensource<br/>(catalogs, playbooks)"]
     HL["homelab"]
   end
   W -. "private data" .-> LA
