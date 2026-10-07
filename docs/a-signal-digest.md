@@ -33,7 +33,7 @@ code      code       small model   model     code               code
    account as "user not found" twice, then found it after a pause. It had also "lost" an account cited dozens of
    times in the operator's own saved links. Retry with backoff, and confirm absence a second way before acting on it.
 6. **Size the calls.** One search call covering 20 accounts ran past a 10-minute read timeout. Six accounts per
-   call, four in parallel, finished in under two minutes. A timed-out call may still be billed, so the budget
+   call, four in parallel, all finished inside the same timeout. A timed-out call may still be billed, so the budget
    ledger books a conservative estimate rather than zero.
 7. **Caps stop before spending.** A per-run cap and a monthly cap are checked before the first paid call.
 
