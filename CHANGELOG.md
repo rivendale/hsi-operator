@@ -12,6 +12,20 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **An agent CLI given an empty tools allow-list still read a canary file and ran a shell command, and a
+  headless browser behind a URL pre-check followed a redirect to localhost.** New
+  `docs/untrusted-input-lanes.md`: put the control on what runs (a plain API call, or a proxy on the network
+  path) and prove it in the denying direction with a canary and a working control. The measured grok row is in
+  `docs/tools.md`.
+
+- **A daily digest built on a search model answered with zero searches when the tool was optional, a free
+  lookup reported an active account as missing, and a 20-account call timed out with its cost unknown.** New
+  `docs/a-signal-digest.md`: code runs the pipeline, models only label and rank with no tools, quotes come from
+  a second fetch, counts reconcile in every issue, and caps stop before spending.
+
+- **The README listed the skills but not the docs, evals, starter kit or adapters, and nothing showed how the
+  pieces connect.** Added a repo map, a workflow diagram and a fuller companion-repo table.
+
 - Add the `update` skill and read-only operator reporter: explicit finish lines,
   next steps, dated blockers and agent reports, evidence-labelled completions, and
   visible failures when objective/git/PR sources cannot be read. Includes an objective

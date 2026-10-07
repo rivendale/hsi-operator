@@ -106,6 +106,13 @@ host. For where the money goes once you drive these tools, see
   --deny Bash --deny Write --deny Edit`, and grep the output for the string: under those flags it
   printed the canary. Adding `--deny Read --deny Glob --deny Grep --deny LS` refused it
   (2026-10-05, grok 1.0.40).
+- **An empty allow-list does not seal grok either.** `grok --prompt-file F --tools "" --permission-mode
+  dontAsk --disable-web-search --no-subagents --no-plan`, asked to print a canary file and run
+  `env | grep` for a canary variable, printed both; a one-word control prompt answered normally.
+  An empty `--tools` behaved as no restriction (host, 2026-10-07, grok 1.0.46). In this version
+  `-p` takes the prompt inline (`--single <PROMPT>`), so a first attempt errored before the agent
+  ran: zero canary hits from a usage error proves nothing. Not yet tried: `--sandbox <profile>` or a
+  non-empty allow-list. Practice page: [untrusted-input lanes](untrusted-input-lanes.md).
 - **Check whether a background task outlives the turn on your version.** On one host in early
   September 2026 (Claude Code 2.1.x), a task started with the Bash tool's `run_in_background` was
   killed when the assistant's turn ended, twice, each time to the second of turn end, with a

@@ -12,15 +12,56 @@ This is the one repo to point an agent at. Give it the link and say "read AGENTS
 `https://github.com/rivendale/hsi-operator`. It routes to the sibling repo the task needs.
 Each sibling is maintained separately and links back here.
 
-| when the task is | read |
-|---|---|
-| keeping a person at the strategic level of agent work: what needs them, what done means | this repo |
-| data that may never reach a hosted model; local models and runtimes, private search, finding personal information | [local-ai](https://github.com/rivendale/local-ai) |
-| building from open source instead of from scratch; what a license lets you reuse | [opensource](https://github.com/rivendale/opensource) |
-| running services on your own machines: WSL, systemd user services, networking, sync and backup, alerting | [homelab](https://github.com/rivendale/homelab) |
+| when the task is | read | what is there |
+|---|---|---|
+| keeping a person at the strategic level of agent work: what needs them, what done means | this repo | five skills, practice docs, evals, a starter kit, adapters |
+| data that may never reach a hosted model; local models and runtimes, private search, finding personal information | [local-ai](https://github.com/rivendale/local-ai) | models by hardware, a local classifier, private document search, PII tools |
+| building from open source instead of from scratch; what a license lets you reuse | [opensource](https://github.com/rivendale/opensource) | license-checked catalogs of games and software, and build playbooks; safe page readers (`tools/web`) are in review in [opensource#20](https://github.com/rivendale/opensource/pull/20) |
+| running services on your own machines: WSL, systemd user services, networking, sync and backup, alerting | [homelab](https://github.com/rivendale/homelab) | each rule with the failure behind it and a check you can run |
 
 The same facts for a program are in [`repos.json`](repos.json). `evals/siblings/` fails CI when
 this page or `AGENTS.md` stops linking a sibling, or a sibling stops linking back.
+
+## What is in this repo
+
+| path | what it is |
+|---|---|
+| [`skills/`](skills/) | five skills an agent loads: `hsi-operator` (two doors), `repo-triage`, `context-steward`, `system-map`, `update` |
+| [`docs/`](docs/) | practice pages, one idea each, every rule with the failure that produced it |
+| [`docs/wiki/`](docs/wiki/) | the loop, function allocation, the honesty protocol and the operator channel, at length |
+| [`evals/`](evals/) | CI checks: skill triggering, the CLI, sibling links, the `update` reporter |
+| [`starter/`](starter/) | a minimal `AGENTS.md`, `SETPOINT.md`, changelog and README to copy into a new repo |
+| [`adapters/`](adapters/) | read items from a JSONL task file or a ledger instead of the built-in format |
+| [`examples/`](examples/) | sample items, setpoint, ledger and timeline, with a rendered timeline |
+| [`repos.json`](repos.json) | the sibling repos as data, checked by `evals/siblings/` |
+
+## How the workflows fit
+
+```mermaid
+flowchart LR
+  subgraph operator["The person (strategic level)"]
+    Q["Door 1: the 3 questions<br/>that need them"]
+    D["Door 2: done criteria<br/>and setpoint"]
+  end
+  subgraph agent["Agent work"]
+    W["build"] --> T["independent tests:<br/>failure list first,<br/>second seat writes fixtures,<br/>each fails on a weakened copy"]
+    T --> R["second reader reviews"] --> M["merge the reviewed commit"]
+  end
+  D -- "what done means" --> W
+  M -- "update: progress vs finish lines" --> Q
+  SM["system-map: triggers, flows, loops"] -- "drift items" --> Q
+  RT["repo-triage: license, maturity, runtime"] -- "adopt or not" --> W
+  CS["context-steward: move detail out before the window closes"] -.-> agent
+  Q -- "answers set direction" --> D
+  subgraph siblings["Companion repos"]
+    LA["local-ai"]
+    OS["opensource<br/>(catalogs, playbooks)"]
+    HL["homelab"]
+  end
+  W -. "private data" .-> LA
+  W -. "build from open source" .-> OS
+  W -. "run it at home" .-> HL
+```
 
 ## Continuing work with an agent
 
@@ -256,7 +297,9 @@ with the check that enforces it; [testing a detector with planted defects](docs/
 first run); [naming the reader](docs/every-output-needs-a-reader.md) before building the
 producer; [plain writing for agent output](docs/plain-writing-for-agent-output.md), six
 ASD-STE100 rules chosen by measurement; [a written review standard](docs/a-written-review-standard.md)
-that the reviewed change cannot rewrite; and [an overnight read-only audit](docs/read-only-audit.md)
+that the reviewed change cannot rewrite; [untrusted-input lanes](docs/untrusted-input-lanes.md), where the control
+for agents and browsers that read web text actually lives; [a signal digest](docs/a-signal-digest.md) that code runs and
+models only label; and [an overnight read-only audit](docs/read-only-audit.md)
 that someone reads.
 
 ## Changes
