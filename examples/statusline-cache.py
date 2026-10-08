@@ -26,8 +26,12 @@ elif not pc.get("warm"):
     cold = pc.get("recache_tokens_if_cold")
     print("cache COLD" + (f", next turn rewrites {cold // 1000}k" if cold else ""))
 else:
-    left = max(0, int((pc.get("expires_at") or 0) - time.time()))
-    parts = [f"cache warm {pc.get('ttl', '?')}", f"{left // 60}m left"]
+    exp = pc.get("expires_at")
+    if isinstance(exp, (int, float)) and not isinstance(exp, bool):
+        left = f"{max(0, int(exp - time.time())) // 60}m left"
+    else:
+        left = "time left unknown"
+    parts = [f"cache warm {pc.get('ttl', '?')}", left]
     if pc.get("hit_ratio") is not None:
         parts.append(f"hit {pc['hit_ratio']:.0%}")
     if pc.get("misses"):

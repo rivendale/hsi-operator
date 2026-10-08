@@ -258,9 +258,10 @@ their own economics: the short jobs are where the cheaper models compete.
 - **Per-user agents on a shared resource overwrite each other.** Give each resource one owner, or
   one coordinator that holds every user's constraints. An agent that does not own a resource
   writes to it only after reading the owner's live state, and a check enforces that, not a
-  prompt. Treat any claim about another agent's state that was not read live as suspect. The
-  evidence is thin: one Stanford study of per-user agent teams, which we read only through a
-  social-post summary, not the paper. It points the same way as this repo's rule of findings, not directives, to an owner.
+  prompt. Treat any claim about another agent's state that was not read live as suspect.
+  [UNVERIFIED] A study of per-user agent teams is said to show this, but we know it only through
+  a social-media summary and could not find the paper in four arXiv searches. The rule stands
+  without it: one owner per resource, and live state read before any write.
 - **Replacing the phone door first.** Keep the person's current way in until the new one has carried
   real questions and answers for a week.
 

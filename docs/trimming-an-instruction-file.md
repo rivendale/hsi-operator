@@ -66,12 +66,14 @@ The first three do not decay as models improve. Techniques do. So each technique
 failure it fixes, and it is re-tested on a schedule by removing it and rerunning the eval (rule
 ablation). Keep it only if the failure comes back; otherwise cut it.
 
-Give the agent the scorer, and keep the scorer out of its reach. Ollie Jaffe and Dane Sherburn of
-P-Zero Research measured experimental research taste in
-[TasteVal](https://arxiv.org/abs/2610.06824) (2026-10-06). Withholding the scoring function
-"roughly halves the multiplier", though on 4 tasks neither drop was statistically significant.
-Their researcher model could score submissions but could never read the test score. So a
-scorer is a fact worth giving; make it one the agent can run but not edit.
+Give the agent the scorer, and keep the scorer out of its reach. Oliver Jaffe and Dane Sherburn
+of P-Zero Research measured experimental research taste in
+[TasteVal](https://arxiv.org/abs/2610.06824) (2026-10-06). In their "messy" variant, the scoring
+description is made non-explicit while the agent still gets validation scores. On 4 of the 8
+tasks, with two models, this "roughly halves the multiplier", though neither drop was
+statistically significant. The paper does not test a scorer the agent can run but not edit.
+That part is our inference: a clear scorer is a fact worth giving, so give one the agent can
+run but not edit.
 
 ## The method, by hand or with a tool
 

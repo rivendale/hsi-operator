@@ -15,8 +15,8 @@ what the first run showed is in [`eval-and-hillclimb.md`](eval-and-hillclimb.md)
 4. **Add unmodified controls.** Findings on a control are the baseline: problems already in the
    real store. Read extra findings against it, because some of them are real.
    **A control can hold a real defect its author missed.** When every run of every variant flags
-   the same thing on a control, re-read the control before blaming the reviewer. In one set, a
-   "clean" request said the audit record must say who acted, and its patch made the actor
+   the same thing on a control, re-read the control before blaming the reviewer. In one public
+   set ([rivendale/ai-redteam](https://github.com/rivendale/ai-redteam)), a "clean" request said the audit record must say who acted, and its patch made the actor
    optional. Every reviewer was right.
 5. **Grade in code.** Detected: some finding names the planted item and its target. Kind right:
    the finding's kind is one the case accepts. Look-alike pass: no finding names the planted item.
