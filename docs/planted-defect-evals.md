@@ -14,6 +14,10 @@ what the first run showed is in [`eval-and-hillclimb.md`](eval-and-hillclimb.md)
    specificity, which recall alone hides.
 4. **Add unmodified controls.** Findings on a control are the baseline: problems already in the
    real store. Read extra findings against it, because some of them are real.
+   **A control can hold a real defect its author missed.** When every run of every variant flags
+   the same thing on a control, re-read the control before blaming the reviewer. In one public
+   set ([rivendale/ai-redteam](https://github.com/rivendale/ai-redteam)), a "clean" request said the audit record must say who acted, and its patch made the actor
+   optional. Every reviewer was right.
 5. **Grade in code.** Detected: some finding names the planted item and its target. Kind right:
    the finding's kind is one the case accepts. Look-alike pass: no finding names the planted item.
    Normalize names before matching.
@@ -38,6 +42,11 @@ what the first run showed is in [`eval-and-hillclimb.md`](eval-and-hillclimb.md)
 - If the model under test has tools, it can open the answer key. Turn tools off, and confirm one
   call still returns structured output.
 - Session hooks fire in every eval call unless you disable them.
+- **Make a scratch copy with `git worktree add` or `git clone`, never `cp -r`.** A linked
+  worktree's `.git` is a one-line file pointing at the original worktree's metadata. A `cp -r`
+  copy keeps that pointer, so `git add` in the copy changes the original worktree's index.
+  Reproduced 2026-10-07: `git add` in the copy showed up in the original's `git status`.
+  Check: `git rev-parse --git-dir` must print different paths in the copy and the original.
 - Grade from the saved response, not from the script's printout.
 - To capture cost and the served model without editing production code, put a small shim first on
   `PATH` that passes each call through and saves the response. Give it a fake mode that makes no
@@ -53,6 +62,23 @@ what the first run showed is in [`eval-and-hillclimb.md`](eval-and-hillclimb.md)
   exists (exposed), and no comparable sample (unknown, a failure to measure, which prints as
   neither pass nor absence). Then add a meta-test that fails the suite if fewer than the
   expected number of distinct verdicts are reachable, or if the passing verdict never is.
+- **A mutation the check survives is a finding, not noise.** Weaken the check in several
+  different ways, not one. A scorer's self-check failed correctly when the rule "a High finding
+  on a clean case counts as a false alarm" was deleted. It still passed when the severity table
+  ranked High equal to Medium, because no fixture told the two apart. The fix was a fixture, not
+  a reworded rule. Put the result in the pull request as a table, one row per mutation:
+
+  | mutation | step that should fail | exit code |
+  |---|---|---|
+  | delete the High-is-a-false-alarm rule | scorer self-check | 1 (caught) |
+  | rank High equal to Medium | scorer self-check | 0 (survived: add a fixture) |
+
+  A row with exit 0 is open work, and the table shows a reviewer which faults were tried.
+- **Score in the same checkout the reviewers saw.** One coverage metric counted stray
+  `__pycache__/*.pyc` files that existed only in the scorer's checkout. They inflated "coverage
+  omits a file" violations by about a third. Score from a clean clone, or skip files git
+  ignores (`git ls-files` lists only tracked ones), and diff the scorer's file list against the
+  reviewer's before trusting a count.
 - **Run the old code against the new test.** A sampling bug that could never reach files
   sorting after one letter was fixed with a test asserting "fewer than 20 of 26 directories
   touched". The buggy code touched 22, so the test would have passed the bug. Keep the broken

@@ -130,6 +130,18 @@ host. For where the money goes once you drive these tools, see
   artifact, so a waiter keyed on that artifact cannot tell "working" from "never started". And
   systemd's `StandardOutput=file:` does not truncate, so a done-marker left by the previous run
   fires a waiter at once; use `truncate:` or wait on `is-active`.
+- **Know which cache lifetime each request gets.** On a subscription within plan limits, the main
+  conversation's prompt cache lives 1 hour; subagents, workflows and compaction get 5 minutes.
+  Past the plan limit, on usage credits, an API key or a cloud provider, everything gets 5
+  minutes. So a subagent idle for six minutes re-writes its whole context, and so does the main
+  session once you are over the limit. `promptCacheTtl` and `subagentPromptCacheTtl` (2.1.242 or
+  later) override it ([prompt caching](https://code.claude.com/docs/en/prompt-caching), read
+  2026-10-07). Since 2.1.251 the status line input carries a `prompt_cache` object: `warm`,
+  `ttl`, `expires_at`, `hit_ratio`, `misses` and `recache_tokens_if_cold`, among others
+  ([status line](https://code.claude.com/docs/en/statusline), read 2026-10-07). A status line
+  can then show the minutes left before the next turn goes cold, and what that turn would
+  re-write. [`examples/statusline-cache.py`](../examples/statusline-cache.py) is one, in the
+  Python standard library.
 - **Systemd scope.** A worker launched under a systemd scope inherits `INVOCATION_ID`; wrap the
   command in `env -u INVOCATION_ID` if a hook keys on it (2026-09-24).
 - **Projects** (claude.ai/code, desktop, mobile; beta): threads are cloud sessions with Anthropic

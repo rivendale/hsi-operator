@@ -32,7 +32,7 @@ this page or `AGENTS.md` stops linking a sibling, or a sibling stops linking bac
 | [`evals/`](evals/) | CI checks: skill triggering, the CLI, sibling links, the `update` reporter |
 | [`starter/`](starter/) | a minimal `AGENTS.md`, `SETPOINT.md`, changelog and README to copy into a new repo |
 | [`adapters/`](adapters/) | read items from a JSONL task file or a ledger instead of the built-in format |
-| [`examples/`](examples/) | sample items, setpoint, ledger and timeline, with a rendered timeline |
+| [`examples/`](examples/) | sample items, setpoint, ledger and timeline, with a rendered timeline; a prompt-cache status line |
 | [`repos.json`](repos.json) | the sibling repos as data, checked by `evals/siblings/` |
 
 ## How the workflows fit
