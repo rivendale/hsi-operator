@@ -123,6 +123,11 @@ their own economics: the short jobs are where the cheaper models compete.
    wrong?", which one lane answered "no" to while real defects sat in the file. Settle a
    disagreement by reading the source: one three-model review went 2 to 1 the wrong way.
    ([`writing-a-brief.md`](writing-a-brief.md) has the rest of a delegate's brief.)
+   - **A model that ranks does not grade its own ranking.** Any check of a ranking, a score or a
+     summary runs on a different model, or in code. Models differ widely in how often they take a
+     planted shortcut. The Center for AI Safety's [CheatBench](https://www.cheatbench.ai/)
+     reports cheat rates from 11.2% to 78.0% across nine models in its setup. That is as
+     reported; we have not reproduced it. A self-check inherits whichever rate its model has.
    - **Reviewers get no edit or write tools.** A reviewer that can edit becomes an implementer the
      first time a fix looks easy. Remove the tools; do not rely on asking.
    - **A fix that would grow the change goes to a person, and fixes prefer simplifying.**
@@ -250,6 +255,12 @@ their own economics: the short jobs are where the cheaper models compete.
   contradiction check over such a store found five contradictions or duplicates. Give a
   self-updating store a detector that runs on a schedule, and test the detector with planted
   cases ([`planted-defect-evals.md`](planted-defect-evals.md)) before trusting its silence.
+- **Per-user agents on a shared resource overwrite each other.** Give each resource one owner, or
+  one coordinator that holds every user's constraints. An agent that does not own a resource
+  writes to it only after reading the owner's live state, and a check enforces that, not a
+  prompt. Treat any claim about another agent's state that was not read live as suspect. The
+  evidence is thin: one Stanford study of per-user agent teams, which we read only through a
+  social-post summary, not the paper. It points the same way as this repo's rule of findings, not directives, to an owner.
 - **Replacing the phone door first.** Keep the person's current way in until the new one has carried
   real questions and answers for a week.
 

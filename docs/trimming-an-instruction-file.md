@@ -55,6 +55,24 @@ the grounds that the model would follow it without being told.
 So classify each line before cutting: steering (a candidate), or a rule, grounding, identifier or
 trap (keep, or move with a pointer). A small result is a finding, not a failure of the audit.
 
+**Then sort what you keep by whether it decays.** Four kinds:
+
+- **Fact:** a path, an identifier, a decision and its date.
+- **Constraint:** what must never happen, and who decides.
+- **Mechanical check:** a test, a hook or a CI step that refuses a bad input.
+- **Technique or coaching:** how to think, search or phrase.
+
+The first three do not decay as models improve. Techniques do. So each technique names the
+failure it fixes, and it is re-tested on a schedule by removing it and rerunning the eval (rule
+ablation). Keep it only if the failure comes back; otherwise cut it.
+
+Give the agent the scorer, and keep the scorer out of its reach. Ollie Jaffe and Dane Sherburn of
+P-Zero Research measured experimental research taste in
+[TasteVal](https://arxiv.org/abs/2610.06824) (2026-10-06). Withholding the scoring function
+"roughly halves the multiplier", though on 4 tasks neither drop was statistically significant.
+Their researcher model could score submissions but could never read the test score. So a
+scorer is a fact worth giving; make it one the agent can run but not edit.
+
 ## The method, by hand or with a tool
 
 1. **Measure the whole surface loaded at start, not one file:** the instruction file, every skill

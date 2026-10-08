@@ -220,7 +220,8 @@ A long context window is a bill, not just a limit.
 - **An uncached request against a very large window costs real money** — single-digit dollars
   per request at the top end, and a subscription quota drains the same way. The common way
   into it is walking away from a long session and coming back after the prompt cache has
-  expired (on the order of an hour, shorter on some tools).
+  expired (an hour or five minutes in Claude Code, depending on billing and on whether it is a
+  subagent; [`docs/tools.md`](docs/tools.md#claude-code) has the rule).
 - **Measure where the bill goes before trimming anything.** In two coordinator sessions priced
   from their own transcripts, re-reading cached context was 60 to 70% of cost, cache writes 18
   to 31%, output 9 to 12%, and uncached input about zero. The levers are how large the window
