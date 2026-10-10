@@ -255,6 +255,12 @@ A long context window is a bill, not just a limit.
   summary against it.
 - **Move detail out to a path rather than summarizing it away.** A summary is a pointer, and
   a bad one: it drops the file path, the exact error and the number, silently.
+- **A tool that compares two sides needs both sides measured in this session.** After a
+  compaction lost a fetched calendar, an agent rebuilt it from the summary and ran a differ. The
+  plan said 12 actions; the true count was 22. Each invented "already present" row cancelled a
+  real action, and a differ has no verdict for "this input was made up". So the error made the
+  answer smaller, not more cautious. If a measurement is lost, take it again. One guard: store a
+  hash of each input beside the result, and refuse a result whose inputs are missing or changed.
 
 ---
 

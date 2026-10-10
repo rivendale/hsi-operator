@@ -104,3 +104,17 @@ Claude Code now includes `/doctor prompt-audit` (v2.1.283 or later;
 rules and skills, looks for instructions written for older models, references to files that do not
 exist and files that contradict each other, and changes nothing until you ask. Its proposals need
 the same guard.
+
+## A decision that revokes access must delete the recipe
+
+A decision that removes access is not finished while the instructions for using that access
+remain. In one setup, the index said a set of cloud credentials was revoked. A second instruction
+file still gave the working steps to mint a token with them, with the scope and the project names.
+The credential file was still on disk, modified after the date of the revocation claim. Two of six
+independent readers ranked it the top defect in the instruction files.
+
+An agent follows an executable path before it weighs a prose rule, so a recipe is the sharpest
+thing a decision makes invalid. When a decision revokes access, removes a mount or retires a
+service, search the instruction surface for the procedure that used it. Delete or mark it
+superseded in the same commit. Then check the disk: a credential file that a document calls
+revoked is a question for its owner, not a capability.

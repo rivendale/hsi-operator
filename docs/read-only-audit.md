@@ -70,3 +70,22 @@ find a gap between that assumption and the world.
   running artifact aimed at a guessed path returned a confident "absent"; confirm the path
   exists before trusting an absence inside it. A log line stamped with a time and no date gets
   its date from the file or a date line before anyone cites it.
+- **Read the reject bucket, not only its count.** A filter printed `19 unparseable date` for a
+  128-row file, which looks like dirty data. The rows held full datetimes with a clock time,
+  better input than the date-only rows it accepted. "Unparseable" meant unparseable by this
+  parser. The same mind wrote the accept rule and the reject label, so the label shares its
+  blind spot. The count is reliable; the label is a guess. For any bucket large enough to
+  matter, print three real values from it before you act on the label.
+- **Ask the data which code path ran.** A peer read the code and warned that both intake paths
+  dropped any message with a subject line. Neither was the live path: one column that recorded
+  the source of each row showed that all of the last 102 rows came through a third path. Reading
+  *a* code path is not reading *the* code path. Before reasoning about a pipeline, find the
+  column, log field, metric label or version stamp that names the path, and query it.
+- **A duplicate count is two numbers.** "12 duplicates" can mean 12 surplus rows or 12 items
+  that have copies. They are equal only while every group has exactly two members. A 300-file
+  survey had 288 distinct files: eleven digests repeated, ten twice and one three times, so 12
+  surplus rows. A dedupe built on "11" leaves 289. Report the multiplicity histogram
+  (`{2: 10, 3: 1}`), and check `distinct + surplus = total`. Two more limits: equal bytes is not
+  the same document (blank forms collide), and a rescan has new bytes, so the distinct count
+  is an upper bound. The author's own arithmetic agreed with itself; a second agent given only
+  the rows found the triple.
