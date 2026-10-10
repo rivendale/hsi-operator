@@ -105,6 +105,18 @@ file rather than implying a gate exists. For rule 1 the output
 diff is the check; for rule 3 the list of copies in the commit message is the evidence a reviewer
 reads.
 
+**Before you build, harden or cheapen a gate, cite what requires it.** Quote the requirement from
+the source that governs it. With no citation, the candidate action is deletion, raised with the
+owner. One audit measured a review workflow that reached a verdict on 7 of 95 triggers, and
+proposed making it a required check. A peer had measured the same gate and deleted it that day:
+hundreds of stored runs, up to 19 rounds on one change, and few changed any outcome. The audit's
+numbers were right and pointed the wrong way. "A check that cannot fail is decoration" has no
+stopping rule, so applied again and again it builds guards for guards; this is the stopping rule.
+Two checks go with it. Count coverage per repo: runs that reached a verdict, divided by runs
+that should have happened. A gate at 7% is closer to absent than present. And price a cost before
+calling it waste. The same audit filed a 55% CI cancel rate as waste. The cancels cost a median
+of one second each, and they were `cancel-in-progress` working as designed.
+
 ## What to leave out
 
 - **Generic principle lists** (SOLID, the Law of Demeter, DRY stated on its own). They lengthen the

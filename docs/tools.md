@@ -201,6 +201,20 @@ One operator's records, 2026-09. Small sample; treat as a starting default.
 - **Expect each model's habit.** Gemini found real defects and overstated their severity.
   Codex built working code and did not audit what its own change deleted.
 - **A reviewer with no shell cannot run the code or git.** Put the diff in the prompt.
+- **Read what the panel agrees on, not only its answers.** Send one brief to several models.
+  Agreement on the answer suggests one option dominates. Agreement on a flaw suggests a real
+  defect. One design had been through five solo review passes. Two other models then found, in
+  one pass, a missing core action, an action with no cost rule, and a rule flagged long before
+  and never written. Ask three things: what would you do, why, and what is broken. Ask for the strongest
+  objection, and say what is untested.
+- **A second opinion that can read your notes is not a second opinion.** Lanes pinned
+  read-only still read files in the working directory. One lane, given a minimal brief, replied
+  with figures and names that were only in the author's own notes, and its "agreement" was the
+  author's analysis returned. Read-only stops writes, not reads, and changing the working
+  directory left full read access. Only a sandbox with no view of the repo made the lane blind.
+  Check each reply for facts you did not supply: pick two specifics and search your notes for
+  them. To probe isolation, ask the lane to quote line 1 of a file, never "can you read it?".
+  A sealed lane answered "yes" to the question and could not quote a word.
 - **Pick each review lane's model by its role, not by the leaderboard.** A lane that gates
   merges nobody watches should take the model whose reasoning is easier to monitor, which the
   system card reports as chain-of-thought controllability: how often the model can steer its own
