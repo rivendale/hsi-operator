@@ -86,6 +86,6 @@ find a gap between that assumption and the world.
   survey had 288 distinct files: eleven digests repeated, ten twice and one three times, so 12
   surplus rows. A dedupe built on "11" leaves 289. Report the multiplicity histogram
   (`{2: 10, 3: 1}`), and check `distinct + surplus = total`. Two more limits: equal bytes is not
-  the same document (blank forms collide), and a rescan has new bytes, so the distinct count
+  the same document (identical templates collide), and a rescan has new bytes, so the distinct count
   is an upper bound. The author's own arithmetic agreed with itself; a second agent given only
   the rows found the triple.
