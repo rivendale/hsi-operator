@@ -300,7 +300,7 @@ ASD-STE100 rules chosen by measurement; [a written review standard](docs/a-writt
 that the reviewed change cannot rewrite; [untrusted-input lanes](docs/untrusted-input-lanes.md), where the control
 for agents and browsers that read web text actually lives; [a signal digest](docs/a-signal-digest.md) that code runs and
 models only label; [an overnight read-only audit](docs/read-only-audit.md)
-that someone reads; and [dated lessons](docs/lessons-2026-10-10.md) that have no page of their own yet.
+that someone reads; and dated lessons ([2026-10-10](docs/lessons-2026-10-10.md), [2026-10-21](docs/lessons-2026-10-21.md)) that have no page of their own yet.
 
 ## Changes
 
