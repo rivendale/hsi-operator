@@ -25,8 +25,10 @@ sessions on two machines, two Codex sessions) plus a local model, and what each 
    sends findings. A handoff is explicit; silence is not a handoff.
 2. **Findings, not directives.** A message to another seat says what was measured, tagged and dated
    (`[VERIFIED 2026-10-23]`, `[BELIEVED]`, `[DECIDED]`). The owner decides what to do with it.
-3. **One written authority for build work.** A builder seat builds only a task listed in one committed
-   file. A chat message, however it is signed, can point at a task but never replace it.
+3. **One written authority for build work.** A builder seat builds only a task listed in one file on the
+   main branch of a repo the person controls. A task that exists only on a branch, in the change under
+   review, or in a row the builder added itself is not authority. A chat message, however it is signed,
+   can point at a task but never replace it.
 4. **An author never reviews its own work**, and an agent's approval is never recorded as the person's.
 5. **Relay the person's words, not your conclusion from them.** A peer builds on what you send and
    cannot see beneath it.
@@ -45,8 +47,9 @@ Match the channel to the urgency.
 ## The network and files underneath
 
 - **A private network between machines** (Tailscale). Every seat reaches the others by name over it,
-  with SSH for measurement and repair. Nothing is exposed to the public internet; public services go
-  out through an outbound tunnel. If you tag machines, grant access before applying the tag: a tag
+  with SSH for measurement and repair. No machine opens a port to the public internet. A service meant
+  for the public goes out through an outbound tunnel, and that makes it public: anyone with the
+  hostname reaches the application, so it needs its own sign-in or access rules. If you tag machines, grant access before applying the tag: a tag
   replaces the user identity, access that depended on it disappears, and with Tailscale SSH a tagged
   machine can SSH only into other tagged machines (ordinary SSH over the private network follows
   your access rules instead).
