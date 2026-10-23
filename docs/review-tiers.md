@@ -1,10 +1,13 @@
 # Tier every pull request, and let the tier decide who must review it
 
-Credit: the tiers, "an agent's approval does not count as a person's" and "start strict, loosen with
-evidence" are adapted from Anthropic's account of how the Claude Code team reviews code (October 2026),
-as reported in [AI TLDR's summary](https://ai-tldr.dev/releases/anthropic-claude-code-team-code-review/);
-the primary post was not located when this page was written. The five-point checklist is adapted from
-Warp's `merge-risk` skill in [warpdotdev/common-skills](https://github.com/warpdotdev/common-skills).
+Credit: the tiers, "an agent's approval never counts as a person's", "an approval covers one specific
+commit" and "start strict and loosen with evidence" are adapted from Addy Osmani, Morgan Westlee Lunt and
+Qing Wang's "How the Claude Code team does code review" (Anthropic, 15 October 2026,
+[post](https://claude.dev/blog/solving-code-review-at-anthropic/)). The five-point checklist is adapted
+from Matt Pocock's `pr` skill ([@mattpocockuk](https://x.com/mattpocockuk),
+[skills/engineering/pr/SKILL.md](https://github.com/mattpocock/skills/blob/5beb35b040e3/skills/engineering/pr/SKILL.md)),
+as reused in Warp's `merge-risk` skill
+([.agents/skills/merge-risk/SKILL.md](https://github.com/warpdotdev/common-skills/blob/8792394ff1b6/.agents/skills/merge-risk/SKILL.md)).
 
 When agents write most of the code, a person cannot read every pull request, and should not have to.
 The useful question is not "did a human look?" but "did the right number of independent readers look,
