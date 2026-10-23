@@ -19,7 +19,7 @@ given what this change could break?" Answer it per pull request, with a written 
 |---|---|---|
 | **Low** | Docs, tests, internal tooling, small fixes; all checks green | Checks green and **one** independent review at the exact head |
 | **Medium** | Behavior changes, dependency bumps, schedulers, anything that calls a paid API or outside service | Checks green and **two** independent reviews, ideally from **different model vendors** |
-| **High** | Credentials, secrets or auth; money movement; personal, health or client data; anything irreversible (deletes, data migrations); public publishing; CI or deploy config of anything public-facing; the review and safety rules themselves | Two independent reviews **and the operator's approval** |
+| **High** | Credentials, secrets or auth; input validation at a trust boundary; money movement; personal, health or client data; anything irreversible (deletes, data migrations); public publishing; CI or deploy config of anything public-facing; the review and safety rules themselves | Two independent reviews **and the operator's approval** |
 
 The highest matching item wins: a one-line change to a high-tier path is high.
 
