@@ -297,7 +297,8 @@ with the check that enforces it; [testing a detector with planted defects](docs/
 first run); [naming the reader](docs/every-output-needs-a-reader.md) before building the
 producer; [plain writing for agent output](docs/plain-writing-for-agent-output.md), six
 ASD-STE100 rules chosen by measurement; [a written review standard](docs/a-written-review-standard.md)
-that the reviewed change cannot rewrite; [untrusted-input lanes](docs/untrusted-input-lanes.md), where the control
+that the reviewed change cannot rewrite; [review tiers](docs/review-tiers.md) that set how many independent
+reviewers a pull request needs, and when the operator must approve; [untrusted-input lanes](docs/untrusted-input-lanes.md), where the control
 for agents and browsers that read web text actually lives; [a signal digest](docs/a-signal-digest.md) that code runs and
 models only label; [an overnight read-only audit](docs/read-only-audit.md)
 that someone reads; and dated lessons ([2026-10-10](docs/lessons-2026-10-10.md), [2026-10-21](docs/lessons-2026-10-21.md)) that have no page of their own yet.
