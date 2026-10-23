@@ -11,9 +11,10 @@ sessions on two machines, two Codex sessions) plus a local model, and what each 
   server and its repos, one owns the coordination record, one does cold reads and adversarial review.
   Two seats on the same work duplicate effort and overwrite each other.
 - **A second subscription is for a second boundary.** One operator keeps a separate subscription, on a
-  separate account and machine, for a separate business whose data must never mix with family or
-  personal work. The boundary is the reason; the extra capacity is a side effect. Each subscription
-  belongs to its own account holder and its own use; do not pool or share accounts to stretch limits.
+  separate account and machine, for work whose data must stay apart, for example client data. The
+  boundary is the reason; the extra capacity is a side effect. Each subscription belongs to its own
+  account holder and its own use, on a plan whose terms allow that use; do not pool or share accounts
+  to stretch limits.
 - **A second vendor is for a second opinion.** A reviewer from another model family misses different
   things. Pair a Claude seat with a Codex seat and let each review what the other builds
   (see [review tiers](review-tiers.md)).
@@ -36,7 +37,7 @@ Match the channel to the urgency.
 
 | Channel | Good for | Watch out for |
 |---|---|---|
-| **Live session messaging** (Claude Code's cross-session messages over Remote Control) | Questions that need an answer this hour; review requests; status | Delivery is not proof of reading. Sessions on different permission modes may hold messages |
+| **Live session messaging** (Claude Code's cross-session messages over Remote Control) | Questions that need an answer this hour; review requests; status | Works only between sessions on the **same account**, so a seat on a separate subscription needs the async queue. Delivery is not proof of reading. Sessions on different permission modes may hold messages |
 | **An async message queue** (a small self-hosted push topic per seat, read at session start and on each prompt) | Handoffs, findings, anything that must survive a restart | Plaintext and cached: never secrets or client data. Size limits can silently turn a long message into an attachment readers skip; split long bodies |
 | **A shared git repo** | The durable record: decisions, open work, task authority | One home per fact; point to it, never copy it |
 | **The person** | Anything that needs a decision only they can make | Lead with what you need from them, one item per line |
@@ -46,12 +47,15 @@ Match the channel to the urgency.
 - **A private network between machines** (Tailscale). Every seat reaches the others by name over it,
   with SSH for measurement and repair. Nothing is exposed to the public internet; public services go
   out through an outbound tunnel. If you tag machines, grant access before applying the tag: a tag
-  replaces the user identity, and access that depended on it disappears.
+  replaces the user identity, access that depended on it disappears, and a tagged machine can SSH
+  only into other tagged machines unless a rule says otherwise.
 - **File sync for things that are not code** (Syncthing). It replicates deletes to every machine, so
   never delete from a synced folder casually, and do not sync a folder that holds credentials.
 - **Never copy a credential between machines to fix an auth problem.** Each machine signs in on its own.
-  Keep each session's config separate: a separate config directory per subscription for the Claude CLI,
-  and a separate `CODEX_HOME` per Codex seat, so two sign-ins never share a token file.
+  Keep each session's config separate: a separate `CLAUDE_CONFIG_DIR` per subscription for the Claude
+  CLI, and a separate `CODEX_HOME` per Codex seat, so two sign-ins never share a token file. (Codex
+  keeps its token under `CODEX_HOME` only when its credential store is set to `file`; a keyring store
+  lives in the operating system instead.)
 - **A local model on a GPU you own** is a lane, not a seat: first-pass triage, and the only lane for
   anything that may never reach an outside model.
 
