@@ -117,6 +117,33 @@ that should have happened. A gate at 7% is closer to absent than present. And pr
 calling it waste. The same audit filed a 55% CI cancel rate as waste. The cancels cost a median
 of one second each, and they were `cancel-in-progress` working as designed.
 
+## 7. Speculative hardening asks first; the sensitive list never does
+
+Credit: the first half is OpenCode's `AGENTS.md` rule ("Before adding complexity for a speculative or
+vanishingly unlikely race or security edge case, explain the concrete failure mode, likelihood, and
+complexity cost to the user and get their buy-in";
+[AGENTS.md](https://github.com/anomalyco/opencode/blob/84578e123ffd31e31a174457e7350961da4fabbc/AGENTS.md)).
+The carve-out and the "its own task" split come from replies to that line on X on 2026-10-22 and 23; one, by
+@proxy_vector, suggested pairing it with a short list of paths that always get careful treatment. The
+reply links were not recorded when this page was written.
+
+Agents overbuild because extra code costs them nothing. Before adding code for an unlikely race, retry
+or edge case, the agent says in plain words what would break, how likely it is, and what the extra code
+costs, then waits for a yes. That turns "just in case" into a decision someone made.
+
+The rule does not apply to the paths in the high tier of [review tiers](review-tiers.md), which include
+auth and secrets, input validation at a trust boundary, money, personal or client data, and anything
+irreversible such as deletes and data migrations. Guard those by default. An agent cannot judge
+"unlikely" for security, and an unlikely security hole is exactly what an attacker goes looking for.
+Keep that list in one file that both the builder and the reviewer read, so "sensitive" means the
+same thing at build time and at review time.
+
+Two more lines go with it. A real issue that does not belong in this change becomes its own task,
+written down; it is neither quietly added to the current patch nor dropped. And no backward-compatibility
+code for a version nobody has used yet.
+
+**Check:** review-only. The review checklist's "sensitive surface" question is where it is enforced.
+
 ## What to leave out
 
 - **Generic principle lists** (SOLID, the Law of Demeter, DRY stated on its own). They lengthen the
