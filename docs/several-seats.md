@@ -47,8 +47,9 @@ Match the channel to the urgency.
 - **A private network between machines** (Tailscale). Every seat reaches the others by name over it,
   with SSH for measurement and repair. Nothing is exposed to the public internet; public services go
   out through an outbound tunnel. If you tag machines, grant access before applying the tag: a tag
-  replaces the user identity, access that depended on it disappears, and a tagged machine can SSH
-  only into other tagged machines unless a rule says otherwise.
+  replaces the user identity, access that depended on it disappears, and with Tailscale SSH a tagged
+  machine can SSH only into other tagged machines (ordinary SSH over the private network follows
+  your access rules instead).
 - **File sync for things that are not code** (Syncthing). It replicates deletes to every machine, so
   never delete from a synced folder casually, and do not sync a folder that holds credentials.
 - **Never copy a credential between machines to fix an auth problem.** Each machine signs in on its own.
