@@ -131,7 +131,7 @@ Agents overbuild because extra code costs them nothing. Before adding code for a
 or edge case, the agent says in plain words what would break, how likely it is, and what the extra code
 costs, then waits for a yes. That turns "just in case" into a decision someone made.
 
-The rule does not apply to the sensitive list, which is the high tier in [review tiers](review-tiers.md):
+The rule does not apply to the paths in the high tier of [review tiers](review-tiers.md), which include
 auth and secrets, input validation, money, personal or client data, and data writes or anything
 irreversible. Guard those by default. An agent cannot judge
 "unlikely" for security, and an unlikely security hole is exactly what an attacker goes looking for.
