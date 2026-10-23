@@ -25,7 +25,7 @@ The highest matching item wins: a one-line change to a high-tier path is high.
 
 Anthropic's version counts people (zero, one, two). In a setup where agents review agents and one
 person operates, count **independent reviewers** instead, and reserve the person for the high tier.
-"Independent" means a different session from the author, and for the medium tier a different vendor,
+"Independent" means a different session from the author, and for the medium and high tiers a different vendor,
 so the two reviewers do not share a blind spot.
 
 ## Rules that make the tiers hold
@@ -56,7 +56,7 @@ so the two reviewers do not share a blind spot.
 - A tier is a judgment. Put the path rules (which directories are high) in a file the merger reads,
   so the judgment is checkable and does not drift between sessions.
 - Two reviews from different vendors cost twice one review. Spend it where a miss is expensive, which
-  is what the medium tier is for.
+  is what the medium and high tiers are for.
 - Revert rate is a lagging measure, and a quiet month on a small repo proves little. Prefer a longer
   window over loosening early.
 
