@@ -12,9 +12,11 @@ sessions on two machines, two Codex sessions) plus a local model, and what each 
   Two seats on the same work duplicate effort and overwrite each other.
 - **A second subscription is for a second boundary.** One operator keeps a separate subscription, on a
   separate account and machine, for work whose data must stay apart, for example client data. The
-  boundary is the reason; the extra capacity is a side effect. Each subscription belongs to its own
-  account holder and its own use, on a plan whose terms allow that use; do not pool or share accounts
-  to stretch limits.
+  boundary is the reason; any extra capacity is incidental. Never open a second account to get
+  around a usage limit. Each subscription belongs to its own account holder and its own use, on a plan
+  whose terms allow that use; do not pool or share accounts to stretch limits. Individual plans fall
+  under consumer terms, so for client or business work check that the plan's terms cover it, or use a
+  team or business plan.
 - **A second vendor is for a second opinion.** A reviewer from another model family misses different
   things. Pair a Claude seat with a Codex seat and let each review what the other builds
   (see [review tiers](review-tiers.md)).
@@ -65,6 +67,8 @@ Match the channel to the urgency.
 
 ## What it costs
 
+- Advertised plan limits assume ordinary, individual use. Persistent or unattended seats can exceed
+  that, so check your plan's terms before you add one.
 - Seats spend most of their budget rereading their own context. Keep instruction files short and
   compact sessions before walking away.
 - Coordination is overhead. Two seats with clear lanes beat four seats with overlapping ones.
