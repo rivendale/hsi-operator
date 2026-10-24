@@ -12,11 +12,11 @@ sessions on two machines, two Codex sessions) plus a local model, and what each 
   Two seats on the same work duplicate effort and overwrite each other.
 - **A second subscription is for a second boundary.** One operator keeps a separate subscription, on a
   separate account and machine, for work whose data must stay apart, for example client data. The
-  boundary is the reason; the extra capacity is a side effect. Never open a second account to get
+  boundary is the reason; any extra capacity is incidental. Never open a second account to get
   around a usage limit. Each subscription belongs to its own account holder and its own use, on a plan
-  whose terms allow that use; do not pool or share accounts to stretch limits. An individual plan is
-  licensed for individual use, so for client or business work check that the plan's terms cover it, or
-  use a team or business plan.
+  whose terms allow that use; do not pool or share accounts to stretch limits. Individual plans fall
+  under consumer terms, so for client or business work check that the plan's terms cover it, or use a
+  team or business plan.
 - **A second vendor is for a second opinion.** A reviewer from another model family misses different
   things. Pair a Claude seat with a Codex seat and let each review what the other builds
   (see [review tiers](review-tiers.md)).
