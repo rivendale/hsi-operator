@@ -54,7 +54,8 @@ listed by `claude --help`, version 2.1.312, 2026-10-29):
 - These do **not** stop `CLAUDE.md` discovery, so a repository's `CLAUDE.md` still steers the run. `--bare` skips it,
   along with hooks and plugins (see [tools](tools.md)). Pass instructions explicitly when you use it.
 - `--restricted` removes the tools that run commands or code, and WebFetch, unless `--tools` names them. It also ignores
-  user and project settings. Use it for a run that only needs to read.
+  user, project and local settings files (managed settings and `--settings` still apply). Add `--strict-mcp-config` so
+  the repository's MCP servers do not start either. Use it for a run that only needs to read.
 - Never start a headless agent with an untrusted repository as its working folder. Copy the files you need into a clean
   folder, or point the agent at them by path.
 
