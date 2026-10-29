@@ -23,7 +23,7 @@ Treat these as code, and read them before an agent or editor works in the folder
 |---|---|
 | `.claude/settings.json`, `.claude/settings.local.json` | Claude Code hooks: shell commands on session start or around every tool call |
 | `.mcp.json`, `.cursor/mcp.json` | MCP servers: a command the agent starts for you |
-| `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursor/rules/` (in the folder or any parent) | instructions the agent treats as yours |
+| `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursor/rules/` | instructions the agent treats as yours (for parent folders, see section 2) |
 | `.gemini/settings.json` | Gemini CLI settings, including its tool and MCP configuration |
 | `.vscode/tasks.json` | a task with `"runOptions": {"runOn": "folderOpen"}` can run when VS Code opens the folder, if the folder is trusted and automatic tasks are allowed ([tasks](https://code.visualstudio.com/docs/editor/tasks), [workspace trust](https://code.visualstudio.com/docs/editor/workspace-trust)) |
 | `.devcontainer/devcontainer.json` | `initializeCommand` runs on the host machine before the container is built ([reference](https://containers.dev/implementors/json_reference/)) |
@@ -41,9 +41,15 @@ Then read each one. A hook, a server command or an install line you did not expe
 
 ## 2. Keep instruction files out of parent folders
 
-Agents load `AGENTS.md`, `CLAUDE.md` and `GEMINI.md` from the working folder and from folders above it. A stray file in
-Downloads, or in a projects folder, steers every agent started below it. Keep these files only at the root of repositories
-you own, and remove stray ones.
+Tools differ in how far up they look, so check each one you use:
+- Claude Code loads `CLAUDE.md` from the working folder and from every folder above it
+  ([docs](https://code.claude.com/docs/en/memory#how-claude-md-files-load)). A stray `CLAUDE.md` in Downloads, or in a
+  projects folder, steers every Claude Code session started below it.
+- Codex reads `AGENTS.md` from the project root (the Git root) down to the working folder, not above that root
+  ([docs](https://learn.chatgpt.com/docs/agent-configuration/agents-md)). A stray `AGENTS.md` in Downloads steers Codex
+  when Downloads itself is the project, as when Codex is started there on a downloaded file.
+
+Keep these files only at the root of repositories you own, and remove stray ones.
 
 ## 3. Pin what a headless run loads
 
