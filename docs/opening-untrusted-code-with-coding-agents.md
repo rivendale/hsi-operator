@@ -23,7 +23,7 @@ Treat these as code, and read them before an agent or editor works in the folder
 |---|---|
 | `.claude/settings.json`, `.claude/settings.local.json` | Claude Code hooks: shell commands on session start or around every tool call |
 | `.mcp.json`, `.cursor/mcp.json` | MCP servers: a command the agent starts for you |
-| `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursor/rules/` | instructions the agent treats as yours (for parent folders, see section 2) |
+| `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.cursor/rules/` | instructions the agent treats as yours (for Claude Code and Codex parent folders, see section 2; for other tools, check their docs) |
 | `.gemini/settings.json` | Gemini CLI settings, including its tool and MCP configuration |
 | `.vscode/tasks.json` | a task with `"runOptions": {"runOn": "folderOpen"}` can run when VS Code opens the folder, if the folder is trusted and automatic tasks are allowed ([tasks](https://code.visualstudio.com/docs/editor/tasks), [workspace trust](https://code.visualstudio.com/docs/editor/workspace-trust)) |
 | `.devcontainer/devcontainer.json` | `initializeCommand` runs on the host machine before the container is built ([reference](https://containers.dev/implementors/json_reference/)) |
