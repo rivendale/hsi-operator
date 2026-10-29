@@ -42,12 +42,12 @@ Then read each one. A hook, a server command or an install line you did not expe
 ## 2. Keep instruction files out of parent folders
 
 Tools differ in how far up they look, so check each one you use:
-- Claude Code loads `CLAUDE.md` from the working folder and from every folder above it
-  ([docs](https://code.claude.com/docs/en/memory#how-claude-md-files-load)). A stray `CLAUDE.md` in Downloads, or in a
-  projects folder, steers every Claude Code session started below it.
-- Codex reads `AGENTS.md` from the project root (the Git root) down to the working folder, not above that root
-  ([docs](https://learn.chatgpt.com/docs/agent-configuration/agents-md)). A stray `AGENTS.md` in Downloads steers Codex
-  when Downloads itself is the project, as when Codex is started there on a downloaded file.
+- Claude Code loads `CLAUDE.md` from the working folder and from every folder above it. A stray `CLAUDE.md` in
+  Downloads, or in a projects folder, steers every Claude Code session started below it.
+  [Claude Code docs](https://code.claude.com/docs/en/memory#how-claude-md-files-load).
+- Codex reads `AGENTS.md` from the project root (the Git root) down to the working folder, not above that root. A stray
+  `AGENTS.md` in Downloads steers Codex when Downloads itself is the project, as when Codex is started there.
+  [Codex docs](https://learn.chatgpt.com/docs/agent-configuration/agents-md).
 
 Keep these files only at the root of repositories you own, and remove stray ones.
 
