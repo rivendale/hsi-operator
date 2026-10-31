@@ -16,7 +16,9 @@ it does, the version goes above the date and this line goes away.
   links are excluded from the link check, so nothing proved they resolve.**
   `skills/hsi-operator/references/hsi-se.md` now links DOIs for Parasuraman, Sheridan & Wickens
   (2000), Endsley (1995) and Bainbridge (1983), each resolved through doi.org on 2026-10-31, and
-  says the dau.edu links are unchecked.
+  says the dau.edu links are unchecked. Lychee got 500 from IEEE Xplore and 403 from SAGE behind
+  two of those DOIs, so it now skips doi.org, and a new CI step asks doi.org for each DOI's
+  citation record instead; it refuses a DOI that does not exist.
 
 - **The skill list drifted in three places and nothing noticed: `AGENTS.md` said four skills,
   and the README's per-skill install list and `.claude-plugin/plugin.json` both left out

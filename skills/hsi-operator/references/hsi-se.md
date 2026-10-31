@@ -69,5 +69,6 @@ Chaos is already Door 2: a vague large done is sensitive to initial conditions; 
 
 The two dau.edu links above are not link-checked: dau.edu redirects to waru.edu, which answers
 403 to automated clients, so CI excludes the domain (see `.github/workflows/evals.yml`). Both
-answered 403 to a plain request on 2026-10-31. A person with a browser can still open them; the
-DOIs were resolved through doi.org the same day.
+answered 403 to a plain request on 2026-10-31. A person with a browser can still open them. The DOI
+links are checked in CI by asking doi.org for each one's citation record, because the
+publisher pages behind them refuse link checkers too.
