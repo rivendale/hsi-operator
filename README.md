@@ -326,9 +326,10 @@ is what lets a calculation pass as a finding.
 Door 2's three paths (spike, bounded, architectural), the one-way ratchet between them, and
 the rule that an approval covers the stage actually shown are adapted from the brainstorming
 skill in [obra/superpowers](https://github.com/obra/superpowers) (MIT). We took the
-classifier and the gate; we did not take "when in doubt take the heavier path" as a general
-habit, because this skill's bias is a *smaller* done, and we did not install the collection:
-its session hook re-injects itself at every startup and every compaction.
+classifier, its tie-break and the gate. The tie-break (two paths that look equally right take
+the heavier one) decides how much process a request gets, not how big done is; this skill's
+bias is still a *smaller* done. We did not install the collection: its session hook
+re-injects itself at every startup and every compaction.
 
 `evals/trigger/` checks that each skill's description would actually route the prompts it
 claims, and `--selftest` proves the check can still fail. Both run in CI on every pull

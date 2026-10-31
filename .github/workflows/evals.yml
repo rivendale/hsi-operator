@@ -1,6 +1,6 @@
-# The only automated gate in this repo. It runs the trigger check and the check's own
-# selftest, so a green tick means both "the descriptions still route" and "the checker can
-# still fail". A checker nothing runs is a comment.
+# The only automated gate in this repo: the trigger check and its selftest, the CLI and
+# update-reporter checks, the sibling and skill-list check, sysmap's selftest and the link
+# checks, each listed below. A checker nothing runs is a comment.
 name: evals
 on:
   push:
@@ -75,8 +75,9 @@ jobs:
       # The update reporter's fixtures (evals/update): README says CI covers them (#65).
       - run: python3 evals/update/run.py
       # This repo's own lists, without the sibling clones: every sibling linked, and the skills
-      # named in README.md, AGENTS.md and plugin.json match skills/*/SKILL.md. The selftest runs
-      # in the siblings job below.
+      # named in README.md, AGENTS.md and plugin.json match skills/*/SKILL.md, and AGENTS.md and
+      # starter/AGENTS.md fit in 32 KiB and end with the sentinel. The selftest runs in the
+      # siblings job below.
       - run: python3 evals/siblings/run.py
       # system-map's checker proves each refusal, and that hsi in this repo takes its items.
       - run: python3 skills/system-map/bin/sysmap selftest
