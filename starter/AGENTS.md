@@ -51,6 +51,12 @@ task at hand overrides these defaults.
   Small fixes go in directly; write a plan only when the approach is unclear or the impact
   is large. Decide routine details yourself; ask when two readings would produce materially
   different work.
+- **When this file and the code disagree:** When a repository's documentation and its existing
+  code disagree, follow the conventions used in the existing code, and in your final reply
+  point out each inconsistency you found between the documentation and the code. Each conflict
+  goes to the person as a decision: fix this file, or change the code. (Sentence from
+  [arXiv 2610.30571](https://arxiv.org/abs/2610.30571), which measured agents following a
+  stale instruction file in 90.1% of choices without it, and 91.4% following the code with it.)
 - **While editing:** prefer what the project already does, then the standard library, then an
   installed dependency, and only then something new. Fix the root cause. No abstractions or
   configuration for needs nobody has today. Justify a new dependency. A nearby bug gets fixed

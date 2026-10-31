@@ -12,6 +12,14 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **Agents follow a stale instruction file over the code it once described, and say so while
+  doing it:** 90.1% of choices in 320 runs of Claude Code and Codex CLI, and Codex rewrote working
+  code to match the file in 20 of 80 runs ([arXiv 2610.30571](https://arxiv.org/abs/2610.30571)).
+  `AGENTS.md`, `starter/AGENTS.md` and `docs/adopting-an-existing-repo.md` now carry the paper's
+  one sentence giving existing code precedence, and send each reported conflict to the operator as
+  a DECIDE item. The paper tested the user-level file; these put it in the project file, because a
+  home-directory `.claude/CLAUDE.md` switches `AGENTS.md` off in Claude Code.
+
 - **An agent CLI given an empty tools allow-list still read a canary file and ran a shell command, and a
   headless browser behind a URL pre-check followed a redirect to localhost.** New
   `docs/untrusted-input-lanes.md`: put the control on what runs (a plain API call, or a proxy on the network

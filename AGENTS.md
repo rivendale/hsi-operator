@@ -120,6 +120,25 @@ write a short plan only when the approach is unclear or the blast radius is larg
 routine details yourself, and ask when two readings of the request would produce materially
 different work. Load the one skill that fits, not a whole workflow because a keyword matched.
 
+**When this file and the code disagree, the code wins.** When a repository's documentation and
+its existing code disagree, follow the conventions used in the existing code, and in your final
+reply point out each inconsistency you found between the documentation and the code.
+
+That sentence is quoted from Xu and Wu, [Stale Instruction Files Override the Code in Coding
+Agents: A One-Sentence Fix](https://arxiv.org/abs/2610.30571) (arXiv 2610.30571, read
+2026-10-31). In 320 runs of Claude Code and Codex CLI on 40 projects whose instruction file
+asked for one convention while the code used another, 90.1% of choices followed the stale
+file; Claude Code named the conflict in 79 of 80 runs and followed the file anyway, and Codex
+CLI rewrote working code in 20 of 80 runs, breaking the project's tests in 17. With the
+sentence, 91.4% of choices followed the code and every run's tests passed. Each conflict you
+report is a **DECIDE** item for the operator: fix the file, or change the code to match it.
+Do not settle it yourself in either direction.
+
+The paper put the sentence in the user-level file (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`).
+This repo puts it here, in the project file, because a home-directory `.claude/CLAUDE.md`
+switches `AGENTS.md` off in Claude Code (measured above). Project-level placement is the
+untested one, so ask the first session what it loaded, as for any change to this file.
+
 **While editing.** Before writing new code, look in this order: what the project already
 does, the standard library and platform, dependencies already installed, and only then
 something new. Fix the root cause. Do not add abstractions, configuration or compatibility
