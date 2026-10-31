@@ -12,6 +12,25 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **`evals/update/run.py`, run as root, made the machine's tools unexecutable.** Its cleanup
+  chmods everything under its temp directory to 0600, including `toolbin/`, whose entries are
+  symlinks to the real `sh`, `bash`, `python3`, `git` and the rest, and `os.chmod` follows
+  symlinks. On a CI runner the chmod fails and is swallowed; in a root container on
+  2026-10-31 it set `bash`, `git`, `cp` and the other tools it links to 0600 and ended the session's
+  shell. The cleanup now skips symlinks.
+
+- **The ranking rule was worded three ways, the Door 2 tie-break two ways, and AGENTS.md asked
+  for a size gate nobody had built.** `bin/hsi` owns the rule's wording; `SKILL.md` and
+  `references/l0-channel.md` now quote what it prints, and `evals/cli/run.py` fails when either
+  copy differs (and proves it refuses a reworded one). The README's credit to obra/superpowers
+  said the heavier-path tie-break was not taken, while `SKILL.md` and `starter/SETPOINT.md` use
+  it; the README now says it was taken, for classification only. `evals/siblings/run.py`
+  (`instruction-file`) fails when `AGENTS.md` or `starter/AGENTS.md` is over 32 KiB, Codex's
+  default budget, or does not end with the new sentinel line, with three selftest refusals.
+  Stale lines fixed: `l0-channel.md` still said not to build `signal` or the ledger (both
+  landed), the workflow header said it ran only the trigger check, and the update fixtures'
+  mutation table listed two survivors that fixtures `04g` and `X13` now catch.
+
 - **The human-factors shelf named Parasuraman/Sheridan/Wickens with no link, and its two dau.edu
   links are excluded from the link check, so nothing proved they resolve.**
   `skills/hsi-operator/references/hsi-se.md` now links DOIs for Parasuraman, Sheridan & Wickens
