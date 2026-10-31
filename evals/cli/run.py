@@ -193,6 +193,22 @@ def main():
         rule = out.split("\n\n")[0].lower()
         check("the printed ranking rule says errors come first",
               rc == 0 and "error" in rule and rule.find("error") < rule.find("deadline"), out)
+        # The code owns the rule's wording; SKILL.md and l0-channel.md quote it, and drift here
+        # is three wordings of one rule (it happened). Whitespace and a quote marker do not count.
+        printed = re.search(r"Ranked by:.*?held last\.", out, re.S)
+
+        def quotes_rule(path, rule_text):
+            with open(os.path.join(ROOT, path), encoding="utf-8") as f:
+                body = " ".join(re.sub(r"(?m)^\s*>\s?", "", f.read()).split())
+            return " ".join(rule_text.split()) in body
+
+        for doc in ("skills/hsi-operator/SKILL.md", "skills/hsi-operator/references/l0-channel.md"):
+            check(f"{doc} quotes the ranking rule hsi prints",
+                  printed is not None and quotes_rule(doc, printed.group(0)), printed.group(0) if printed else out)
+        check("and the quote check refuses a reworded rule",
+              printed is not None and not quotes_rule("skills/hsi-operator/SKILL.md",
+                                                      printed.group(0).replace("errors first", "hard deadline first")),
+              "a reworded rule was accepted")
         dated_err = item("dated-error", signal="error", deadline="2026-10-20", evidence="python3 tools/other.py exits 1")
         f8 = items_file("two-errors.json", [undated_err, dated_err, dated_prop])
         rc, out = run(f8, "--all")
@@ -1098,17 +1114,17 @@ def main():
               rc == 0 and "The human was needed 2 times: 1 DECIDE, 1 APPROVE. "
               "2 more events had no recognized kind, shown as other." in page, page[:1500])
         rc, out, page = timeline(ledger_file("tl-invisible-kind.jsonl", [
-            row("bidi", kind="DE\u202eCIDE"), row("zero-width", kind="APP\u200bROVE"),
+            row("bidi", kind="DE\U0000202eCIDE"), row("zero-width", kind="APP\U0000200bROVE"),
         ]))
         check("timeline: an unrecognized kind that only looks like a known one shows its invisible character",
               rc == 0 and "(DE\\u202eCIDE)" in page and "(APP\\u200bROVE)" in page
-              and "(DECIDE)" not in page and "\u200b" not in page, page[-3000:])
+              and "(DECIDE)" not in page and "\U0000200b" not in page, page[-3000:])
 
         rc, out, page = timeline(ledger_file("tl-bidi.jsonl", [
-            row("deploy\u202e", actor="builder\u2067", question="\u202dswap\u202c this\u2066",
-                asked_at="2026-09-20T10:00:00Z", at="2026-09-20T11:00:00Z", evidence="\u202egnp.exe"),
+            row("deploy\U0000202e", actor="builder\U00002067", question="\U0000202dswap\U0000202c this\U00002066",
+                asked_at="2026-09-20T10:00:00Z", at="2026-09-20T11:00:00Z", evidence="\U0000202egnp.exe"),
         ]))
-        controls = sorted({f"U+{ord(c):04X}" for c in re.findall("[\u202a-\u202e\u2066-\u2069]", page)})
+        controls = sorted({f"U+{ord(c):04X}" for c in re.findall("[\U0000202a-\U0000202e\U00002066-\U00002069]", page)})
         check("timeline: bidi controls from the ledger are removed, so the page's own words never reverse",
               rc == 0 and not controls and "(DECIDE, deploy, asked by builder)." in page and "gnp.exe" in page,
               str(controls) + " " + page[:1200])

@@ -207,3 +207,7 @@ rendering, and give notes in camera terms: framing, movement, timing.
 - Record **what would invalidate** an answer, and re-ask when that fires rather than on a
   timer.
 - A correction has to land where the claim lives. One fact in five files is five fixes.
+
+---
+
+Sentinel: if you can read this line, the whole file loaded.

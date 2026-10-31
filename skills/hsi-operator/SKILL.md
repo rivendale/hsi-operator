@@ -50,12 +50,10 @@ question: were you, or the helper, refused this action? Then it goes to the oper
 the most, and make the rest one keystroke away — never gone, never first.
 
 Say the ranking rule out loud every time, because a hidden ranking is a judgement the
-operator cannot audit:
+operator cannot audit. The rule is the one `bin/hsi` prints, and the code owns it; say it in
+these words rather than your own:
 
-1. **Irreversibility** — can this be undone next week?
-2. **Who is blocked** — a person or agent stopped, waiting
-3. **Cost of inaction at 30 days** — money, legal exposure, a forfeited benefit
-4. **Errors with direct evidence come first**, dated by date then undated by score; proposals follow with hard external deadlines first, then score; reconstructed evidence is held last
+> Ranked by: errors first, dated by date then undated by score; proposals and stale items next, hard deadlines first then score. Scores use irreversibility, who is blocked, the cost of doing nothing for 30 days, error residuals, and invalidated standing answers. Reconstructed evidence is held last.
 
 An item's optional `signal` is `proposal` by default or `error` when a named setpoint's
 check fails; `error` adds 25 points for the residual. `stale` adds 20 points when a standing

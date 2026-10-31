@@ -101,7 +101,8 @@ Two more about what arrives once a file does load, read 2026-09-29:
   or 111 skills were installed, so each description got shorter as skills were added
   (measured September 2026; the budget is inferred, not documented). Put a sentinel line at
   the end of the file and ask the tool whether it saw it, and gate the file's size in CI at
-  the smallest limit among the tools that read it.
+  the smallest limit among the tools that read it. Here `evals/siblings/run.py` does both, for
+  this file and `starter/AGENTS.md`: 32 KiB, and the sentinel as the last line.
 - **A generator can write its own `AGENTS.md`.** One vendor's app builder left its own root
   instruction file ("You are Grok Build, in an isolated Linux sandbox", about 18.9 KB) in four
   generated repos, where every tool that reads the name takes it as the project's rules. Read
@@ -401,12 +402,17 @@ into notes and handoffs; its value never does.
 
 - Almost nothing on this page is enforced. CI runs the skill-trigger evals, the CLI checks,
   `sysmap selftest`, a link check and the sibling check, and of this page only the sibling
-  table at the top and the skill list are checked (that it links every repo in `repos.json`,
-  and names every folder under `skills/`). No hook reads the rest and no check fails when it
-  is ignored. It is a rule someone keeps, and a rule nobody keeps is a comment.
+  table at the top, the skill list and its size are checked (that it links every repo in
+  `repos.json`, names every folder under `skills/`, stays within 32 KiB and ends with the
+  sentinel line, as `starter/AGENTS.md` must too). No hook reads the rest and no check fails
+  when it is ignored. It is a rule someone keeps, and a rule nobody keeps is a comment.
 - The cost figures are the right order of magnitude, not a price list; vendors change both
   prices and cache lifetimes.
 - [`starter/AGENTS.md`](starter/AGENTS.md) is the copyable version for a new repo, and
   [`docs/adopting-an-existing-repo.md`](docs/adopting-an-existing-repo.md) is the order to
   take it in when the repo already has history. This page describes *this* repo and is not
   a template.
+
+---
+
+Sentinel: if you can read this line, the whole file loaded.

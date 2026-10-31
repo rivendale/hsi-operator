@@ -41,6 +41,11 @@ WHAT IT CATCHES, each one a case in --selftest
                     name one in backticks, or says "four skills" (any count spelled as a word)
                     when there are five. Found 2026-10-31: AGENTS.md said four, the README
                     install list and plugin.json both omitted `update` (#59).
+  instruction-file  AGENTS.md or starter/AGENTS.md is over 32 KiB, Codex's default
+                    `project_doc_max_bytes` and the smallest budget among the tools AGENTS.md
+                    names, or its last non-empty line is not the sentinel below. A tool drops
+                    what is past its budget without a word; the sentinel is the line to ask
+                    about, and it is last only if nothing was appended after it.
 
   Backlinks are read at the pinned commit when there is one, else at the checkout's HEAD, so
   a `git clone --filter=blob:none --no-checkout` is enough. Without --siblings they are not
@@ -68,6 +73,9 @@ NUMBER_WORDS = ("zero one two three four five six seven eight nine ten eleven tw
                 "fourteen fifteen sixteen seventeen eighteen nineteen twenty").split()
 COUNT_CLAIM = re.compile(r"\b(" + "|".join(NUMBER_WORDS) + r")\s+skills\b", re.IGNORECASE)
 SKILL_FLAG = re.compile(r"--skill\s+`?([A-Za-z0-9_.-]+)")
+INSTRUCTION_FILES = ("AGENTS.md", "starter/AGENTS.md")
+INSTRUCTION_MAX_BYTES = 32 * 1024
+SENTINEL = "Sentinel: if you can read this line, the whole file loaded."
 
 
 def link_to(url, text):
@@ -165,6 +173,26 @@ def check_skills(root, fail):
               f"README.md and AGENTS.md")
 
 
+def check_instruction_files(root, fail):
+    """Each instruction file fits the smallest tool budget and ends with the sentinel."""
+    for rel in INSTRUCTION_FILES:
+        path = os.path.join(root, rel)
+        try:
+            size = os.path.getsize(path)
+        except OSError:
+            fail("instruction-file", f"{rel} is missing")
+            continue
+        lines = [l.strip() for l in (read(path) or "").splitlines() if l.strip()]
+        if size > INSTRUCTION_MAX_BYTES:
+            fail("instruction-file", f"{rel} is {size} bytes, over {INSTRUCTION_MAX_BYTES} "
+                                     f"(Codex stops reading at 32 KiB by default)")
+        elif not lines or lines[-1] != SENTINEL:
+            fail("instruction-file", f"{rel} does not end with the line {SENTINEL!r}")
+        else:
+            print(f"PASS  instruction file: {rel} is {size} of {INSTRUCTION_MAX_BYTES} bytes "
+                  f"and ends with the sentinel")
+
+
 def check(root, siblings_dir):
     fails = []
 
@@ -173,6 +201,7 @@ def check(root, siblings_dir):
         print(f"FAIL  {tag}: {msg}")
 
     check_skills(root, fail)
+    check_instruction_files(root, fail)
 
     # --- the index -------------------------------------------------------------------
     index, err = load_json(os.path.join(root, "repos.json"))
@@ -438,6 +467,15 @@ def selftest():
          "skill-list"),
         ("a new skills/<name>/SKILL.md nobody listed", _new_skill("brand-new"), None,
          "skill-list"),
+        ("AGENTS.md grown past 32 KiB, sentinel still last",
+         _edit_text("AGENTS.md", lambda t: "x" * INSTRUCTION_MAX_BYTES + "\n" + t), None,
+         "instruction-file"),
+        ("starter/AGENTS.md without the sentinel",
+         _edit_text("starter/AGENTS.md", lambda t: t.replace(SENTINEL, "")), None,
+         "instruction-file"),
+        ("text appended to AGENTS.md after the sentinel",
+         _edit_text("AGENTS.md", lambda t: t + "\nA rule added below the sentinel.\n"), None,
+         "instruction-file"),
     ]
     ok = True
     for label, mutate, sib, expect in cases:
@@ -457,8 +495,8 @@ def selftest():
             elif mutate == "PIN-WRONG":
                 mutate = _pin(first["name"], "f" * 40)
             before = {p: read(os.path.join(work, p)) for p in
-                      ("repos.json", "README.md", "AGENTS.md", ".claude-plugin/plugin.json",
-                       ".claude-plugin/marketplace.json")}
+                      ("repos.json", "README.md", "AGENTS.md", "starter/AGENTS.md",
+                       ".claude-plugin/plugin.json", ".claude-plugin/marketplace.json")}
             before["skills/"] = skill_dirs(work)
             if mutate:
                 mutate(work)

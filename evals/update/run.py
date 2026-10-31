@@ -233,8 +233,13 @@ def run_case(case, binpath, timing=False):
     finally:
         for dp, dn, fn in os.walk(root):
             for n in dn + fn:
+                p = os.path.join(dp, n)
+                # Never through a symlink: toolbin/ links to the real /usr/bin tools, and os.chmod
+                # follows links, so as root this once set /usr/bin/bash and the rest to 0600.
+                if os.path.islink(p):
+                    continue
                 try:
-                    os.chmod(os.path.join(dp, n), 0o700 if n in dn else 0o600)
+                    os.chmod(p, 0o700 if n in dn else 0o600)
                 except OSError:
                     pass
         shutil.rmtree(root, ignore_errors=True)
