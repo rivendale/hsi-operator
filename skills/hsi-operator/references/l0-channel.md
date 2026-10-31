@@ -172,12 +172,12 @@ as an assistant that approves everything.
 
 ## Canonical frame
 
-What `bin/hsi` already almost prints. Keep this density even when an agent is
-speaking instead of the CLI.
+What `bin/hsi` prints; the ranking rule is its words, owned by the code. Keep this
+density even when an agent is speaking instead of the CLI.
 
 ```
-3 of 11 thing(s) need you. Ranked by: hard deadline first,
-then irreversibility, who is blocked, and the cost of doing nothing for 30 days.
+3 of 11 thing(s) need you. Ranked by: errors first,
+dated by date then undated by score; proposals and stale items next, hard deadlines first then score. Scores use irreversibility, who is blocked, the cost of doing nothing for 30 days, error residuals, and invalidated standing answers. Reconstructed evidence is held last.
 
 1. [DECIDE] Renew the analytics vendor at $18k/yr, drop to free, or export then drop?
       BY 2026-10-14
@@ -206,5 +206,6 @@ and the setpoint JSON beside it, `examples/setpoint.example.json` (#2).
 
 Take your assignment from the issue tracker, not from this page — it ships with the skill
 and cannot know what has landed. This file is protocol. It does not add fields to
-`hsi --schema`. Do not implement sitting files, `signal`, or the ledger from here. When those issues land, they must still fit this frame — if they make
-L0 longer, the issue is wrong, not the frame.
+`hsi --schema`. `signal` (#4) and the ledger (#3) landed in code; the sitting rules stay
+protocol (#5). New work starts as a new issue, not from here, and it must still fit this
+frame — if it makes L0 longer, the issue is wrong, not the frame.
