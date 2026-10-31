@@ -16,11 +16,15 @@ Each sibling is maintained separately and links back here.
 |---|---|---|
 | keeping a person at the strategic level of agent work: what needs them, what done means | this repo | five skills, practice docs, evals, a starter kit, adapters |
 | data that may never reach a hosted model; local models and runtimes, private search, finding personal information | [local-ai](https://github.com/rivendale/local-ai) | models by hardware, a local classifier, private document search, PII tools |
-| building from open source instead of from scratch; what a license lets you reuse | [opensource](https://github.com/rivendale/opensource) | license-checked catalogs of games and software, and build playbooks; safe page readers (`tools/web`) are in review in [opensource#20](https://github.com/rivendale/opensource/pull/20) |
+| building from open source instead of from scratch; what a license lets you reuse | [opensource](https://github.com/rivendale/opensource) | license-checked catalogs of games and software, and build playbooks; safe public-page readers in [`tools/web`](https://github.com/rivendale/opensource/tree/main/tools/web), merged in [opensource#20](https://github.com/rivendale/opensource/pull/20) on 2026-10-07 |
 | running services on your own machines: WSL, systemd user services, networking, sync and backup, alerting | [homelab](https://github.com/rivendale/homelab) | each rule with the failure behind it and a check you can run |
+| a second opinion on AI-produced work: red-team a plan, claim or decision, review one pull request, assess a shared link | [ai-redteam](https://github.com/rivendale/ai-redteam) | adversarial-review skills and paste-in prompts, with a published eval set |
 
 The same facts for a program are in [`repos.json`](repos.json). `evals/siblings/` fails CI when
-this page or `AGENTS.md` stops linking a sibling, or a sibling stops linking back.
+this page or `AGENTS.md` stops linking a sibling, or a sibling stops linking back. ai-redteam is
+not in `repos.json` yet: its link back here is below the first 12 lines of its README, which
+that check refuses. The same check fails CI when the skills named here, in `AGENTS.md` or in
+`.claude-plugin/plugin.json` differ from the folders under `skills/`.
 
 ## What is in this repo
 
@@ -182,7 +186,7 @@ npx skills add rivendale/hsi-operator --skill '*' -g -a claude-code
 ```
 
 Either way, one of them: `--skill hsi-operator`, `--skill repo-triage`, `--skill context-steward`,
-`--skill system-map`.
+`--skill system-map`, `--skill update`.
 
 Or, in Claude Code, as a plugin from the same pinned clone:
 

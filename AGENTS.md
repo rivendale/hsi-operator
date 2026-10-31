@@ -3,13 +3,16 @@
 **Start here, then read the sibling the task needs.** This repo is the hub. Its siblings are
 maintained separately, and each links back here. Read the one the task needs and link its
 rules rather than restating them; a copy goes stale without a sound. The same facts for a
-program are in [`repos.json`](repos.json), checked by `evals/siblings/run.py`.
+program are in [`repos.json`](repos.json), checked by `evals/siblings/run.py`. ai-redteam is
+listed here but not yet in `repos.json`: its link back to this repo is below the first 12
+lines of its README, which that check refuses.
 
 | when the task is | read |
 |---|---|
 | data that may never reach a hosted model; local models and runtimes, private search, finding and redacting personal information | [local-ai](https://github.com/rivendale/local-ai) |
 | building from open source instead of from scratch; what a license lets you reuse | [opensource](https://github.com/rivendale/opensource) |
 | running services on your own machines: WSL, systemd user services, networking, sync and backup, alerting | [homelab](https://github.com/rivendale/homelab) |
+| a second opinion on AI-produced work: red-team a plan, claim or decision, review one pull request, assess a shared link | [ai-redteam](https://github.com/rivendale/ai-redteam) |
 
 The rest of this page is about working in this repo.
 
@@ -315,8 +318,9 @@ before rendering anything, and give notes in camera terms: framing, movement, ti
 
 ## Skills
 
-- **Install the skill you need, not a bundle.** `skills/` here is four skills, each one
-  `SKILL.md` plus a small script; `system-map` also carries its schema and its viewer page.
+- **Install the skill you need, not a bundle.** `skills/` here is five skills (`hsi-operator`,
+  `repo-triage`, `context-steward`, `system-map`, `update`), each one `SKILL.md` plus a small
+  script; `system-map` also carries its schema and its viewer page.
 - **Pin an installed skill to a reviewed commit rather than tracking `main`.** A skill is
   instructions: tracking a branch means a future push edits how an agent behaves with no
   review step on that machine. Check out a reviewed SHA, read the diff, then move the pin.
@@ -396,9 +400,10 @@ into notes and handoffs; its value never does.
 ## Honest limitations of this page
 
 - Almost nothing on this page is enforced. CI runs the skill-trigger evals, the CLI checks,
-  `sysmap selftest`, a link check and the sibling check, and of this page only the sibling table at the top is
-  checked (that it links every repo in `repos.json`). No hook reads the rest and no check
-  fails when it is ignored. It is a rule someone keeps, and a rule nobody keeps is a comment.
+  `sysmap selftest`, a link check and the sibling check, and of this page only the sibling
+  table at the top and the skill list are checked (that it links every repo in `repos.json`,
+  and names every folder under `skills/`). No hook reads the rest and no check fails when it
+  is ignored. It is a rule someone keeps, and a rule nobody keeps is a comment.
 - The cost figures are the right order of magnitude, not a price list; vendors change both
   prices and cache lifetimes.
 - [`starter/AGENTS.md`](starter/AGENTS.md) is the copyable version for a new repo, and

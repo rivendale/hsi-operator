@@ -12,6 +12,16 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **The skill list drifted in three places and nothing noticed: `AGENTS.md` said four skills,
+  and the README's per-skill install list and `.claude-plugin/plugin.json` both left out
+  `update` (#59).** `evals/siblings/run.py` now fails (`skill-list`) when the skills named in
+  README.md, AGENTS.md or plugin.json differ from the `skills/<name>/SKILL.md` folders, with seven
+  new selftest refusals; the trigger job runs it on every pull request. Fixed the three lists,
+  the `repos.json` line that implied siblings are pinned (none is), the README's "in review" for
+  opensource#20 (merged 2026-10-07) and the wiki home page's stale issue framing. ai-redteam,
+  which already linked back here, is now in the README and AGENTS.md routing tables; it is not in
+  `repos.json` yet because its backlink is past the 12 lines the sibling check reads.
+
 - **Agents follow a stale instruction file over the code it once described, and say so while
   doing it:** 90.1% of choices in 320 runs of Claude Code and Codex CLI, and Codex rewrote working
   code to match the file in 20 of 80 runs ([arXiv 2610.30571](https://arxiv.org/abs/2610.30571)).

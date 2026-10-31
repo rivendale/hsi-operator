@@ -74,6 +74,10 @@ jobs:
       - run: python3 evals/cli/run.py
       # The update reporter's fixtures (evals/update): README says CI covers them (#65).
       - run: python3 evals/update/run.py
+      # This repo's own lists, without the sibling clones: every sibling linked, and the skills
+      # named in README.md, AGENTS.md and plugin.json match skills/*/SKILL.md. The selftest runs
+      # in the siblings job below.
+      - run: python3 evals/siblings/run.py
       # system-map's checker proves each refusal, and that hsi in this repo takes its items.
       - run: python3 skills/system-map/bin/sysmap selftest
       # Every link in the docs, on every PR. Placeholder links (example.com, in examples/)

@@ -10,8 +10,9 @@ the only thing joining them is a handful of links, and a link nobody checks rots
 the hub once named one sibling, in a docs page, and no sibling named the hub.
 
 `repos.json` holds the routing facts (name, URL, where to start, what each is for, when to
-read it). Pinned commits live only in `.claude-plugin/marketplace.json`, so each fact has
-one home and this check compares the two.
+read it). A sibling pin, when there is one, lives only in `.claude-plugin/marketplace.json`,
+so each fact has one home and this check compares the two. None is pinned today, so a
+sibling is read at its default branch.
 
 WHAT IT CATCHES, each one a case in --selftest
   index             repos.json missing, unreadable, a row without name, url, start, purpose or
@@ -33,6 +34,13 @@ WHAT IT CATCHES, each one a case in --selftest
   missing-start     the file repos.json says to start at does not exist in the sibling.
   no-backlink       a sibling's README.md or AGENTS.md has no link to this repo in its first
                     12 lines. A reader who stops after the title should still find the hub.
+  skill-list        the skills this repo advertises differ from the folders that hold a
+                    `skills/<name>/SKILL.md`: `.claude-plugin/plugin.json` lists a path that is
+                    not one of them or omits one; README.md has no `--skill <name>` for one, or
+                    a `--skill` for a skill that does not exist; README.md or AGENTS.md does not
+                    name one in backticks, or says "four skills" (any count spelled as a word)
+                    when there are five. Found 2026-10-31: AGENTS.md said four, the README
+                    install list and plugin.json both omitted `update` (#59).
 
   Backlinks are read at the pinned commit when there is one, else at the checkout's HEAD, so
   a `git clone --filter=blob:none --no-checkout` is enough. Without --siblings they are not
@@ -56,6 +64,10 @@ BACKLINK_LINES = 12
 GIT_SOURCES = ("github", "url", "git-subdir")
 SHA = re.compile(r"^[0-9a-f]{40}$")
 FIELDS = ("name", "url", "start", "purpose", "read_when")
+NUMBER_WORDS = ("zero one two three four five six seven eight nine ten eleven twelve thirteen "
+                "fourteen fifteen sixteen seventeen eighteen nineteen twenty").split()
+COUNT_CLAIM = re.compile(r"\b(" + "|".join(NUMBER_WORDS) + r")\s+skills\b", re.IGNORECASE)
+SKILL_FLAG = re.compile(r"--skill\s+`?([A-Za-z0-9_.-]+)")
 
 
 def link_to(url, text):
@@ -98,12 +110,69 @@ def sibling_file(repo, rev, rel):
     return out if code == 0 else None
 
 
+def skill_dirs(root):
+    base = os.path.join(root, "skills")
+    if not os.path.isdir(base):
+        return []
+    return sorted(n for n in os.listdir(base)
+                  if os.path.isfile(os.path.join(base, n, "SKILL.md")))
+
+
+def check_skills(root, fail):
+    """The skill list in README.md, AGENTS.md and plugin.json matches skills/*/SKILL.md."""
+    have = skill_dirs(root)
+    if not have:
+        fail("skill-list", "no skills/<name>/SKILL.md found; nothing to compare the lists with")
+        return
+    bad = False
+    plugin, err = load_json(os.path.join(root, ".claude-plugin", "plugin.json"))
+    listed = plugin.get("skills") if isinstance(plugin, dict) else None
+    if not isinstance(listed, list) or not all(isinstance(s, str) for s in listed):
+        fail("skill-list", f"plugin.json has no list of skill paths ({err or 'skills missing'})")
+        bad = True
+    else:
+        names = [os.path.basename(os.path.normpath(s)) for s in listed]
+        extra = [s for s, n in zip(listed, names)
+                 if n not in have or os.path.normpath(s) != os.path.join("skills", n)]
+        omitted = [n for n in have if n not in names]
+        if extra or omitted:
+            fail("skill-list", f"plugin.json skills differ from skills/: omits {omitted or 'none'}, "
+                               f"lists {extra or 'nothing'} that is not a skills/<name> folder")
+            bad = True
+    word = NUMBER_WORDS[len(have)] if len(have) < len(NUMBER_WORDS) else None
+    for page in ("README.md", "AGENTS.md"):
+        text = read(os.path.join(root, page)) or ""
+        unnamed = [n for n in have if f"`{n}`" not in text and f"`--skill {n}`" not in text]
+        if unnamed:
+            fail("skill-list", f"{page} never names {', '.join(unnamed)} in backticks")
+            bad = True
+        wrong = sorted({m.group(0) for m in COUNT_CLAIM.finditer(text)
+                        if m.group(1).lower() != word})
+        if wrong:
+            fail("skill-list", f"{page} says {', '.join(repr(w) for w in wrong)}; skills/ holds "
+                               f"{len(have)}")
+            bad = True
+        if page == "README.md":
+            flags = {m.group(1) for m in SKILL_FLAG.finditer(text)} - {"*"}
+            missing = [n for n in have if n not in flags]
+            ghost = sorted(flags - set(have))
+            if missing or ghost:
+                fail("skill-list", f"README.md install flags: no --skill for {missing or 'none'}; "
+                                   f"--skill for {ghost or 'nothing'} that skills/ does not hold")
+                bad = True
+    if not bad:
+        print(f"PASS  skill list: {len(have)} skill(s) named alike in skills/, plugin.json, "
+              f"README.md and AGENTS.md")
+
+
 def check(root, siblings_dir):
     fails = []
 
     def fail(tag, msg):
         fails.append(tag)
         print(f"FAIL  {tag}: {msg}")
+
+    check_skills(root, fail)
 
     # --- the index -------------------------------------------------------------------
     index, err = load_json(os.path.join(root, "repos.json"))
@@ -288,8 +357,18 @@ def _pin(name, sha, description=None, **extra):
     return _edit_json(".claude-plugin/marketplace.json", fn)
 
 
+def _new_skill(name):
+    def apply(work):
+        d = os.path.join(work, "skills", name)
+        os.makedirs(d)
+        with open(os.path.join(d, "SKILL.md"), "w", encoding="utf-8") as fh:
+            fh.write(f"---\nname: {name}\ndescription: x\n---\n")
+    return apply
+
+
 def selftest():
     idx = _index()
+    skills = skill_dirs(ROOT)
     hub_url, names = idx["hub"]["url"], [r["name"] for r in idx["repos"]]
     first, last = idx["repos"][0], idx["repos"][-1]
     lookalike = first["url"] + "-extra"
@@ -341,6 +420,24 @@ def selftest():
          {"page_text": {(first["name"], "README.md"): "# x\n\nNo link here.\n"}}, "no-backlink"),
         ("a backlink buried past the first lines", None,
          {"page_text": {(last["name"], "AGENTS.md"): buried}}, "no-backlink"),
+        ("plugin.json omits a skill",
+         _edit_json(".claude-plugin/plugin.json", lambda d: d["skills"].pop()), None, "skill-list"),
+        ("plugin.json lists a skill folder that does not exist",
+         _edit_json(".claude-plugin/plugin.json", lambda d: d["skills"].append("./skills/ghost")),
+         None, "skill-list"),
+        ("README.md drops a --skill flag",
+         _edit_text("README.md", lambda t: t.replace(f"`--skill {skills[-1]}`", "`--skill`")),
+         None, "skill-list"),
+        ("README.md offers --skill for a skill that does not exist",
+         _edit_text("README.md", lambda t: t + "\n`--skill ghost-skill`\n"), None, "skill-list"),
+        ("AGENTS.md says one skill fewer than skills/ holds",
+         _edit_text("AGENTS.md", lambda t: t + f"\n{NUMBER_WORDS[len(skills) - 1]} skills\n"),
+         None, "skill-list"),
+        ("AGENTS.md stops naming a skill",
+         _edit_text("AGENTS.md", lambda t: t.replace(f"`{skills[-1]}`", skills[-1])), None,
+         "skill-list"),
+        ("a new skills/<name>/SKILL.md nobody listed", _new_skill("brand-new"), None,
+         "skill-list"),
     ]
     ok = True
     for label, mutate, sib, expect in cases:
@@ -362,9 +459,11 @@ def selftest():
             before = {p: read(os.path.join(work, p)) for p in
                       ("repos.json", "README.md", "AGENTS.md", ".claude-plugin/plugin.json",
                        ".claude-plugin/marketplace.json")}
+            before["skills/"] = skill_dirs(work)
             if mutate:
                 mutate(work)
-                after = {p: read(os.path.join(work, p)) for p in before}
+                after = {p: read(os.path.join(work, p)) for p in before if p != "skills/"}
+                after["skills/"] = skill_dirs(work)
                 if after == before:
                     # Unchanged, it would be checked as the real tree and prove nothing.
                     ok = False
