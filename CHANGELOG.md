@@ -12,6 +12,12 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **The human-factors shelf named Parasuraman/Sheridan/Wickens with no link, and its two dau.edu
+  links are excluded from the link check, so nothing proved they resolve.**
+  `skills/hsi-operator/references/hsi-se.md` now links DOIs for Parasuraman, Sheridan & Wickens
+  (2000), Endsley (1995) and Bainbridge (1983), each resolved through doi.org on 2026-10-31, and
+  says the dau.edu links are unchecked.
+
 - **The skill list drifted in three places and nothing noticed: `AGENTS.md` said four skills,
   and the README's per-skill install list and `.claude-plugin/plugin.json` both left out
   `update` (#59).** `evals/siblings/run.py` now fails (`skill-list`) when the skills named in
