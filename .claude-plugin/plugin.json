@@ -6,6 +6,7 @@
     "./skills/hsi-operator",
     "./skills/repo-triage",
     "./skills/context-steward",
-    "./skills/system-map"
+    "./skills/system-map",
+    "./skills/update"
   ]
 }

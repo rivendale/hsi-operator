@@ -37,6 +37,17 @@ Then prove it, per tool, in this repo:
   here";
 - a version measured at the start of a session may not be the one that ran.
 
+A repo with history is the one whose instruction file is already out of date somewhere.
+Agents follow a stale instruction file over the code it once described, even when they say
+they noticed: 90.1% of choices in [arXiv 2610.30571](https://arxiv.org/abs/2610.30571)
+(2026). Add its one sentence, which both
+[`../starter/AGENTS.md`](../starter/AGENTS.md) and this repo's [`AGENTS.md`](../AGENTS.md)
+now carry, and treat each conflict an agent reports as a decision for the person (a DECIDE
+item), not as something the agent resolves. The paper tested the sentence in the user-level
+file; these files put it in the project file, because a home-directory `.claude/CLAUDE.md`
+switches `AGENTS.md` off in Claude Code ([`../AGENTS.md`](../AGENTS.md) has the measurement),
+so check that the first session loaded it.
+
 **How you know it worked:** for each tool your team uses, you can name the file it loaded
 and the day you checked.
 

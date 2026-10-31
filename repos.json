@@ -1,5 +1,5 @@
 {
-  "about": "Routing facts for agents: the sibling repos this hub knows, what each is for, and when to read it. Each is maintained separately; read the one the task needs and link its rules rather than restating them. Pinned commits live only in .claude-plugin/marketplace.json. Checked by evals/siblings/run.py.",
+  "about": "Routing facts for agents: the sibling repos this hub knows, what each is for, and when to read it. Each is maintained separately; read the one the task needs and link its rules rather than restating them. A sibling pin, when there is one, lives only in .claude-plugin/marketplace.json; none is pinned today, so CI reads each sibling at its default branch. Checked by evals/siblings/run.py.",
   "hub": {
     "name": "hsi-operator",
     "url": "https://github.com/rivendale/hsi-operator",

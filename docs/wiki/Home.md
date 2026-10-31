@@ -2,7 +2,7 @@
 
 Keep a human at the strategic level of agent work. Surface only what needs a person. Establish what done means before building.
 
-This wiki is the operator-facing shelf. The skill itself is still the prose in `skills/*/SKILL.md`. Issues #1–#8 are the loop work. An agent takes its assignment from the issue tracker rather than from this page; #2 and #8 landed on 2026-09-21, and every other child of #1 closed on 2026-09-24.
+This wiki is the operator-facing shelf. The skill itself is still the prose in `skills/*/SKILL.md`. Issues #1–#8 built the loop and all closed by 2026-09-24; open work is tracked in the [issues](https://github.com/rivendale/hsi-operator/issues), with the current list in [#75](https://github.com/rivendale/hsi-operator/issues/75). An agent takes its assignment from the issue tracker rather than from this page.
 
 ## Protocol
 

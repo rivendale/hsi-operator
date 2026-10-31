@@ -9,9 +9,9 @@ The coding agent on #2 does not implement anything from this file.
 - Function allocation between human and automation for AI-enabled systems. DAU HSI.
 - In-service experience feedback. INCOSE / FlexTech HSI Primer Vol. 1.
 - More automation → more HSI, not less. Endsley, Defense AT&L Jan–Feb 2016.
-- Situation awareness as a *reading* of our fields: adapters perceive, `kind`/`why_you` comprehend, `if_ignored_30d` projects. Do not operationalise a 3-level scorer.
+- Situation awareness as a *reading* of our fields (Endsley 1995): adapters perceive, `kind`/`why_you` comprehend, `if_ignored_30d` projects. Do not operationalise a 3-level scorer.
 - SEBoK HSI one-sentence definition. DoD HSI Guidebook C1 2024 for domain names (manpower ≈ attention here).
-- Parasuraman / Sheridan / Wickens LOA — parked in `allocation.md`. Not in `score()`.
+- Parasuraman / Sheridan / Wickens (2000) types and levels of automation — parked in `allocation.md`. Not in `score()`.
 - Honesty protocol from [ferdinandobons/startup-skill](https://github.com/ferdinandobons/startup-skill) (MIT).
 
 Paul Iusztin, 15 Sep 2026: agent may research, scan, implement, QA, review; a human decides *what to build*, *shape*, and *what ships*. That is the person-test in one post. https://x.com/pauliusztin_/status/2099777741923004849
@@ -24,6 +24,10 @@ Same failure mode, already solved in pieces. None of them close setpoint → res
 - AC before build / skipped question is never a yes: [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills) planning + spec-driven (steal the checkable sentence, refuse the six-phase theatre); SureForge skill (Da7em, Sep 2026).
 - Observation *masking*: tool output becomes a pointer. [muratcankoylan context-optimization](https://github.com/muratcankoylan/Agent-Skills-for-Context-Engineering). That is L2.
 - A skill that reports its own friction is `#5`, not a new product.
+
+- Bainbridge (1983), "Ironies of automation": the more is automated, the less practice the
+  operator keeps for the moment they must take over. The fourteen-day unused finding is the
+  same failure seen from the tool's side.
 
 ## Refused
 
@@ -59,3 +63,12 @@ Chaos is already Door 2: a vague large done is sensitive to initial conditions; 
 - FlexTech HSI Primer Vol. 1: https://www.flextechchair.org/ewExternalFiles/HSI%20Primer%20Vol.%201%20v4.pdf
 - DoD HSI Guidebook C1 2024: https://www.cto.mil/wp-content/uploads/2024/07/HSI-Guidebook-C1-2024.pdf
 - Endsley 2016: https://www.dau.edu/sites/default/files/Migrate/DATLFiles/Jan-Feb2016/Endsley.pdf
+- Parasuraman, Sheridan & Wickens 2000, "A model for types and levels of human interaction with automation", IEEE Trans. SMC Part A 30(3): https://doi.org/10.1109/3468.844354
+- Endsley 1995, "Toward a theory of situation awareness in dynamic systems", Human Factors 37(1): https://doi.org/10.1518/001872095779049543
+- Bainbridge 1983, "Ironies of automation", Automatica 19(6): https://doi.org/10.1016/0005-1098(83)90046-8
+
+The two dau.edu links above are not link-checked: dau.edu redirects to waru.edu, which answers
+403 to automated clients, so CI excludes the domain (see `.github/workflows/evals.yml`). Both
+answered 403 to a plain request on 2026-10-31. A person with a browser can still open them. The DOI
+links are checked in CI by asking doi.org for each one's citation record, because the
+publisher pages behind them refuse link checkers too.

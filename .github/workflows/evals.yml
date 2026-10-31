@@ -74,6 +74,10 @@ jobs:
       - run: python3 evals/cli/run.py
       # The update reporter's fixtures (evals/update): README says CI covers them (#65).
       - run: python3 evals/update/run.py
+      # This repo's own lists, without the sibling clones: every sibling linked, and the skills
+      # named in README.md, AGENTS.md and plugin.json match skills/*/SKILL.md. The selftest runs
+      # in the siblings job below.
+      - run: python3 evals/siblings/run.py
       # system-map's checker proves each refusal, and that hsi in this repo takes its items.
       - run: python3 skills/system-map/bin/sysmap selftest
       # Every link in the docs, on every PR. Placeholder links (example.com, in examples/)
@@ -93,9 +97,44 @@ jobs:
             --verbose --no-progress
             --exclude '^https?://(www\.)?(dau|waru)\.edu/'
             --exclude '^https://(x|twitter)\.com/'
+            --exclude '^https://doi\.org/'
             --max-concurrency 4 --max-retries 4 --retry-wait-time 5
             --remap 'https://github\.com/rivendale/([^/]+)/blob/(.+) https://raw.githubusercontent.com/rivendale/$1/$2'
             './**/*.md' './**/*.html' './**/*.rst'
+
+      # 2026-10-31: a doi.org link redirects to the publisher, and IEEE Xplore answered 500 and SAGE
+      # 403 to lychee on this box while doi.org itself resolved both. So lychee skips doi.org and
+      # this step asks doi.org for each DOI's citation record instead: a DOI that does not exist
+      # has none, and the title is printed so a reader can see it is the paper cited.
+      - name: DOI links resolve at doi.org
+        if: ${{ !cancelled() }}
+        run: |
+          pat='https://doi\.org/10\.[0-9]{4,9}/[^ >"]+'
+          # A DOI may hold parentheses, and a markdown link closes with one: trim trailing
+          # punctuation, and a closing parenthesis only while there are more ")" than "(".
+          trim() {
+            local u=${1%[.,;]}
+            while [ "$(printf '%s' "$u" | tr -cd ')' | wc -c)" -gt "$(printf '%s' "$u" | tr -cd '(' | wc -c)" ]; do
+              u=${u%)}; done
+            printf '%s\n' "$u"
+          }
+          # Prove the extraction before trusting it (no DOIs at all is fine).
+          got=$(echo '[x](https://doi.org/10.1016/0005-1098(83)90046-8). and https://doi.org/10.1109/3468.844354,' |
+            grep -oE "$pat" | while read -r u; do trim "$u"; done | tr '\n' ' ')
+          [ "$got" = "https://doi.org/10.1016/0005-1098(83)90046-8 https://doi.org/10.1109/3468.844354 " ] ||
+            { echo "pattern self-test failed: $got"; exit 1; }
+          links=$(git grep -h -o -E "$pat" -- '*.md' '*.html' '*.rst') && rc=0 || rc=$?
+          [ "$rc" -le 1 ] || { echo "git grep failed (exit $rc); nothing was checked"; exit 1; }
+          fail=0; n=0
+          for u in $(printf '%s\n' "$links" | while read -r l; do [ -n "$l" ] && trim "$l"; done | sort -u); do
+            n=$((n+1))
+            body=$(curl -s -m 20 --retry 3 --retry-all-errors -L \
+              -H 'Accept: application/vnd.citationstyles.csl+json' "$u") || body=''
+            title=$(printf '%s' "$body" | jq -r '.title // empty' 2>/dev/null) || title=''
+            if [ -z "$title" ]; then echo "UNRESOLVED  $u"; fail=1; else echo "ok  $u  ($title)"; fi
+          done
+          echo "checked $n DOI link(s)"
+          exit $fail
 
       # X answers 403 to every link checker (2026-10-05: five links on main and on #51), so lychee
       # skips x.com and this step checks X POST links instead, through the public fxtwitter API.
