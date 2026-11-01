@@ -1,0 +1,119 @@
+{
+  "kind": "ask",
+  "meaning": "The best action depends on the setpoint and a wrong guess is costly: EVPI exceeds the cost of asking, so ask.",
+  "cases": [
+    {
+      "id": "force-push-shared-branch",
+      "task": "Reviewer asked for a cleaner history on a pushed branch. Rewrite it, or add commits on top?",
+      "setpoint": {"question": "Has anyone else pulled or built on this branch?",
+                   "options": {"nobody": "only this session has used it", "others": "someone has pulled it"}},
+      "priors": {"nobody": 0.7, "others": 0.3},
+      "actions": {"force-push": "rewrite and force-push", "merge-on-top": "fix up with new commits"},
+      "loss": {"force-push": {"nobody": 0, "others": 240},
+               "merge-on-top": {"nobody": 15, "others": 15}},
+      "ask_cost": 3,
+      "source": "AGENTS.md, When to ask: ask before something irreversible or outward-facing. Pair: assume.json force-push-overnight."
+    },
+    {
+      "id": "forgotten-claude-md",
+      "task": "A home-directory .claude/CLAUDE.md is switching AGENTS.md off. Fix the load.",
+      "setpoint": {"question": "Does that CLAUDE.md hold rules the operator still wants?",
+                   "options": {"stale": "it is leftover and can go", "wanted": "it holds live personal rules"}},
+      "priors": {"stale": 0.5, "wanted": 0.5},
+      "actions": {"delete-it": "delete the older file",
+                  "load-both": "set instructionFiles to claude-md-and-agents-md in user settings"},
+      "loss": {"delete-it": {"stale": 0, "wanted": 180},
+               "load-both": {"stale": 40, "wanted": 5}},
+      "ask_cost": 3,
+      "source": "AGENTS.md: a CLAUDE.md you had forgotten about switches AGENTS.md off."
+    },
+    {
+      "id": "paid-eval-run",
+      "task": "The eval needs GPU time on a paid provider. Run the full set or a sample?",
+      "setpoint": {"question": "What is the operator's ceiling for this run?",
+                   "options": {"small": "about $20", "large": "about $200"}},
+      "priors": {"small": 0.5, "large": 0.5},
+      "actions": {"full-run": "the full set, about $150", "sampled-run": "a 10% sample, about $15"},
+      "loss": {"full-run": {"small": 200, "large": 0},
+               "sampled-run": {"small": 0, "large": 60}},
+      "ask_cost": 3,
+      "source": "AGENTS.md, When to ask: ask before spending money."
+    },
+    {
+      "id": "two-readings-of-faster",
+      "task": "\"Make the weekly report faster.\" The report is slow to generate and slow to read.",
+      "setpoint": {"question": "Faster to generate, or faster to read?",
+                   "options": {"generate": "the job takes too long", "read": "the page takes too long to take in"}},
+      "priors": {"generate": 0.5, "read": 0.5},
+      "actions": {"cache-queries": "cache and parallelise the queries", "cut-to-three": "rewrite it as three ranked items"},
+      "loss": {"cache-queries": {"generate": 0, "read": 240},
+               "cut-to-three": {"generate": 240, "read": 0}},
+      "ask_cost": 5,
+      "source": "AGENTS.md, Before editing: ask when two readings of the request would produce materially different work."
+    },
+    {
+      "id": "fix-lands-in-sibling",
+      "task": "The root cause is in a sibling repo maintained separately. Where does the fix go?",
+      "setpoint": {"question": "Does the operator want a pull request on the sibling, or a local workaround?",
+                   "options": {"upstream": "send it upstream", "local": "keep it here for now"}},
+      "priors": {"upstream": 0.5, "local": 0.5},
+      "actions": {"open-sibling-pr": "open a pull request on the sibling", "local-workaround": "work around it here and write it down"},
+      "loss": {"open-sibling-pr": {"upstream": 0, "local": 90},
+               "local-workaround": {"upstream": 60, "local": 0}},
+      "ask_cost": 3,
+      "source": "AGENTS.md: the hub routes to siblings; ask before outward-facing work. Findings, not directives."
+    },
+    {
+      "id": "prune-old-branches",
+      "task": "\"Clean up the repo.\" There are 40 stale remote branches.",
+      "setpoint": {"question": "Is the history on those branches worth keeping?",
+                   "options": {"junk": "nothing on them matters", "keep": "some hold unmerged work"}},
+      "priors": {"junk": 0.6, "keep": 0.4},
+      "actions": {"delete-branches": "delete the remote branches",
+                  "tag-then-delete": "tag each tip, then delete",
+                  "leave-them": "leave them"},
+      "loss": {"delete-branches": {"junk": 0, "keep": 300},
+               "tag-then-delete": {"junk": 10, "keep": 10},
+               "leave-them": {"junk": 30, "keep": 0}},
+      "ask_cost": 2,
+      "source": "skills/hsi-operator/references/l0-channel.md: 'whether the history is worth keeping' is the operator's call."
+    },
+    {
+      "id": "hosted-compaction-plugin",
+      "task": "Install a compaction plugin whose default mode sends conversation excerpts to a hosted classifier.",
+      "setpoint": {"question": "Does the operator's data policy allow working memory to leave the machine?",
+                   "options": {"allowed": "yes", "forbidden": "no"}},
+      "priors": {"allowed": 0.5, "forbidden": 0.5},
+      "actions": {"hosted-mode": "install with an API key", "threshold-only": "copy the sliding threshold, no hosted call"},
+      "loss": {"hosted-mode": {"allowed": 0, "forbidden": 500},
+               "threshold-only": {"allowed": 10, "forbidden": 0}},
+      "ask_cost": 2,
+      "source": "AGENTS.md, Context: installing is consent; sending working memory to a third party is a data decision."
+    },
+    {
+      "id": "first-party-autoupdate",
+      "task": "Six first-party plugins moved to a new commit without the pin. Write the rule for them.",
+      "setpoint": {"question": "Are first-party channels exempt from the pin rule?",
+                   "options": {"exempt": "trust the vendor channel", "pinned": "pin them like any third party"}},
+      "priors": {"exempt": 0.5, "pinned": 0.5},
+      "actions": {"mark-exempt": "write that first-party channels are exempt", "turn-off-autoupdate": "turn auto-update off and pin"},
+      "loss": {"mark-exempt": {"exempt": 0, "pinned": 60},
+               "turn-off-autoupdate": {"exempt": 45, "pinned": 0}},
+      "ask_cost": 3,
+      "source": "AGENTS.md, Skills: decide in writing whether first-party channels are exempt."
+    },
+    {
+      "id": "docs-disagree-with-code",
+      "task": "AGENTS.md asks for tabs; every source file uses spaces. A new file is needed.",
+      "setpoint": {"question": "Should the file be fixed, or the code changed to match it?",
+                   "options": {"fix-file": "the doc is stale", "change-code": "the doc is the new convention"}},
+      "priors": {"fix-file": 0.7, "change-code": 0.3},
+      "actions": {"reformat-code": "reformat the codebase to match AGENTS.md",
+                  "follow-code-and-report": "follow the code, report the conflict, change nothing else"},
+      "loss": {"reformat-code": {"fix-file": 120, "change-code": 0},
+               "follow-code-and-report": {"fix-file": 0, "change-code": 30}},
+      "ask_cost": 3,
+      "source": "AGENTS.md, Scope guard: each conflict is a DECIDE item for the operator; do not settle it yourself."
+    }
+  ]
+}

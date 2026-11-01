@@ -154,6 +154,8 @@ do not ask permission to continue. Ask before expanding scope, spending money, t
 permission, or doing something irreversible or outward-facing. An action your permissions
 refused goes to the person, never to another agent or helper to run for you. If you were
 asked to review, report findings and do not edit.
+[`evals/clarify/`](evals/clarify/README.md) scores this: ask only when the answer is worth more
+than the attention it costs (EVPI > ask cost); otherwise act and state the assumption.
 
 **In a code repo,** the scope guard is not enough to stop logic being copied rather than
 owned. [`docs/design-rules-for-code.md`](docs/design-rules-for-code.md) adds six rules, each
@@ -399,6 +401,7 @@ into notes and handoffs; its value never does.
 ## Honest limitations of this page
 
 - Almost nothing on this page is enforced. CI runs the skill-trigger evals, the CLI checks,
+  the ask-or-act eval (it scores a recorded policy; nothing makes a session obey it),
   `sysmap selftest`, a link check and the sibling check, and of this page only the sibling
   table at the top, the skill list and its size are checked (that it links every repo in
   `repos.json`, names every folder under `skills/`, stays within 32 KiB and ends with the
