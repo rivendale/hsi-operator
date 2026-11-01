@@ -39,6 +39,17 @@
         "a service or check reports healthy while doing nothing",
         "setting up alerting, backup or remote access at home"
       ]
+    },
+    {
+      "name": "ai-redteam",
+      "url": "https://github.com/rivendale/ai-redteam",
+      "start": "AGENTS.md",
+      "purpose": "Adversarial review for AI-produced work: red-team decisions, plans, claims and code, bounded pull request review, and an assess skill for incoming links, with a published eval set.",
+      "read_when": [
+        "a plan, claim, decision or piece of code needs a second, adversarial opinion before anyone relies on it",
+        "reviewing one pull request with a written adjudication",
+        "someone forwards a link or tool and asks whether it is useful"
+      ]
     }
   ]
 }

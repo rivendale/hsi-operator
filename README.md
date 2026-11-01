@@ -21,10 +21,9 @@ Each sibling is maintained separately and links back here.
 | a second opinion on AI-produced work: red-team a plan, claim or decision, review one pull request, assess a shared link | [ai-redteam](https://github.com/rivendale/ai-redteam) | adversarial-review skills and paste-in prompts, with a published eval set |
 
 The same facts for a program are in [`repos.json`](repos.json). `evals/siblings/` fails CI when
-this page or `AGENTS.md` stops linking a sibling, or a sibling stops linking back. ai-redteam is
-not in `repos.json` yet: its link back here is below the first 12 lines of its README, which
-that check refuses. The same check fails CI when the skills named here, in `AGENTS.md` or in
-`.claude-plugin/plugin.json` differ from the folders under `skills/`.
+this page or `AGENTS.md` stops linking a sibling, or a sibling stops linking back. The same
+check fails CI when the skills named here, in `AGENTS.md` or in `.claude-plugin/plugin.json`
+differ from the folders under `skills/`.
 
 ## What is in this repo
 

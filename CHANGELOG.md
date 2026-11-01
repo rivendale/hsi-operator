@@ -12,6 +12,12 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **ai-redteam was routed from the README and AGENTS.md but missing from `repos.json`, so no check
+  covered its links: its README linked back here only at line 136, and its AGENTS.md not at all.**
+  ai-redteam now links the hub in the first lines of both
+  ([rivendale/ai-redteam#132](https://github.com/rivendale/ai-redteam/pull/132)), and `repos.json`
+  lists it, so `evals/siblings` checks its backlink like every other sibling.
+
 - **`evals/update/run.py`, run as root, made the machine's tools unexecutable.** Its cleanup
   chmods everything under its temp directory to 0600, including `toolbin/`, whose entries are
   symlinks to the real `sh`, `bash`, `python3`, `git` and the rest, and `os.chmod` follows
