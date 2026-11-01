@@ -12,6 +12,14 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **Nothing here ran the evals as root, so a cleanup that chmods through a symlink, like
+  `evals/update/run.py`'s, passed CI; and nothing checked the tracked files' executable bits,
+  raw invisible characters or stale dated markers.** `.github/workflows/hygiene.yml` calls the shared
+  hygiene workflow of rivendale/opensource, pinned by SHA, and `.hygiene.json` configures it:
+  executable bits against the base commit, invisible characters, stale "checked" dates in the
+  docs, the size and sentinel of `AGENTS.md` and `starter/AGENTS.md`, and `evals/update/run.py`
+  run as root in a throwaway container that fails if a system file changes mode or content.
+
 - **"Surface only what needs a person" had no check, so nothing told a policy that asks about
   everything from one that never asks.** `evals/clarify/` holds 26 operator cases (force-push,
   a paid run, a forgotten `CLAUDE.md`, a branch name, and so on), each with a hidden setpoint, priors,

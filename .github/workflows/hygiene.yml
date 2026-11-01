@@ -1,0 +1,19 @@
+# The shared hygiene check from rivendale/opensource (tools/hygiene/README.md there): executable
+# bits, invisible characters, stale dated markers, the size and sentinel of AGENTS.md and
+# starter/AGENTS.md, and the update reporter's fixtures run as root in a throwaway container,
+# where a chmod through a symlink like evals/update's (CHANGELOG) fails. .hygiene.json configures it.
+# To move to a newer version, change both SHAs below in one commit.
+name: hygiene
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  hygiene:
+    uses: rivendale/opensource/.github/workflows/hygiene.yml@bd93f38385536fa29060ca10975522a88183312c
+    with:
+      hygiene_ref: bd93f38385536fa29060ca10975522a88183312c
