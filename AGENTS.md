@@ -402,7 +402,8 @@ into notes and handoffs; its value never does.
 
 - Almost nothing on this page is enforced. CI runs the skill-trigger evals, the CLI checks,
   the ask-or-act eval (it scores a recorded policy; nothing makes a session obey it),
-  `sysmap selftest`, a link check and the sibling check, and of this page only the sibling
+  `sysmap selftest`, a link check, the sibling check and the shared hygiene check
+  (`.github/workflows/hygiene.yml`, configured in `.hygiene.json`), and of this page only the sibling
   table at the top, the skill list and its size are checked (that it links every repo in
   `repos.json`, names every folder under `skills/`, stays within 32 KiB and ends with the
   sentinel line, as `starter/AGENTS.md` must too). No hook reads the rest and no check fails

@@ -1,0 +1,10 @@
+{
+  "_comment": "Schema: rivendale/opensource tools/hygiene/README.md. Keys starting with _ are comments.",
+  "stale_pattern": "\\b(?:checked|rechecked|verified|reviewed|read|as of)[:\\s]+(?:on\\s+)?(\\d{4}-\\d{2}-\\d{2})\\b",
+  "stale_globs": ["README.md", "AGENTS.md", "starter/**/*.md", "docs/**/*.md", "skills/**/*.md", "adapters/**/*.md", "examples/**/*.md"],
+  "instructions": [
+    {"file": "AGENTS.md", "max_bytes": 32768, "sentinel": "Sentinel: if you can read this line, the whole file loaded."},
+    {"file": "starter/AGENTS.md", "max_bytes": 32768, "sentinel": "Sentinel: if you can read this line, the whole file loaded."}
+  ],
+  "root_safety": ["python3 evals/update/run.py"]
+}
