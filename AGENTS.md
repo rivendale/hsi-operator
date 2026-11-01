@@ -3,9 +3,7 @@
 **Start here, then read the sibling the task needs.** This repo is the hub. Its siblings are
 maintained separately, and each links back here. Read the one the task needs and link its
 rules rather than restating them; a copy goes stale without a sound. The same facts for a
-program are in [`repos.json`](repos.json), checked by `evals/siblings/run.py`. ai-redteam is
-listed here but not yet in `repos.json`: its link back to this repo is below the first 12
-lines of its README, which that check refuses.
+program are in [`repos.json`](repos.json), checked by `evals/siblings/run.py`.
 
 | when the task is | read |
 |---|---|
