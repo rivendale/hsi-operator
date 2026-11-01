@@ -11,6 +11,7 @@ program are in [`repos.json`](repos.json), checked by `evals/siblings/run.py`.
 | building from open source instead of from scratch; what a license lets you reuse | [opensource](https://github.com/rivendale/opensource) |
 | running services on your own machines: WSL, systemd user services, networking, sync and backup, alerting | [homelab](https://github.com/rivendale/homelab) |
 | a second opinion on AI-produced work: red-team a plan, claim or decision, review one pull request, assess a shared link | [ai-redteam](https://github.com/rivendale/ai-redteam) |
+| checking marketing or product claims against the seller's pages and independent evidence | [factcheck](https://github.com/rivendale/factcheck) |
 
 The rest of this page is about working in this repo.
 
