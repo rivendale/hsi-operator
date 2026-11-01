@@ -300,7 +300,7 @@ def check(case, res):
         if bad:
             problems.append(f"control characters in the output: {sorted(set(b.hex() for b in bad))}")
     if e.get("no_invisible_format_chars"):
-        bad = re.findall("[​-‏‪-‮⁦-⁩﻿]", text)
+        bad = re.findall("[\u200b-\u200f\u202a-\u202e\u2066-\u2069\ufeff]", text)
         if bad:
             problems.append(f"invisible format characters in the output: {[hex(ord(c)) for c in set(bad)]}")
     if e.get("max_seconds") and res["secs"] > e["max_seconds"]:
