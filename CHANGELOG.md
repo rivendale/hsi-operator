@@ -12,6 +12,16 @@ it does, the version goes above the date and this line goes away.
 
 ## Unreleased
 
+- **"Surface only what needs a person" had no check, so nothing told a policy that asks about
+  everything from one that never asks.** `evals/clarify/` holds 26 operator cases (force-push,
+  a paid run, a forgotten `CLAUDE.md`, a branch name, and so on), each with a hidden setpoint, priors,
+  a loss table and the cost of asking. The rule is to ask iff the expected value of perfect
+  information (Howard 1966) exceeds that cost, and the runner counts unnecessary asks, missed
+  asks and acts without a stated assumption. The EVPI-optimal oracle scores 26/26. `--selftest`
+  proves always-ask fails with 17 unnecessary asks and never-ask with 9 missed asks and 9 unstated
+  assumptions. CI runs both. The regex in `evals/update/run.py` that finds invisible format characters
+  held seven of them raw; it now spells them as escapes.
+
 - **ai-redteam was routed from the README and AGENTS.md but missing from `repos.json`, so no check
   covered its links: its README linked back here only at line 136, and its AGENTS.md not at all.**
   ai-redteam now links the hub in the first lines of both

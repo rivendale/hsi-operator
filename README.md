@@ -32,7 +32,7 @@ differ from the folders under `skills/`.
 | [`skills/`](skills/) | five skills an agent loads: `hsi-operator` (two doors), `repo-triage`, `context-steward`, `system-map`, `update` |
 | [`docs/`](docs/) | practice pages, one idea each, every rule with the failure that produced it |
 | [`docs/wiki/`](docs/wiki/) | the loop, function allocation, the honesty protocol and the operator channel, at length |
-| [`evals/`](evals/) | CI checks: skill triggering, the CLI, sibling links, the `update` reporter |
+| [`evals/`](evals/) | CI checks: skill triggering, the CLI, sibling links, the `update` reporter, [when to ask](evals/clarify/README.md) |
 | [`starter/`](starter/) | a minimal `AGENTS.md`, `SETPOINT.md`, changelog and README to copy into a new repo |
 | [`adapters/`](adapters/) | read items from a JSONL task file or a ledger instead of the built-in format |
 | [`examples/`](examples/) | sample items, setpoint, ledger and timeline, with a rendered timeline; a prompt-cache status line |
