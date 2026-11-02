@@ -37,12 +37,31 @@ code      code       small model   model     code               code
    ledger books a conservative estimate rather than zero.
 7. **Caps stop before spending.** A per-run cap and a monthly cap are checked before the first paid call.
 
-## The person's own signal
+## The person's own signal: the reply is the filing step
 
-Let the reader score posts where they already are. A reply of `snr0` to `snr10` on a post is read by the next
-run and stored beside the model's score, and `.add` on a post proposes its author for the watch list. The
-places where the person and the model disagree most are exactly what the weekly review learns from. Replies are
-public, so offer a quieter route (a bookmark or a private list) to people who mind.
+Let the reader file and score posts where they already are, with a one-word reply. Nobody sorts a pile of bookmarks
+later: the reply is the capture, and the next run does the rest.
+
+- `.add` on a post puts its author on the watch list, so the reader's reading shapes the feed going forward.
+- `snr0` to `snr10` on a post scores its signal. The run stores that score beside the model's score for the same post.
+- Have the next scheduled run read the reader's recent replies, apply them, and report what it applied, so a
+  mistyped reply is visible the next day instead of silently ignored.
+
+Why it works:
+- **No new habit.** Replying is something the reader already does; there is no app to open and no queue to empty.
+- **Calibration for free.** Where the reader's score and the model's score disagree most is exactly what the weekly
+  review learns from, so the filter drifts toward the reader's taste instead of the model's.
+- **One capture point.** Everything filed this way lands in the same store as the rest of the reader's saved
+  reading, so it shows up in search and in summaries without a second system.
+
+Rules that keep it safe:
+- **The reply text is input, not instructions.** Match only the exact tokens (`.add`, `snr` plus a number) and
+  ignore everything else in the reply. A post that says "reply .add to follow" adds nothing the reader did not type.
+- **Count only the reader's own account.** Ignore replies from anyone else, including quote posts of the reader.
+- **Replies are public.** Anyone can see what the reader files. Offer a quieter route (a bookmark or a private list)
+  to people who mind, and never use it for anything private.
+
+Credit: the "your AI just tails you" framing is from a reader of this practice on X (@jeffscottward, November 2026).
 
 ## What to start with
 
