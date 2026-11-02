@@ -55,20 +55,22 @@ Why it can work:
 - **One capture point.** Filed posts land in the same store as the rest of the reader's saved reading.
 
 Rules that keep it safe:
-- **Everything fetched is untrusted data.** The replied-to post, quotes, links, bios and alt text are never
-  instructions, in the filing step or later in summaries and the weekly review. Models that read them hold no
-  tools (see [untrusted-input lanes](untrusted-input-lanes.md)).
-- **Parse in code, whole reply only.** A reply counts only if the entire trimmed reply is `.add` or `snr0`-`snr10`.
+- **Everything fetched is untrusted data, and so is anything derived from it.** The replied-to post, quotes,
+  links, bios and alt text are never instructions. Models that read them hold no tools (see
+  [untrusted-input lanes](untrusted-input-lanes.md)), and their summaries and proposals cannot authorize an action
+  later either: a person approves every change.
+- **Parse in code, whole reply only.** After the platform's leading `@mention` prefix is removed, a reply counts
+  only if the entire trimmed text is `.add` or `snr0`-`snr10`.
   A conversational reply that mentions a token is ignored. Deduplicate by reply id across overlapping runs.
 - **Bind to authenticated ids.** The filer is the reader's platform user id from the API, not a handle or display
   name; the target is the platform's replied-to post id and its author id. Anything ambiguous is skipped and reported.
-- **The capture job is read-only, and only the person files.** It never posts, likes or follows. A reply written by
-  an agent or app on the reader's account is not a filing, so feed text cannot make the system file anything.
-- **Replies are public.** Anyone can see what the reader tracks and how they score; an author sees a public `snr0`
-  on their post. Prefer `.add` and high scores in public, and use a private route (a bookmark or a private list)
-  for low scores, private topics and anything sensitive.
-
-Credit: the "your AI just tails you" framing is from a public post by a reader of this practice on X (November 2026).
+- **The capture job is read-only, and no agent can post as the reader.** It never posts, likes or follows, and no
+  agent gets write access to the reader's account. The platform cannot tell a person's reply from one an app wrote,
+  so a reply from that account is treated as the reader's: keep write access with the person alone.
+- **Replies are public.** Anyone can see what the reader tracks and how they score, and an author sees a public
+  `snr0` on their post. Decide sensitivity before replying: low scores, and any topic or account the reader would
+  not want associated with them, go through a private route instead (a bookmark or a private list that the run
+  also reads).
 
 ## What to start with
 
