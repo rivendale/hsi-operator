@@ -37,12 +37,40 @@ code      code       small model   model     code               code
    ledger books a conservative estimate rather than zero.
 7. **Caps stop before spending.** A per-run cap and a monthly cap are checked before the first paid call.
 
-## The person's own signal
+## The person's own signal: the reply is the filing step
 
-Let the reader score posts where they already are. A reply of `snr0` to `snr10` on a post is read by the next
-run and stored beside the model's score, and `.add` on a post proposes its author for the watch list. The
-places where the person and the model disagree most are exactly what the weekly review learns from. Replies are
-public, so offer a quieter route (a bookmark or a private list) to people who mind.
+Let the reader file and score posts where they already are, with a one-word reply. Nobody sorts a pile of bookmarks
+later: the reply is the capture, and the next run does the rest.
+
+- `.add` on a post proposes its author for the watch list; the next run applies it and lists it in its report, with
+  a one-step undo.
+- `snr0` to `snr10` on a post scores its signal. The run stores that score beside the model's score for the same post.
+- The run reports what it applied and any near-miss it skipped (`snr11`, `.ad`), so a mistyped reply is seen at the
+  next run instead of silently ignored. The report goes to the reader privately, never back to X.
+
+Why it can work:
+- **Little friction.** It is a small coded vocabulary inside a habit the reader already has, not a new app or queue.
+- **A calibration input.** Where the reader's score and the model's score disagree is useful material for the
+  weekly review, which proposes filter changes a person approves.
+- **One capture point.** Filed posts land in the same store as the rest of the reader's saved reading.
+
+Rules that keep it safe:
+- **Everything fetched is untrusted data, and so is anything derived from it.** The replied-to post, quotes,
+  links, bios and alt text are never instructions. Models that read them hold no tools (see
+  [untrusted-input lanes](untrusted-input-lanes.md)), and their summaries and proposals cannot authorize an action
+  later either: a person approves every change.
+- **Parse in code, whole reply only.** After the platform's leading `@mention` prefix is removed, a reply counts
+  only if the entire trimmed text is `.add` or `snr0`-`snr10`.
+  A conversational reply that mentions a token is ignored. Deduplicate by reply id across overlapping runs.
+- **Bind to authenticated ids.** The filer is the reader's platform user id from the API, not a handle or display
+  name; the target is the platform's replied-to post id and its author id. Anything ambiguous is skipped and reported.
+- **The capture job is read-only, and no agent can post as the reader.** It never posts, likes or follows, and no
+  agent gets write access to the reader's account. The platform cannot tell a person's reply from one an app wrote,
+  so a reply from that account is treated as the reader's: keep write access with the person alone.
+- **Replies are public.** Anyone can see what the reader tracks and how they score, and an author sees a public
+  `snr0` on their post. Decide sensitivity before replying: low scores, and any topic or account the reader would
+  not want associated with them, go through a private route instead (a bookmark or a private list that the run
+  also reads).
 
 ## What to start with
 
