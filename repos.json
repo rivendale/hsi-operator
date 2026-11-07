@@ -50,6 +50,17 @@
         "reviewing one pull request with a written adjudication",
         "someone forwards a link or tool and asks whether it is useful"
       ]
+    },
+    {
+      "name": "factcheck",
+      "url": "https://github.com/rivendale/factcheck",
+      "start": "README.md",
+      "purpose": "A fact-check skill for marketing and product claims: dated, claim-by-claim ratings from the seller's own pages, checked arithmetic and clearly separated independent evidence.",
+      "read_when": [
+        "checking marketing or product claims against the seller's own pages and independent evidence",
+        "rating a claim as supported, contradicted, incomplete or missing support",
+        "building or reviewing a fact-check skill or paste-in prompt"
+      ]
     }
   ]
 }
