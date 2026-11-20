@@ -14,6 +14,6 @@ permissions:
 
 jobs:
   hygiene:
-    uses: rivendale/opensource/.github/workflows/hygiene.yml@bd93f38385536fa29060ca10975522a88183312c
+    uses: rivendale/opensource/.github/workflows/hygiene.yml@534b5515f971b70e85c80bba8f1ddaf23607353e
     with:
       hygiene_ref: bd93f38385536fa29060ca10975522a88183312c
